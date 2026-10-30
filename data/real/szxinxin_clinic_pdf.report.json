@@ -1,0 +1,133 @@
+{
+  "meta": {
+    "provider": "file",
+    "kind": "pdf",
+    "needs_ai": false
+  },
+  "report": {
+    "header_row": 0,
+    "mapped_columns": {
+      "序号": "A",
+      "项目名称": "B",
+      "规格工艺": "C",
+      "单位": "D",
+      "数量": "E",
+      "单价": "F",
+      "合价": "G",
+      "备注": "H"
+    },
+    "rows": 168,
+    "dropped_no_name": 0,
+    "arith_checked": 168,
+    "arith_bad": [
+      {
+        "name": "主材-亚光砖800X800",
+        "qty": 19.4,
+        "price": 45.6,
+        "amount": 973.1,
+        "calc": 884.64,
+        "ratio": 1.1
+      },
+      {
+        "name": "主材-亚光砖800X800",
+        "qty": 10.3,
+        "price": 45.6,
+        "amount": 516.65,
+        "calc": 469.68,
+        "ratio": 1.1
+      },
+      {
+        "name": "主材-亚光砖800X800",
+        "qty": 9.1,
+        "price": 45.6,
+        "amount": 456.46,
+        "calc": 414.96,
+        "ratio": 1.1
+      },
+      {
+        "name": "主材-亚光砖800X800",
+        "qty": 6.7,
+        "price": 45.6,
+        "amount": 336.07,
+        "calc": 305.52,
+        "ratio": 1.1
+      },
+      {
+        "name": "主材-亚光砖800X800",
+        "qty": 2.9,
+        "price": 45.6,
+        "amount": 145.46,
+        "calc": 132.24,
+        "ratio": 1.1
+      },
+      {
+        "name": "主材-亚光砖800X800",
+        "qty": 1.8,
+        "price": 45.6,
+        "amount": 90.29,
+        "calc": 82.08,
+        "ratio": 1.1
+      },
+      {
+        "name": "主材-亚光砖800X800",
+        "qty": 1.8,
+        "price": 45.6,
+        "amount": 90.29,
+        "calc": 82.08,
+        "ratio": 1.1
+      },
+      {
+        "name": "主材-亚光砖800X800",
+        "qty": 1.4,
+        "price": 45.6,
+        "amount": 70.22,
+        "calc": 63.84,
+        "ratio": 1.1
+      },
+      {
+        "name": "主材-亚光砖800X800",
+        "qty": 1.3,
+        "price": 45.6,
+        "amount": 65.21,
+        "calc": 59.28,
+        "ratio": 1.1
+      },
+      {
+        "name": "主材-亚光砖800X800",
+        "qty": 1.3,
+        "price": 45.6,
+        "amount": 65.21,
+        "calc": 59.28,
+        "ratio": 1.1
+      },
+      {
+        "name": "主材-亚光砖800X800",
+        "qty": 2.0,
+        "price": 45.6,
+        "amount": 100.32,
+        "calc": 91.2,
+        "ratio": 1.1
+      },
+      {
+        "name": "主材-亚光砖800X800",
+        "qty": 1.1,
+        "price": 45.6,
+        "amount": 55.18,
+        "calc": 50.16,
+        "ratio": 1.1
+      },
+      {
+        "name": "正压负压信号线",
+        "qty": 56.0,
+        "price": 32.5,
+        "amount": 2002.0,
+        "calc": 1820.0,
+        "ratio": 1.1
+      }
+    ],
+    "multipliers": {
+      "1.1": 13
+    },
+    "total": 113588.0
+  }
+}

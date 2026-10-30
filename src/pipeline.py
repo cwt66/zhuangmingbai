@@ -305,11 +305,55 @@ def find_arithmetic(quote, rule):
             diff = round(r["amount"] - r["qty"] * r["price"], 2)
             if abs(diff) > 1:
                 c = confidence(rule["strength"], 0.95, r["align_conf"] or 0.9, False)
+                base = r["qty"] * r["price"]
                 out.append({"cid": r["cid"], "concept": r["name"], "line": r["no"],
                             "issue": f"合价与数量×单价不一致（差 {diff:+.0f} 元）",
                             "rule": rule["id"], "confidence": c, "tier": tier(c),
+                            "ratio": round(r["amount"] / base, 3) if base else None,
                             "evidence": {"basis": "报价单算术一致性",
                                          "formula": f"{r['qty']}×{r['price']}={r['qty']*r['price']:.0f}，单列 {r['amount']:.0f}"}})
+    return out
+
+
+def find_arithmetic_grouped(quote, rule):
+    """算术校验，但把「同一比例反复出现」聚合成一条。
+
+    真实单据常见做法：对主材行统一乘一个系数（如 10% 损耗）却不写进损耗列。
+    逐行报会产生十几条同类告警，把真正的问题淹掉——这属于"口径"而不是"错行"，
+    所以合并成一条，并明确说出比例与命中行数。
+    """
+    raw = find_arithmetic(quote, rule)
+    if not raw:
+        return raw
+
+    by_ratio = defaultdict(list)
+    others = []
+    for x in raw:
+        r = x.get("ratio")
+        if r is None or r == 1:
+            # 比例恰好是 1（差额来自四舍五入）→ 不是系统性系数，保留原样
+            others.append(x)
+        else:
+            by_ratio[round(float(r), 3)].append(x)
+
+    out = list(others)
+    for ratio, items in by_ratio.items():
+        if len(items) < 3:                       # 少于 3 次不算"系统性"
+            out.extend(items)
+            continue
+        pct = (ratio - 1) * 100
+        out.append({
+            "rule": rule["id"], "concept": "多行合计",
+            "line": ",".join(str(i.get("line")) for i in items[:6]) + ("…" if len(items) > 6 else ""),
+            "issue": ("%d 行的「合价 ÷（数量×单价）」恒为 %.3f（%+.0f%%），"
+                      "但表内未声明损耗/系数列" % (len(items), ratio, pct)),
+            "detail": "逐行明细见数据文件；这是单据层面的口径问题，不是单行算错",
+            "confidence": confidence(rule["strength"], 0.95, 0.95, True),
+            "tier": "auto",
+            "evidence": {"basis": "同一比例在 ≥3 行重复出现",
+                         "formula": "amount / (qty × price) = const",
+                         "sample": [i.get("concept") for i in items[:3]]},
+        })
     return out
 
 
@@ -434,7 +478,7 @@ def audit(quotes, onto, templates, rules, coverage=None, template_key="old_house
         risks = []
         risks += find_vague(q, R["R4_vague_term"])
         risks += find_unit_anomaly(q, onto, R["R6_unit_anomaly"])
-        risks += find_arithmetic(q, R["R8_arithmetic"])
+        risks += find_arithmetic_grouped(q, R["R8_arithmetic"])
         risks += find_qty_unit(q, R["R9_qty_unit"])
         risks += find_fee_rate(q, R["R10_fee_rate"])
         risks += find_spec_missing(q, R["R11_spec_missing"])

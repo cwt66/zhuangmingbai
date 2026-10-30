@@ -35,6 +35,14 @@ def print_report(rows, meta, report, out_csv):
     for b in (report.get("arith_bad") or [])[:5]:
         print("   ! %-22s %s × %s = %s，表上写 %s" % (b["name"], b["qty"], b["price"],
                                                        b["calc"], b["amount"]))
+    mult = report.get("multipliers") or {}
+    if mult:
+        for ratio, cnt in sorted(mult.items(), key=lambda kv: -kv[1]):
+            pct = (float(ratio) - 1) * 100
+            print("系统性系数 : %d 行的「合价 ÷（数量×单价）」= %.3f（+%.0f%%）"
+                  % (cnt, float(ratio), pct))
+        print("             → 单据对某类行乘了系数但表内未声明（常见是损耗/管理费），"
+              "不是识别错误，是口径问题。")
     if report.get("total") is not None:
         print("合价合计   :", "%.2f" % report["total"])
     print("已写入     :", out_csv)

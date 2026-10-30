@@ -226,6 +226,82 @@ class TestFileProvider(unittest.TestCase):
         self.assertIn("xlsx", str(ctx.exception))
 
 
+
+
+class TestPdfCoords(unittest.TestCase):
+    """PDF 坐标解析：用合成片段测，不依赖二进制样本。
+
+    这几条对应真实 PDF 上踩过的坑（深圳新新装饰那份 7 页公开报价单）：
+    1. 数字比表头宽 → 按字符位置切会吃掉首字符，所以必须按 x 坐标；
+    2. `#` 是 ￥ 被字体映射的结果，不是数据；
+    3. 单位 `M` 落在「损耗」与「单位」列之间，按坐标会判错，按内容才稳；
+    4. **y 轴可能是反的**（表头 y 最小），按 -y 排序会倒着读。
+    """
+
+    HDR = [("序", 48.4), ("项目名称", 92.3), ("工程量", 166.6), ("单位", 206.6),
+           ("损耗", 223.3), ("单价", 246.7), ("合计", 305.7), ("施工工艺及材料说明", 358.7)]
+
+    def _page(self, hdr_y, rows):
+        """rows: [(y, [(x, text), ...])]"""
+        frags = [(hdr_y, x, t) for t, x in self.HDR]
+        for y, cells in rows:
+            for x, t in cells:
+                frags.append((y, x, t))
+        return frags
+
+    def test_basic_two_rows(self):
+        page = self._page(760.0, [
+            (700.0, [(51, "1"), (85, "地砖铺设人工"), (173, "19.4"), (213, "㎡"),
+                     (232, "#"), (243, "60.00"), (299, "1164.00")]),
+            (680.0, [(51, "2"), (85, "批腻子"), (173, "43.4"), (213, "㎡"),
+                     (232, "#"), (243, "29.90"), (299, "1297.66")]),
+        ])
+        grid = P._pdf_rows_by_coords([page])
+        self.assertEqual(len(grid), 3)                      # 表头 + 2 行
+        first = grid[1]
+        self.assertEqual(first["B"], "地砖铺设人工")          # 名称完整，没被切首字
+        self.assertEqual(first["E"], "19.4")
+        self.assertEqual(first["F"], "60.00")
+        self.assertEqual(first["G"], "1164.00")
+        self.assertNotIn("#", first["B"])                    # 货币符号没污染名称
+
+    def test_unit_is_forced_by_content(self):
+        """单位 M 的 x=215 离「损耗」更近，但必须判成单位。"""
+        page = self._page(760.0, [
+            (700.0, [(51, "1"), (85, "不锈钢地脚线"), (173, "11.6"), (215, "M"),
+                     (232, "#"), (243, "23.40"), (299, "271.44")]),
+        ])
+        grid = P._pdf_rows_by_coords([page])
+        self.assertEqual(grid[1]["D"], "M")
+        self.assertEqual(grid[1]["B"], "不锈钢地脚线")
+
+    def test_inverted_y_axis_preserves_order(self):
+        """表头 y 最小（翻转坐标系）时，行序仍要是视觉从上到下。"""
+        page = self._page(50.0, [
+            (680.0, [(51, "1"), (85, "第一项"), (173, "1.0"), (213, "项"),
+                     (232, "#"), (243, "10.00"), (299, "10.00")]),
+            (700.0, [(51, "2"), (85, "第二项"), (173, "2.0"), (213, "项"),
+                     (232, "#"), (243, "20.00"), (299, "40.00")]),
+        ])
+        grid = P._pdf_rows_by_coords([page])
+        self.assertEqual([grid[1]["B"], grid[2]["B"]], ["第一项", "第二项"])
+
+    def test_section_title_becomes_zone_not_row(self):
+        page = self._page(760.0, [
+            (720.0, [(66, "一"), (80, "、"), (94, "候诊大厅")]),
+            (700.0, [(51, "1"), (85, "贴砖"), (173, "19.4"), (213, "㎡"),
+                     (232, "#"), (243, "60.00"), (299, "1164.00")]),
+        ])
+        grid = P._pdf_rows_by_coords([page])
+        self.assertEqual(len(grid), 2)                       # 分区不占数据行
+        self.assertEqual(grid[1]["C"], "分区：一、候诊大厅")
+
+    def test_no_usable_header_raises(self):
+        with self.assertRaises(P.PerceptionError):
+            P._pdf_rows_by_coords([[("随便", 10, "什么")]])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
 

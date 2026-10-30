@@ -39,6 +39,9 @@ DOCS = [
      "csv": "data/real/sh_zhuoguan_halfpack.csv", "template_key": "old_house"},
     {"slug": "huaxibeian", "doc": "花溪北岸·5 页施工报价",
      "csv": "data/real/huaxibeian_newhouse.csv", "template_key": "new_house"},
+    # 第一份**文本版 PDF**（7 页、19 个分区、168 行），经坐标法解析得到
+    {"slug": "szxinxin_clinic", "doc": "深圳新新·诊所装饰（公开 PDF）",
+     "csv": "data/real/szxinxin_clinic_pdf.csv", "template_key": "new_house"},
 ]
 
 

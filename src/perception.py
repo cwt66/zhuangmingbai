@@ -282,12 +282,165 @@ def _csv_to_rows(path):
     return grid
 
 
-def _pdf_to_rows(path):
-    """PDF 文本层 → 网格。按表头各列字符位置切片，比按空白分割稳。
+def _pdf_fragments(reader):
+    """每页的 [(y, x, text)]。pypdf 的 visitor 逐片段回调，带文本矩阵。"""
+    pages = []
+    for page in reader.pages:
+        frags = []
 
-    扫描件/图片合成的 PDF 没有文本层——必须明确报错让人换图片路径，
-    不能返回空表（空表会被上层当成"没有漏项"）。
+        def visitor(text, cm, tm, font_dict, font_size, _acc=frags):
+            t = (text or "").strip()
+            if t:
+                _acc.append((round(tm[5], 1), round(tm[4], 1), t))
+
+        page.extract_text(visitor_text=visitor)
+        pages.append(frags)
+    return pages
+
+
+# PDF 表头专用匹配串。显式列出，避免「说明」同时命中「规格工艺」和「备注」
+PDF_HEADER_KEYS = [
+    ("序号", ["序号", "序"]),
+    ("项目名称", ["项目名称", "施工项目", "项目", "名称"]),
+    ("数量", ["工程量", "数量"]),
+    ("单位", ["单位"]),
+    ("损耗", ["损耗"]),
+    ("单价", ["单价"]),
+    ("合价", ["合计", "合价", "金额", "小计"]),
+    ("备注", ["施工工艺及材料说明", "施工工艺", "工艺说明", "说明", "备注"]),
+]
+_NUMERIC_COLS = ("序号", "数量", "单价", "合价", "损耗")
+_CURRENCY_ONLY = re.compile(r"^[#￥¥$]+$")
+# 计量单位白名单。x 坐标落在「损耗」列附近的单位（如 M）会被就近分配错，
+# 单位是强特征，直接按内容判定比按坐标稳。
+_UNIT_RE = re.compile(
+    r"^(㎡|m²|m2|m3|m³|M|m|cm|mm|米|毫米|项|套|个|根|樘|处|间|台|组|只|张|块|条|座|片|对|副|"
+    r"公斤|kg|t|吨|工日|台班|次|盏|扇|延米|间|批|系统)$", re.I)
+
+
+def _header_anchors(frags):
+    """从一页片段里找表头各列的 x。表头可能跨两行（「序」和「号」分开）。"""
+    anchors = {}
+    for _, x, t in frags:
+        for std, keys in PDF_HEADER_KEYS:
+            if std in anchors:
+                continue
+            for k in keys:
+                if t == k or t.startswith(k) or (k.startswith(t) and len(k) > len(t)):
+                    anchors[std] = x
+                    break
+    return anchors
+
+
+def _is_number(s):
+    return bool(re.fullmatch(r"-?[\d,]+(?:\.\d+)?", (s or "").strip()))
+
+
+def _pdf_rows_by_coords(pages):
+    """坐标法重建表格：行按 y 聚类，列按最近的表头锚点分配。
+
+    为什么不能用字符位置切片：真实报价单里 `1164.00` 比表头「合计」宽得多，
+    按字符位置切会把首字符切掉（实测 1164.00 → 164.00，65 行算术不符）。
     """
+    anchors = {}
+    for frags in pages:
+        anchors = _header_anchors(frags)
+        if all(k in anchors for k in ("项目名称", "单价", "合价")):
+            break
+    if len(anchors) < 4:
+        raise PerceptionError("PDF 里没找到可用的表头坐标")
+
+    order = sorted(anchors.items(), key=lambda kv: kv[1])      # [(列名, x)] 从左到右
+
+    def col_of(x):
+        return min(order, key=lambda kv: abs(kv[1] - x))[0]
+
+    comment_x = anchors.get("备注", 1e9)
+
+    # 先把每页聚成行（y 容差 2），再决定阅读方向。
+    all_rows = []
+    for pi, frags in enumerate(pages):
+        rows = []
+        for y, x, t in sorted(frags, key=lambda f: (-f[0], f[1])):
+            if rows and abs(rows[-1][0][0] - y) <= 2.0:
+                rows[-1].append((y, x, t))
+            else:
+                rows.append([(y, x, t)])
+        all_rows.append((pi, rows))
+
+    # 方向探测：有的 PDF 用翻转坐标系（y 越大越靠下）。判据是表头行的 y
+    # 与数据行 y 中位数的相对位置——表头在视觉顶部，正常情况下 y 最大。
+    header_y, data_ys = None, []
+    for _, rows in all_rows:
+        for row in rows:
+            joined = "".join(t for _, _, t in row)
+            if header_y is None and "项目名称" in joined:
+                header_y = row[0][0]
+            for _, _, t in row:
+                if _is_number(t) and "." in t:
+                    data_ys.append(row[0][0])
+                    break
+    inverted = bool(header_y is not None and data_ys
+                    and header_y < sorted(data_ys)[len(data_ys) // 2])
+
+    recs, cur = [], None
+    for pi, rows in all_rows:
+        rows = sorted(rows, key=lambda r: r[0][0], reverse=not inverted)
+
+        for row in rows:
+            joined = "".join(t for _, _, t in row)
+            if any(k in joined for k in ("签字", "附件：", "装饰工程报价单")):
+                continue
+
+            cells = {}
+            for _, x, t in sorted(row, key=lambda f: f[1]):
+                if _CURRENCY_ONLY.match(t):
+                    # PDF 字体常把 ￥ 映射成 #，且紧贴单价。它不是数据，丢掉。
+                    continue
+                # 单位是强特征：宁可信任内容，也不信任坐标
+                # （实测「M」落在损耗列与单位列的中点附近，会判错）
+                col = "单位" if _UNIT_RE.match(t) else col_of(x)
+                # 类型校正：数字列里出现非数字，说明该片段其实属于名称或说明
+                if col in _NUMERIC_COLS and not _is_number(t):
+                    col = "项目名称" if x < comment_x else "备注"
+                cells[col] = (cells.get(col, "") + " " + t).strip() if col in cells else t
+
+            if not cells:
+                continue
+            name = re.sub(r"\s+", "", cells.get("项目名称", ""))
+            has_num = any(cells.get(c) for c in ("数量", "单价", "合价"))
+            # 分区标题（「一、候诊大厅」）在 PDF 里常被拆成「一」+「、候诊大厅」两段，
+            # 拼接后会带空格，所以先去掉空白再判，且必须没有数字列
+            if re.match(r"^[一二三四五六七八九十百]+[、.．]", name) and not has_num:
+                recs.append({"__section__": name})
+                continue
+
+            if _is_number(cells.get("序号", "")):
+                cur = {"序号": cells["序号"], "项目名称": name, "单位": cells.get("单位", ""),
+                       "数量": cells.get("数量"), "单价": cells.get("单价"),
+                       "合价": cells.get("合价"), "备注": cells.get("备注", "")}
+                recs.append(cur)
+            elif cur is not None:
+                # 续行：名称列续名称，说明列续备注
+                if cells.get("项目名称"):
+                    cur["项目名称"] = (cur["项目名称"] + cells["项目名称"]).strip()
+                if cells.get("备注"):
+                    cur["备注"] = (cur["备注"] + " " + cells["备注"]).strip()
+
+    section, grid = "", [{_col_letter(i): c for i, c in enumerate(COLUMNS)}]
+    for r in recs:
+        if "__section__" in r:
+            section = r["__section__"]
+            continue
+        row = dict(r)
+        row["规格工艺"] = ("分区：%s" % section) if section else ""
+        grid.append({_col_letter(i): ("" if row.get(c) is None else str(row.get(c)))
+                     for i, c in enumerate(COLUMNS)})
+    return grid
+
+
+def _pdf_to_rows(path):
+    """PDF 文本层 → 网格。优先用坐标法，失败才降级到按字符位置切片。"""
     try:
         from pypdf import PdfReader
     except ImportError:
@@ -295,20 +448,25 @@ def _pdf_to_rows(path):
             "解析 PDF 需要 pypdf：pip install pypdf。"
             "注意这是**可选依赖**，只有 PDF 输入才需要，引擎本身仍然零依赖。")
     reader = PdfReader(path)
-    lines = []
-    for page in reader.pages:
-        try:
-            txt = page.extract_text(extraction_mode="layout")
-        except TypeError:                       # 老版本 pypdf 不支持 layout
-            txt = page.extract_text()
-        if txt:
-            lines.extend(txt.splitlines())
-    if not any(l.strip() for l in lines):
+    pages = _pdf_fragments(reader)
+    if not any(pages):
         raise PerceptionError(
             "这个 PDF 没有文本层（扫描件或图片合成），无法直接取字。"
             "请改用图片路径：--provider maas 或 --provider ocr_table。")
-    return _lines_to_grid(lines)
-
+    try:
+        return _pdf_rows_by_coords(pages)
+    except PerceptionError:
+        lines = []
+        for pg in reader.pages:
+            try:
+                txt = pg.extract_text(extraction_mode="layout")
+            except TypeError:
+                txt = pg.extract_text()
+            if txt:
+                lines.extend(txt.splitlines())
+        if not any(l.strip() for l in lines):
+            raise
+        return _lines_to_grid(lines)
 
 def _header_positions(line):
     """在表头行里定位各标准列的起始字符位置。取最长别名，避免「单价」被「单价(元)」干扰。"""
@@ -431,9 +589,20 @@ def rows_to_quote(raw_rows, header_row_index=None):
         if rec["数量"] is not None and rec["单价"] is not None and rec["合价"] is not None:
             calc = round(rec["数量"] * rec["单价"], 2)
             if abs(calc - rec["合价"]) > max(1.0, rec["合价"] * 0.01):
+                ratio = round(rec["合价"] / calc, 3) if calc else None
                 bad_arith.append({"name": name, "qty": rec["数量"], "price": rec["单价"],
-                                  "amount": rec["合价"], "calc": calc})
+                                  "amount": rec["合价"], "calc": calc, "ratio": ratio})
         out.append(rec)
+
+    # 系统性系数：当大量行的「合价 / (数量×单价)」等于同一个常数，
+    # 说明单据对某类行乘了一个系数（常见是 10% 损耗或管理费），而表内没有声明。
+    # 这不是识别错误，是**该报给业主的口径问题**，所以单独统计而不是混在错误里。
+    multipliers = {}
+    for b in bad_arith:
+        if b.get("ratio"):
+            key = b["ratio"]
+            multipliers[key] = multipliers.get(key, 0) + 1
+    consistent = {r: n for r, n in multipliers.items() if n >= 3}
 
     report = {
         "header_row": header_idx, "mapped_columns": mapping,
@@ -441,6 +610,7 @@ def rows_to_quote(raw_rows, header_row_index=None):
         "arith_checked": sum(1 for r in out if r["数量"] is not None
                              and r["单价"] is not None and r["合价"] is not None),
         "arith_bad": bad_arith,
+        "multipliers": consistent,
         "total": round(sum(r["合价"] for r in out if r["合价"]), 2),
     }
     return out, report

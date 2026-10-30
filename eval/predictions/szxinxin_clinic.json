@@ -1,0 +1,613 @@
+{
+  "meta": {
+    "slug": "szxinxin_clinic",
+    "doc": "深圳新新·诊所装饰（公开 PDF）",
+    "template_key": "new_house",
+    "git_commit": "ba213c6",
+    "created_at": "2026-10-30 20:03:41",
+    "fingerprint": "3d33c49caf60f48d",
+    "hashes": {
+      "data": "28f45cc9e57b6d7f",
+      "template": "ac907aae6c55f0ef",
+      "ontology": "20089f0a8a53b642",
+      "rules": "51c5afb8842bce26",
+      "coverage": "a687c69917c45cc4"
+    }
+  },
+  "items": [
+    {
+      "cid": "mep",
+      "concept": "水电改造",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": []
+      }
+    },
+    {
+      "cid": "waterproof",
+      "concept": "防水涂料",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "6",
+          "6",
+          "6",
+          "6",
+          "6",
+          "7",
+          "6",
+          "1"
+        ]
+      }
+    },
+    {
+      "cid": "water_test",
+      "concept": "闭水试验",
+      "decision": "missing_auto",
+      "tier": "auto",
+      "confidence": 0.938,
+      "evidence": {
+        "basis": "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中",
+        "formula": "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项",
+        "checked_words": [
+          "闭水"
+        ]
+      }
+    },
+    {
+      "cid": "pressure_test",
+      "concept": "打压试验",
+      "decision": "missing_auto",
+      "tier": "auto",
+      "confidence": 0.938,
+      "evidence": {
+        "basis": "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中",
+        "formula": "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项",
+        "checked_words": [
+          "打压",
+          "试压"
+        ]
+      }
+    },
+    {
+      "cid": "tile_wall",
+      "concept": "贴墙砖",
+      "decision": "missing_auto",
+      "tier": "auto",
+      "confidence": 0.938,
+      "evidence": {
+        "basis": "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中",
+        "formula": "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项",
+        "checked_words": []
+      }
+    },
+    {
+      "cid": "tile_floor",
+      "concept": "贴地砖",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "1",
+          "2",
+          "1",
+          "2",
+          "1",
+          "2",
+          "3",
+          "4",
+          "2",
+          "3",
+          "3",
+          "4",
+          "2",
+          "3",
+          "3",
+          "4",
+          "3",
+          "4",
+          "3",
+          "4",
+          "1",
+          "2",
+          "3",
+          "4"
+        ]
+      }
+    },
+    {
+      "cid": "level_floor",
+      "concept": "地面找平",
+      "decision": "missing_auto",
+      "tier": "auto",
+      "confidence": 0.938,
+      "evidence": {
+        "basis": "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中",
+        "formula": "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项",
+        "checked_words": []
+      }
+    },
+    {
+      "cid": "grout",
+      "concept": "填缝",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": []
+      }
+    },
+    {
+      "cid": "threshold",
+      "concept": "门槛石",
+      "decision": "missing_auto",
+      "tier": "auto",
+      "confidence": 0.938,
+      "evidence": {
+        "basis": "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中",
+        "formula": "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项",
+        "checked_words": [
+          "门槛"
+        ]
+      }
+    },
+    {
+      "cid": "sill",
+      "concept": "窗台石",
+      "decision": "missing_auto",
+      "tier": "auto",
+      "confidence": 0.938,
+      "evidence": {
+        "basis": "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中",
+        "formula": "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项",
+        "checked_words": [
+          "窗台"
+        ]
+      }
+    },
+    {
+      "cid": "skirting",
+      "concept": "踢脚线",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "4",
+          "4",
+          "4",
+          "1",
+          "5",
+          "1",
+          "5",
+          "1",
+          "1",
+          "1",
+          "9",
+          "1"
+        ]
+      }
+    },
+    {
+      "cid": "pipe_wrap",
+      "concept": "包立管",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": []
+      }
+    },
+    {
+      "cid": "ceiling",
+      "concept": "吊顶",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "10",
+          "8",
+          "9",
+          "12",
+          "9",
+          "8",
+          "9",
+          "9",
+          "8",
+          "8",
+          "8"
+        ]
+      }
+    },
+    {
+      "cid": "door_install",
+      "concept": "木门安装",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": []
+      }
+    },
+    {
+      "cid": "door_frame",
+      "concept": "门套",
+      "decision": "missing_auto",
+      "tier": "auto",
+      "confidence": 0.938,
+      "evidence": {
+        "basis": "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中",
+        "formula": "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项",
+        "checked_words": [
+          "门套"
+        ]
+      }
+    },
+    {
+      "cid": "wall_base",
+      "concept": "墙面基层处理",
+      "decision": "missing_auto",
+      "tier": "auto",
+      "confidence": 0.938,
+      "evidence": {
+        "basis": "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中",
+        "formula": "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项",
+        "checked_words": [
+          "基层处理",
+          "基础处理"
+        ]
+      }
+    },
+    {
+      "cid": "putty",
+      "concept": "批刮腻子",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "6",
+          "13",
+          "6",
+          "7",
+          "6",
+          "12",
+          "9",
+          "13",
+          "6",
+          "8",
+          "9",
+          "6",
+          "8",
+          "10",
+          "9",
+          "9",
+          "9"
+        ]
+      }
+    },
+    {
+      "cid": "primer",
+      "concept": "刷底漆",
+      "decision": "missing_review",
+      "tier": "review",
+      "confidence": 0.85,
+      "evidence": {
+        "basis": "未单列，但复合工序「刷面漆」已在报价中，可能已含",
+        "formula": "T \\ S 未命中，且存在可吸收它的复合工序",
+        "checked_words": [
+          "底漆"
+        ]
+      }
+    },
+    {
+      "cid": "topcoat",
+      "concept": "刷面漆",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": []
+      }
+    },
+    {
+      "cid": "interface_agent",
+      "concept": "界面剂",
+      "decision": "missing_auto",
+      "tier": "auto",
+      "confidence": 0.938,
+      "evidence": {
+        "basis": "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中",
+        "formula": "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项",
+        "checked_words": [
+          "界面剂"
+        ]
+      }
+    },
+    {
+      "cid": "sanitary",
+      "concept": "洁具安装",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "12"
+        ]
+      }
+    },
+    {
+      "cid": "switch_install",
+      "concept": "开关插座安装",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": []
+      }
+    },
+    {
+      "cid": "light_install",
+      "concept": "灯具安装",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "2",
+          "3"
+        ]
+      }
+    },
+    {
+      "cid": "clean",
+      "concept": "竣工保洁",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": []
+      }
+    },
+    {
+      "cid": "mgmt_fee",
+      "concept": "管理费",
+      "decision": "missing_auto",
+      "tier": "auto",
+      "confidence": 0.938,
+      "evidence": {
+        "basis": "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中",
+        "formula": "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项",
+        "checked_words": [
+          "管理费"
+        ]
+      }
+    },
+    {
+      "cid": "water_pipe",
+      "concept": "给水管",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "2"
+        ]
+      }
+    },
+    {
+      "cid": "wire",
+      "concept": "布线",
+      "decision": "missing_auto",
+      "tier": "auto",
+      "confidence": 0.938,
+      "evidence": {
+        "basis": "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中",
+        "formula": "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项",
+        "checked_words": []
+      }
+    },
+    {
+      "cid": "floor_drain",
+      "concept": "地漏",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "14"
+        ]
+      }
+    }
+  ],
+  "duplicates": [
+    {
+      "cid": "putty",
+      "concept": "批刮腻子",
+      "rule": "R3_duplicate_same_concept",
+      "lines": [
+        "6",
+        "7"
+      ],
+      "amount": 307.97,
+      "confidence": 0.92,
+      "tier": "auto",
+      "evidence": {
+        "basis": "本体归一后同一概念在「二、过道」内多行计费",
+        "formula": "count(concept, zone) >= 2 且行名去掉正式名后完全一致",
+        "line_nos": [
+          "6",
+          "7"
+        ]
+      }
+    },
+    {
+      "cid": "putty",
+      "concept": "批刮腻子",
+      "rule": "R3_duplicate_same_concept",
+      "lines": [
+        "6",
+        "8"
+      ],
+      "amount": 86.71,
+      "confidence": 0.92,
+      "tier": "auto",
+      "evidence": {
+        "basis": "本体归一后同一概念在「五、设备间」内多行计费",
+        "formula": "count(concept, zone) >= 2 且行名去掉正式名后完全一致",
+        "line_nos": [
+          "6",
+          "8"
+        ]
+      }
+    },
+    {
+      "cid": "putty",
+      "concept": "批刮腻子",
+      "rule": "R3_duplicate_same_concept",
+      "lines": [
+        "6",
+        "8"
+      ],
+      "amount": 53.82,
+      "confidence": 0.92,
+      "tier": "auto",
+      "evidence": {
+        "basis": "本体归一后同一概念在「七、技工室」内多行计费",
+        "formula": "count(concept, zone) >= 2 且行名去掉正式名后完全一致",
+        "line_nos": [
+          "6",
+          "8"
+        ]
+      }
+    }
+  ],
+  "risks": [
+    {
+      "rule": "R8_arithmetic",
+      "concept": "多行合计",
+      "line": "3,3,3,2,4,2…",
+      "issue": "13 行的「合价 ÷（数量×单价）」恒为 1.100（+10%），但表内未声明损耗/系数列",
+      "detail": "逐行明细见数据文件；这是单据层面的口径问题，不是单行算错",
+      "confidence": 0.96,
+      "tier": "auto",
+      "evidence": {
+        "basis": "同一比例在 ≥3 行重复出现",
+        "formula": "amount / (qty × price) = const",
+        "sample": [
+          "主材-亚光砖800X800",
+          "主材-亚光砖800X800",
+          "主材-亚光砖800X800"
+        ]
+      }
+    },
+    {
+      "cid": "demo_wall",
+      "concept": "墙",
+      "line": "7",
+      "issue": "合价与数量×单价不一致（差 -5 元）",
+      "rule": "R8_arithmetic",
+      "confidence": 0.79,
+      "tier": "review",
+      "ratio": 0.996,
+      "evidence": {
+        "basis": "报价单算术一致性",
+        "formula": "5.3×240.0=1272，单列 1267"
+      }
+    },
+    {
+      "cid": "waterproof",
+      "concept": "防水碳晶板墙板",
+      "line": "6",
+      "issue": "合价与数量×单价不一致（差 +2 元）",
+      "rule": "R8_arithmetic",
+      "confidence": 0.84,
+      "tier": "review",
+      "ratio": 1.006,
+      "evidence": {
+        "basis": "报价单算术一致性",
+        "formula": "4.0×91.0=364，单列 366"
+      }
+    },
+    {
+      "cid": "waterproof",
+      "concept": "防水碳晶板墙板",
+      "line": "6",
+      "issue": "合价与数量×单价不一致（差 +2 元）",
+      "rule": "R8_arithmetic",
+      "confidence": 0.84,
+      "tier": "review",
+      "ratio": 1.007,
+      "evidence": {
+        "basis": "报价单算术一致性",
+        "formula": "3.5×91.0=318，单列 321"
+      }
+    },
+    {
+      "cid": "waterproof",
+      "concept": "防水碳晶板墙板",
+      "line": "6",
+      "issue": "合价与数量×单价不一致（差 -2 元）",
+      "rule": "R8_arithmetic",
+      "confidence": 0.84,
+      "tier": "review",
+      "ratio": 0.993,
+      "evidence": {
+        "basis": "报价单算术一致性",
+        "formula": "3.4×91.0=309，单列 307"
+      }
+    },
+    {
+      "cid": "tile_floor",
+      "concept": "贴地砖",
+      "lines": [
+        "1",
+        "2",
+        "1",
+        "2",
+        "1",
+        "2",
+        "3",
+        "4",
+        "2",
+        "3",
+        "3",
+        "4",
+        "2",
+        "3",
+        "3",
+        "4",
+        "3",
+        "4",
+        "3",
+        "4",
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "issue": "疑似拆分报价（人工/材料分开计费）",
+      "rule": "R7_split_billing",
+      "confidence": 0.848,
+      "tier": "review",
+      "evidence": {
+        "basis": "拆分报价模式",
+        "formula": "同概念多行且命中人工/材料关键词"
+      }
+    }
+  ],
+  "stats": {
+    "rows": 168,
+    "aligned": 113,
+    "total": 113588.0,
+    "missing_auto": 11,
+    "missing_review": 1,
+    "present": 16
+  }
+}
