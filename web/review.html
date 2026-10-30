@@ -112,7 +112,7 @@ if (!window.REVIEW_DATA) {
         <button id="export">导出 CSV</button>
         <button class="ghost" id="reset">重置</button>
       </div>
-      <table><thead><tr><th>#</th><th>项目名称</th><th>规格工艺</th><th>单位</th><th>数量</th><th>单价</th><th>合价</th><th>置信度</th><th>操作</th></tr></thead>
+      <table><thead><tr><th>#</th><th>项目名称</th><th>规格工艺</th><th>单位</th><th>数量</th><th>单价</th><th>合价</th><th>解析置信度</th><th>操作</th></tr></thead>
       <tbody>${q.rows.map(rowHtml).join('')}</tbody></table>`;
     bind();
   }

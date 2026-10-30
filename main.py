@@ -85,7 +85,7 @@ PAGE = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <div class="wrap">
   <div class="kicker">华为 ICT 大赛创新赛 · 赛题1 · 在线 Demo</div>
   <h1>装明白 · 可计算审计</h1>
-  <p class="lead">上传 2–4 家装修公司的报价单，输出一份可核对、可溯源、带置信度的审计报告：
+  <p class="lead">上传 2–4 家装修公司的报价单，输出一份可核对、可溯源、带证据强度的审计报告：
   谁漏了项、谁重复收了钱、谁口径混乱、补漏后真实成本是多少。
   <b>我们不判断贵不贵，只判断漏没漏、重没重。</b></p>
   <div class="rule"></div>
