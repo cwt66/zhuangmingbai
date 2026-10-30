@@ -1,0 +1,242 @@
+{
+  "meta": {
+    "version": "0.1",
+    "note": "审计规则 DSL v0（JSON 表达，W2 可迁移为更易读的 YAML 前端；求值器在 src/pipeline.py）",
+    "principle": "规则只依赖本体与模板，不依赖价格库；每条结论必须带证据（行号+基准+公式）"
+  },
+  "rules": [
+    {
+      "id": "R1_missing_item",
+      "name": "漏项检测",
+      "type": "missing_item",
+      "enabled": true,
+      "when": {
+        "template": "auto",
+        "scope": "concept_set_difference"
+      },
+      "then": {
+        "conclusion": "缺项：{concept_name}",
+        "severity": "high",
+        "evidence": {
+          "basis": "标准工序模板（{template_name}）",
+          "formula": "T \\\\ S（模板必做项 − 实列项）"
+        }
+      },
+      "strength": 0.92
+    },
+    {
+      "id": "R2_duplicate_known",
+      "name": "已知重复计价对",
+      "type": "duplicate_known",
+      "enabled": true,
+      "pairs": [
+        {
+          "container": "tile_floor",
+          "contained": "grout",
+          "note": "贴地砖工艺通常含填缝"
+        },
+        {
+          "container": "tile_wall",
+          "contained": "tile_corner",
+          "note": "墙砖铺贴标准工艺含 45° 碰角"
+        },
+        {
+          "container": "backfill",
+          "contained": "level_floor",
+          "note": "陶粒回填通常已含找平"
+        },
+        {
+          "container": "build_wall",
+          "contained": "level_wall",
+          "note": "新砌墙通常已含找平"
+        },
+        {
+          "container": "demo_putty",
+          "contained": "putty",
+          "note": "批荡层铲除通常已含腻子铲除"
+        }
+      ],
+      "then": {
+        "conclusion": "疑似重复计价：{contained_name} 已包含在 {container_name} 中",
+        "severity": "high",
+        "evidence": {
+          "basis": "家装施工工艺惯例 + 模板备注",
+          "formula": "contained ∈ container 的工艺范围"
+        }
+      },
+      "strength": 0.86
+    },
+    {
+      "id": "R3_duplicate_same_concept",
+      "name": "同工序多行重复",
+      "type": "duplicate_same_concept",
+      "enabled": true,
+      "min_lines": 2,
+      "then": {
+        "conclusion": "同一工序出现 {n} 行，存在重复计价风险",
+        "severity": "medium",
+        "evidence": {
+          "basis": "本体归一后同一概念多行计费",
+          "formula": "count(concept) ≥ 2"
+        }
+      },
+      "strength": 0.9
+    },
+    {
+      "id": "R4_vague_term",
+      "name": "模糊/开口表述",
+      "type": "vague_term",
+      "enabled": true,
+      "patterns": [
+        "按实结算",
+        "按实际",
+        "按现场",
+        "暂定",
+        "据实",
+        "以实际为准",
+        "多退少补",
+        "另计",
+        "单边",
+        "按根"
+      ],
+      "then": {
+        "conclusion": "开口项：{pattern}（后期增项风险）",
+        "severity": "medium",
+        "evidence": {
+          "basis": "报价单风险表述清单 v0",
+          "formula": "regex/关键词命中"
+        }
+      },
+      "strength": 0.8
+    },
+    {
+      "id": "R5_unit_mix",
+      "name": "跨单单位不一致",
+      "type": "unit_mix",
+      "enabled": true,
+      "scope": "cross_quote",
+      "then": {
+        "conclusion": "同一工序各单位不一致：{units}",
+        "severity": "low",
+        "evidence": {
+          "basis": "本体单位定义",
+          "formula": "unit(q1) ≠ unit(q2)"
+        }
+      },
+      "strength": 0.7
+    },
+    {
+      "id": "R6_unit_anomaly",
+      "name": "单位口径异常",
+      "type": "unit_anomaly",
+      "enabled": true,
+      "then": {
+        "conclusion": "面积/长度类工序按「项」报价，工程量不可核",
+        "severity": "medium",
+        "evidence": {
+          "basis": "本体默认单位 {default_unit}",
+          "formula": "unit=项 且 default_unit ∈ {㎡,m}"
+        }
+      },
+      "strength": 0.75
+    },
+    {
+      "id": "R7_split_billing",
+      "name": "拆分报价嫌疑",
+      "type": "split_billing",
+      "enabled": true,
+      "keywords": [
+        "人工",
+        "辅材",
+        "材料",
+        "水泥砂浆"
+      ],
+      "then": {
+        "conclusion": "疑似拆分报价：{concept_name} 被拆成多行分别计费",
+        "severity": "medium",
+        "evidence": {
+          "basis": "拆分报价模式（人工/材料分开报）",
+          "formula": "同一概念下多行且含人工/材料关键词"
+        }
+      },
+      "strength": 0.72
+    },
+    {
+      "id": "R8_arithmetic",
+      "name": "算术校验",
+      "type": "arithmetic",
+      "enabled": true,
+      "then": {
+        "conclusion": "合价与「数量×单价」不一致（差 {diff} 元）",
+        "severity": "medium",
+        "evidence": {
+          "basis": "报价单算术一致性",
+          "formula": "|合价 − 数量×单价| > 1"
+        }
+      },
+      "strength": 0.95
+    },
+    {
+      "id": "R9_qty_unit",
+      "name": "数量/单位缺失",
+      "type": "qty_unit",
+      "enabled": true,
+      "then": {
+        "conclusion": "数量或单位缺失，工程量不可核",
+        "severity": "medium",
+        "evidence": {
+          "basis": "报价单完整性",
+          "formula": "qty<=0 或 unit 为空"
+        }
+      },
+      "strength": 0.88
+    },
+    {
+      "id": "R10_fee_rate",
+      "name": "管理费率异常",
+      "type": "fee_rate",
+      "enabled": true,
+      "threshold": 0.08,
+      "then": {
+        "conclusion": "管理费率 {rate}% 偏高（参考上限 8%）",
+        "severity": "low",
+        "evidence": {
+          "basis": "行业惯例：管理费通常 3%–8%",
+          "formula": "管理费/总价 > 8%"
+        }
+      },
+      "strength": 0.68
+    },
+    {
+      "id": "R11_spec_missing",
+      "name": "材料未写明品牌型号",
+      "type": "spec_missing",
+      "enabled": true,
+      "min_amount": 2000,
+      "then": {
+        "conclusion": "金额较大但未写明品牌/型号/规格",
+        "severity": "medium",
+        "evidence": {
+          "basis": "合同附件要求：品牌+型号+规格+工艺",
+          "formula": "spec 为空且合价 ≥ 2000"
+        }
+      },
+      "strength": 0.72
+    },
+    {
+      "id": "R12_wp_height",
+      "name": "防水高度不足",
+      "type": "wp_height",
+      "enabled": true,
+      "then": {
+        "conclusion": "防水仅写地面，未注明淋浴区墙面 1.8m",
+        "severity": "high",
+        "evidence": {
+          "basis": "国标：卫生间墙面防水≥1.8m，厨房≥0.3m",
+          "formula": "spec 含「地面」且不含 1.8/1800/墙面"
+        }
+      },
+      "strength": 0.85
+    }
+  ]
+}

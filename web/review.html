@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>装明白 · 解析校对台</title>
+<style>
+  :root{--ink:#1f2329;--muted:#646a73;--line:#e5e6eb;--bg:#f7f8fa;--blue:#185fa5;--blue-bg:#e8f3ff;--amber:#b95000;--amber-bg:#fff7e8;--green:#0f7b4f;--green-bg:#e8f7ef}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;color:var(--ink);background:#fff;line-height:1.6}
+  header{padding:22px 28px 14px;border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:20px;font-weight:600}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .wrap{padding:18px 28px 40px}
+  .tabs{display:flex;gap:8px;margin:8px 0 14px;flex-wrap:wrap}
+  .tab{padding:7px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13px;cursor:pointer}
+  .tab.active{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+  .tab .dot{display:inline-block;min-width:18px;padding:0 5px;margin-left:6px;border-radius:9px;background:var(--amber-bg);color:var(--amber);font-size:11px;text-align:center}
+  .stats{display:flex;gap:12px;margin:6px 0 16px;flex-wrap:wrap}
+  .stat{border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-width:130px}
+  .stat .l{font-size:11px;color:var(--muted)}
+  .stat .v{font-size:18px;font-weight:600;margin-top:2px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:middle}
+  th{background:var(--bg);font-weight:500;text-align:left;position:sticky;top:0}
+  tr.low{background:var(--amber-bg)}
+  tr.done{background:var(--green-bg)}
+  input,select{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fff;width:100%}
+  input.num{text-align:right}
+  td.amt{text-align:right;font-variant-numeric:tabular-nums}
+  .badge{display:inline-block;padding:1px 7px;border-radius:9px;font-size:11px}
+  .b-low{background:var(--amber-bg);color:var(--amber)}
+  .b-ok{background:var(--green-bg);color:var(--green)}
+  .b-mid{background:var(--blue-bg);color:var(--blue)}
+  .bar{display:flex;gap:10px;margin:14px 0}
+  button{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer}
+  button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  button.ghost{color:var(--muted)}
+  .note{margin-top:18px;padding:12px 14px;background:var(--bg);border-radius:8px;color:var(--muted);font-size:12px}
+  .err{padding:16px;background:var(--amber-bg);color:var(--amber);border-radius:8px;margin:20px 0}
+  @media print{header,.bar,.tabs{display:none}body{font-size:11px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>装明白 · 解析校对台</h1>
+  <div class="sub">VLM 解析结果逐行校对：低置信度标黄 → 修改 → 确认 → 导出 CSV 进入审计引擎</div>
+</header>
+<div class="wrap">
+  <div id="app"></div>
+  <div class="note">
+    <b>演示模式说明</b>：本页数据来自引擎对三家样例的结构化结果；为展示校对交互，B 公司有两行被人为置为低置信度（0.72）。
+    真实链路中置信度由 VLM 按字段返回（项目名/规格/单位/数量/单价），低于 0.85 即标黄。<br>
+    导出 CSV 的列与 <code>data/samples/</code> 完全一致，可直接被 <code>src/pipeline.py</code> 读取。
+  </div>
+</div>
+<script src="../out/review_data.js"></script>
+<script>
+const root = document.getElementById('app');
+if (!window.REVIEW_DATA) {
+  root.innerHTML = '<div class="err">未找到 <code>out/review_data.js</code>。请先在项目根目录运行 <code>python3 src/pipeline.py</code> 生成数据，再用浏览器打开本页。</div>';
+} else {
+  let state = JSON.parse(JSON.stringify(window.REVIEW_DATA));
+  let cur = 0;
+  const UNITS = ['项','㎡','m','樘','块','根','个','位','套'];
+
+  function lowCount(q){ return q.rows.filter(r => !r.confirmed && r.conf < 0.85).length; }
+
+  function tabs(){
+    return '<div class="tabs">' + state.quotes.map((q,i) => {
+      const n = lowCount(q);
+      return `<div class="tab ${i===cur?'active':''}" data-i="${i}">${q.label}${n?`<span class="dot">${n}</span>`:''}</div>`;
+    }).join('') + '</div>';
+  }
+
+  function stats(q){
+    const low = lowCount(q);
+    const pending = q.rows.filter(r => !r.confirmed && r.conf < 0.85).reduce((s,r)=>s+r.amount,0);
+    return `<div class="stats">
+      <div class="stat"><div class="l">单据行数</div><div class="v">${q.rows.length}</div></div>
+      <div class="stat"><div class="l">低置信度待确认</div><div class="v" style="color:${low?'#b95000':'#0f7b4f'}">${low}</div></div>
+      <div class="stat"><div class="l">待确认金额</div><div class="v">¥${pending.toLocaleString()}</div></div>
+      <div class="stat"><div class="l">当前合计</div><div class="v">¥${q.rows.reduce((s,r)=>s+r.amount,0).toLocaleString()}</div></div>
+    </div>`;
+  }
+
+  function rowHtml(r, i){
+    const cls = r.confirmed ? 'done' : (r.conf < 0.85 ? 'low' : '');
+    const badge = r.confirmed ? '<span class="badge b-ok">已确认</span>'
+      : (r.conf < 0.85 ? `<span class="badge b-low">${r.conf.toFixed(2)}</span>` : `<span class="badge b-mid">${r.conf.toFixed(2)}</span>`);
+    const opts = ['', ...UNITS.filter(u=>u!==r.unit)].map(u => `<option value="${u}" ${u===r.unit?'selected':''}>${u||'—'}</option>`).join('');
+    return `<tr class="${cls}">
+      <td style="width:44px;text-align:right">${r.no}</td>
+      <td><input data-i="${i}" data-k="name" value="${esc(r.name)}"></td>
+      <td><input data-i="${i}" data-k="spec" value="${esc(r.spec)}"></td>
+      <td style="width:74px"><select data-i="${i}" data-k="unit">${opts}</select></td>
+      <td style="width:80px"><input class="num" data-i="${i}" data-k="qty" type="number" step="0.01" value="${r.qty}"></td>
+      <td style="width:90px"><input class="num" data-i="${i}" data-k="price" type="number" step="0.01" value="${r.price}"></td>
+      <td class="amt" style="width:96px">${r.amount.toLocaleString()}</td>
+      <td style="width:86px">${badge}</td>
+      <td style="width:84px"><button data-confirm="${i}" ${r.confirmed?'disabled':''}>确认</button></td>
+    </tr>`;
+  }
+
+  function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+  function render(){
+    const q = state.quotes[cur];
+    root.innerHTML = tabs() + stats(q) +
+      `<div class="bar">
+        <button class="primary" id="confirmAll">全部确认（${q.rows.filter(r=>!r.confirmed).length}）</button>
+        <button id="export">导出 CSV</button>
+        <button class="ghost" id="reset">重置</button>
+      </div>
+      <table><thead><tr><th>#</th><th>项目名称</th><th>规格工艺</th><th>单位</th><th>数量</th><th>单价</th><th>合价</th><th>置信度</th><th>操作</th></tr></thead>
+      <tbody>${q.rows.map(rowHtml).join('')}</tbody></table>`;
+    bind();
+  }
+
+  function bind(){
+    root.querySelectorAll('.tab').forEach(el => el.onclick = () => { cur = +el.dataset.i; render(); });
+    root.querySelectorAll('input[data-k],select[data-k]').forEach(el => {
+      el.onchange = el.oninput = () => {
+        const i = +el.dataset.i, k = el.dataset.k;
+        const row = state.quotes[cur].rows[i];
+        row[k] = (k==='qty'||k==='price') ? (parseFloat(el.value)||0) : el.value;
+        row.amount = Math.round(row.qty * row.price * 100) / 100;
+        render();
+      };
+    });
+    root.querySelectorAll('[data-confirm]').forEach(el => el.onclick = () => {
+      const row = state.quotes[cur].rows[+el.dataset.confirm];
+      row.confirmed = true; row.conf = 1; render();
+    });
+    const ca = root.querySelector('#confirmAll');
+    if (ca) ca.onclick = () => {
+      state.quotes[cur].rows.forEach(r => { if(!r.confirmed){ r.confirmed = true; r.conf = 1; } });
+      render();
+    };
+    const ex = root.querySelector('#export');
+    if (ex) ex.onclick = () => exportCSV(state.quotes[cur]);
+    const rs = root.querySelector('#reset');
+    if (rs) rs.onclick = () => { state = JSON.parse(JSON.stringify(window.REVIEW_DATA)); render(); };
+  }
+
+  function exportCSV(q){
+    const head = ['序号','项目名称','规格工艺','单位','数量','单价','合价','备注'];
+    const lines = [head.join(',')];
+    q.rows.forEach(r => {
+      const cells = [r.no, r.name, r.spec, r.unit, r.qty, r.price, r.amount, r.confirmed?'已确认':'待确认'];
+      lines.push(cells.map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+    });
+    const blob = new Blob(['\ufeff' + lines.join('\n')], {type:'text/csv;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = q.label.replace(/[^\w\u4e00-\u9fa5]+/g,'_') + '_校对后.csv';
+    a.click();
+  }
+
+  render();
+}
+</script>
+</body>
+</html>

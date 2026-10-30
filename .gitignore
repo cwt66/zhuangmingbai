@@ -1,0 +1,12 @@
+.env
+.env.local
+__pycache__/
+*.pyc
+out/
+eval/dataset/raw/
+eval/dataset/labels/
+.DS_Store
+.venv/
+venv/
+.auto-deploy/
+*.log
