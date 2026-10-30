@@ -8,9 +8,14 @@
 
 | provider   | 依赖 | 用途 |
 |------------|------|------|
-| `maas`     | ModelArts Studio API Key（`MAAS_API_KEY`） | 推荐：视觉大模型直接读表，能处理手写/合并单元格 |
-| `ocr_table`| 华为云 AK/SK + 开通「表格识别」服务 | 纯表格版式识别，确定性好、无需模型费用，但不懂语义 |
+| `file`     | 无（PDF 需可选装 pypdf） | **优先**：CSV / XLSX / PDF 文本层，零成本、确定性最好 |
+| `maas`     | ModelArts Studio API Key（`MAAS_API_KEY`） | 照片首选：视觉大模型直接读表，能处理手写/合并单元格 |
+| `ocr_table`| 华为云 AK/SK + 开通「表格识别」服务 | 纯版式识别，确定性好、无模型费用，但不懂语义 |
 | `mock`     | 无 | 单测与 CI。**明确标记为 fixture，不允许出现在演示路径里** |
+
+**为什么 `file` 排第一**：装企给业主的正式报价多是 PDF 或 Excel，不是照片。
+这类文件根本不需要 OCR——把 AI 用在能用规则解决的地方，本身就是错的。
+照片才需要 `maas` / `ocr_table`。
 
 已实测到的边界（2026-10-30）：
 - AK/SK 手工签名（SDK-HMAC-SHA256）可用，但**规范化 URI 必须带尾斜杠**，否则 401；
@@ -261,6 +266,109 @@ def _mock_parse(image_bytes, mime):
              "warning": "这是固定样例，不是对输入图片的识别结果"})
 
 
+# ------------------------------------------------- 结构化文件（无需任何 AI 服务）
+
+def _csv_to_rows(path):
+    """CSV/TSV → 网格。表头行原样保留，由 rows_to_quote 统一映射。"""
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        sample = f.read(4096)
+        f.seek(0)
+        delim = "\t" if sample.count("\t") > sample.count(",") else ","
+        grid = []
+        for row in csv.reader(f, delimiter=delim):
+            if not any((c or "").strip() for c in row):
+                continue
+            grid.append({_col_letter(i): (c or "").strip() for i, c in enumerate(row)})
+    return grid
+
+
+def _pdf_to_rows(path):
+    """PDF 文本层 → 网格。按表头各列字符位置切片，比按空白分割稳。
+
+    扫描件/图片合成的 PDF 没有文本层——必须明确报错让人换图片路径，
+    不能返回空表（空表会被上层当成"没有漏项"）。
+    """
+    try:
+        from pypdf import PdfReader
+    except ImportError:
+        raise PerceptionError(
+            "解析 PDF 需要 pypdf：pip install pypdf。"
+            "注意这是**可选依赖**，只有 PDF 输入才需要，引擎本身仍然零依赖。")
+    reader = PdfReader(path)
+    lines = []
+    for page in reader.pages:
+        try:
+            txt = page.extract_text(extraction_mode="layout")
+        except TypeError:                       # 老版本 pypdf 不支持 layout
+            txt = page.extract_text()
+        if txt:
+            lines.extend(txt.splitlines())
+    if not any(l.strip() for l in lines):
+        raise PerceptionError(
+            "这个 PDF 没有文本层（扫描件或图片合成），无法直接取字。"
+            "请改用图片路径：--provider maas 或 --provider ocr_table。")
+    return _lines_to_grid(lines)
+
+
+def _header_positions(line):
+    """在表头行里定位各标准列的起始字符位置。取最长别名，避免「单价」被「单价(元)」干扰。"""
+    found = []
+    for std, aliases in HEADER_ALIASES.items():
+        best = None
+        for a in sorted(aliases, key=len, reverse=True):
+            pos = line.find(a)
+            if pos >= 0:
+                best = pos
+                break
+        if best is not None:
+            found.append((best, std))
+    return {std: pos for pos, std in found}
+
+
+def _lines_to_grid(lines):
+    header_idx, cols = None, {}
+    for i, line in enumerate(lines[:120]):
+        pos = _header_positions(line)
+        if "项目名称" in pos and len(pos) >= 3:
+            header_idx, cols = i, pos
+            break
+    if header_idx is None:
+        raise PerceptionError("PDF 里没找到可识别的表头（需要 项目名称/单位/数量/合价 等列）")
+
+    ordered = sorted(cols.items(), key=lambda kv: kv[1])      # [(std, pos)] 按位置
+    grid = [{_col_letter(j): std for j, (std, _) in enumerate(ordered)}]
+    for line in lines[header_idx + 1:]:
+        if not line.strip():
+            continue
+        row = {}
+        for j, (_, start) in enumerate(ordered):
+            end = ordered[j + 1][1] if j + 1 < len(ordered) else len(line)
+            row[_col_letter(j)] = line[start:end].strip()
+        if (row.get("A") or "").strip():       # 首列空行多为续行/页脚，跳过
+            grid.append(row)
+    return grid
+
+
+def _file_parse(path):
+    """按扩展名分派。这条路不需要任何云服务，是覆盖率最高的一种。"""
+    ext = os.path.splitext(path)[1].lower()
+    if ext in (".csv", ".tsv"):
+        grid, kind = _csv_to_rows(path), "csv"
+    elif ext in (".xlsx", ".xlsm"):
+        with open(path, "rb") as f:
+            grid, kind = _xlsx_to_rows(f.read()), "xlsx"
+    elif ext == ".pdf":
+        grid, kind = _pdf_to_rows(path), "pdf"
+    elif ext in (".xls",):
+        raise PerceptionError("老式 .xls 是二进制格式，请在 Excel 里另存为 .xlsx 或 .csv 再上传。")
+    else:
+        raise PerceptionError("不支持的文件类型：%s（支持 csv/tsv/xlsx/pdf，图片请用 maas 或 ocr_table）"
+                              % (ext or "无扩展名"))
+    if not grid:
+        raise PerceptionError("文件里没有可解析的内容：%s" % path)
+    return grid, {"provider": "file", "kind": kind, "needs_ai": False}
+
+
 # ---------------------------------------------------------------- 归一化
 
 def map_header(cells):
@@ -341,8 +449,15 @@ def rows_to_quote(raw_rows, header_row_index=None):
 def perceive(image_path, provider=None, **kw):
     """唯一对外入口。返回 (rows, meta, report)。"""
     provider = provider or os.environ.get("PERCEPTION_PROVIDER", "maas")
+
+    # 结构化文件不需要读成字节，也不需要任何云端服务
+    if provider == "file":
+        grid, meta = _file_parse(image_path)
+        rows, report = rows_to_quote(grid)
+        return rows, meta, report
+
     if provider not in ("maas", "ocr_table", "mock"):
-        raise PerceptionError("未知 provider：%s（可选 maas / ocr_table / mock）" % provider)
+        raise PerceptionError("未知 provider：%s（可选 file / maas / ocr_table / mock）" % provider)
     if image_path == "__selftest__" or (provider == "mock" and not os.path.exists(image_path)):
         blob = b"__selftest__"          # 自检/单测不读文件
     else:

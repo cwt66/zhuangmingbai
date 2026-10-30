@@ -247,7 +247,10 @@ def perceive_page():
 <h1>图片识别 → 审计</h1>
 <p class="lead">上传一张报价单照片。识别只负责「看见」，判断仍走规则——两层分开，才能分开定位错误。</p>
 <form method="post" action="/perceive" enctype="multipart/form-data" class="card">
-  <input type="file" name="file" accept="image/jpeg,image/png" required>
+  <input type="file" name="file"
+         accept=".csv,.tsv,.xlsx,.xlsm,.pdf,image/jpeg,image/png" required>
+  <p class="note" style="margin:6px 0 0">优先用装企给的 PDF / Excel（不需要 OCR，也不会认错字）；
+  只有手机照片才走视觉模型。</p>
   <label>模板
     <select name="template_key">
       <option value="new_house">新房毛坯（28 项）</option>
@@ -274,16 +277,26 @@ async def perceive_run(file: UploadFile = File(default=None),
     if len(raw) > 10 * 1024 * 1024:
         return _err("图片过大", "请压缩到 10MB 以内（华为云 OCR 单张上限）。", 400)
 
-    todo = tempfile.NamedTemporaryFile(suffix=os.path.splitext(file.filename)[1] or ".jpg",
-                                       delete=False)
+    ext = os.path.splitext(file.filename)[1].lower()
+    # 结构化文件不需要任何云服务；只有图片才要视觉模型
+    structured = ext in (".csv", ".tsv", ".xlsx", ".xlsm", ".pdf")
+    provider = "file" if structured else os.environ.get("PERCEPTION_PROVIDER", "maas")
+
+    todo = tempfile.NamedTemporaryFile(suffix=ext or ".jpg", delete=False)
     try:
         todo.write(raw)
         todo.close()
         try:
-            rows, meta, report = perception.perceive(todo.name)
+            rows, meta, report = perception.perceive(todo.name, provider=provider)
         except perception.PerceptionError as e:
-            return _err("感知层未能完成识别", "%s<br><br>"
-                        "失败不等于「这张单据没问题」——因此不输出任何审计结论。" % e, 503)
+            hint = "" if structured else (
+                "<br><br>照片识别需要开通服务，二选一：<br>"
+                "① 华为云控制台开通「文字识别 OCR → 表格识别」（2 分钟，无需新 Key）<br>"
+                "② ModelArts Studio 领免费额度并创建 API Key（<code>MAAS_API_KEY</code>）<br>"
+                "如果手上有装企发的 PDF/Excel，直接上传那个更快也更准。")
+            return _err("感知层未能完成识别", "%s%s<br><br>"
+                        "失败不等于「这张单据没问题」——因此不输出任何审计结论。"
+                        % (e, hint), 503)
         if not rows:
             return _err("没有识别出行项", "识别成功但行项为空，请检查图片是否清晰、是否是报价表。", 400)
 

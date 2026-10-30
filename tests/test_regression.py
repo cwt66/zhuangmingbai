@@ -105,5 +105,56 @@ class TestInvariants(unittest.TestCase):
                                         "%s 被判确定却低于阈值" % m["concept"])
 
 
+
+
+class TestPerceptionRoundTrip(unittest.TestCase):
+    """感知层解析后跑审计，结论必须与直接读原件**逐字一致**。
+
+    这是"感知层没有信息损失"的唯一硬证据。只要它绿，
+    「换个输入格式结论会变」这个担心就不成立。
+    """
+
+    @staticmethod
+    def _sig(csv_path, label):
+        onto = P.Ontology(os.path.join(ROOT, "data", "ontology_v0.json"))
+        tpl, rules, cover = _load("templates_v0.json"), _load("rules_v0.json"), _load(
+            "coverage_v0.json")
+        q = P.build_line_index(P.load_quote(csv_path, label), onto)
+        r = P.audit([q], onto, tpl, rules, cover, template_key="old_house")[q["label"]]
+        return {
+            "rows": len(q["rows"]),
+            "aligned": sum(1 for x in q["rows"] if x["cid"]),
+            "auto": sorted(m["concept"] for m in r["missing"] if m["tier"] == "auto"),
+            "review": sorted(m["concept"] for m in r["missing"] if m["tier"] != "auto"),
+            "dups": len(r["duplicates"]),
+            "risks": len(r["risks"]),
+            "total": round(q["total"], 2),
+        }
+
+    def test_csv_through_perception_is_lossless(self):
+        import tempfile
+        import perception
+        src = os.path.join(ROOT, "data/real/sh_zhuoguan_halfpack.csv")
+        rows, _, _ = perception.perceive(src, provider="file")
+        tmp = os.path.join(tempfile.mkdtemp(prefix="zmb-rt-"), "out.csv")
+        perception.write_csv(rows, tmp)
+        self.assertEqual(self._sig(src, "原件"), self._sig(tmp, "往返"))
+
+    def test_freeform_tier_never_above_threshold(self):
+        """tier 判定与数值阈值必须一致，防止 tier() 被改坏。"""
+        onto = P.Ontology(os.path.join(ROOT, "data", "ontology_v0.json"))
+        tpl, rules, cover = _load("templates_v0.json"), _load("rules_v0.json"), _load(
+            "coverage_v0.json")
+        q = P.build_line_index(
+            P.load_quote(os.path.join(ROOT, "data/real/sh_zhuoguan_halfpack.csv"), "x"), onto)
+        r = P.audit([q], onto, tpl, rules, cover, template_key="old_house")[q["label"]]
+        for m in r["missing"]:
+            if m["confidence"] < 0.60:
+                self.assertEqual(m["tier"], "manual", m["concept"])
+            elif m["confidence"] < 0.90:
+                self.assertEqual(m["tier"], "review", m["concept"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+

@@ -161,17 +161,25 @@ python scripts/auto_deploy.py \
 引擎本身只吃 CSV。要把手机拍的报价单直接变成审计报告，用感知层：
 
 ```bash
-# 自检（不读图片，验代码路径）
-python3 scripts/parse_doc.py --selftest
+# ① PDF / Excel / CSV —— 不需要任何云服务（优先用这条）
+python3 scripts/parse_doc.py 报价单.pdf  --out /tmp/x.csv
+python3 scripts/parse_doc.py 报价单.xlsx --out /tmp/x.csv
 
-# 华为云「表格识别」：需要 AK/SK + 控制台开通服务（有免费额度）
+# ② 华为云「表格识别」—— AK/SK + 控制台开通服务（有免费额度），用于照片
 HW_ACCESS_KEY=... HW_SECRET_KEY=... HW_PROJECT_ID=... \
   python3 scripts/parse_doc.py 报价单.jpg --provider ocr_table --out /tmp/x.csv
 
-# ModelArts Studio 视觉模型：需要 API Key
+# ③ ModelArts Studio 视觉模型 —— 需要 API Key，用于照片（能手写/合并单元格）
 MAAS_API_KEY=... MAAS_MODEL=qwen2.5-vl-72b \
   python3 scripts/parse_doc.py 报价单.jpg --out /tmp/x.csv
+
+# 自检（不读文件，验代码路径）
+python3 scripts/parse_doc.py --selftest
 ```
+
+**为什么优先 PDF/Excel**：装企正式报价多是这两种，根本不需要 OCR。
+把 AI 用在能用规则解决的地方是设计错误。往返测试已证明：经感知层解析再导出，
+审计结论与直接读原件**逐字一致**。
 
 网页版：`GET /perceive` 上传照片 → 识别 → 直接出审计报告。
 

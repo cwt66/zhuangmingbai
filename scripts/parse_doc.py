@@ -43,8 +43,9 @@ def print_report(rows, meta, report, out_csv):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("image", nargs="?")
-    ap.add_argument("--provider", default=os.environ.get("PERCEPTION_PROVIDER", "maas"),
-                    choices=["maas", "ocr_table", "mock"])
+    ap.add_argument("--provider", default=os.environ.get("PERCEPTION_PROVIDER"),
+                    choices=["file", "maas", "ocr_table", "mock"],
+                    help="默认按扩展名推断：csv/xlsx/pdf→file，图片→maas")
     ap.add_argument("--out", default="out/parsed.csv")
     ap.add_argument("--report", default=None, help="解析报告 JSON 路径")
     ap.add_argument("--selftest", action="store_true", help="不读图片，只验代码路径")
@@ -61,8 +62,14 @@ def main():
     if not os.path.isfile(args.image):
         ap.error("找不到图片：%s" % args.image)
 
+    provider = args.provider
+    if not provider:
+        ext = os.path.splitext(args.image)[1].lower()
+        provider = "file" if ext in (".csv", ".tsv", ".xlsx", ".xlsm", ".pdf") else "maas"
+        print("按扩展名选定 provider：%s" % provider)
+
     try:
-        rows, meta, report = P.perceive(args.image, provider=args.provider)
+        rows, meta, report = P.perceive(args.image, provider=provider)
     except P.PerceptionError as e:
         print("感知层失败：", e, file=sys.stderr)
         print("\n失败不等于「这张单据没问题」——上层不得据此输出审计结论。", file=sys.stderr)
