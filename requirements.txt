@@ -3,3 +3,5 @@
 fastapi>=0.110,<1.0
 uvicorn[standard]>=0.27,<1.0
 python-multipart>=0.0.9
+# 感知层（src/perception.py）同样零第三方依赖：签名用 hmac/hashlib，
+# xlsx 解析用标准库 zipfile + 正则，不引入 openpyxl。

@@ -155,3 +155,47 @@ python scripts/auto_deploy.py \
 - 该 Skill 只负责「单机 ECS + 代码上传 + 启动 + 健康检查」，RDS / Redis / OBS 不在其范围内，需用 KooCLI 或对应 Skill 单独开通。
 - `requirements.txt` 里含 `fastapi`，脚本会自动识别为 Python/FastAPI 项目并以 `uvicorn main:app` 启动。
 - 部署后先打 `GET /health` 验证，再打 `GET /demo` 确认引擎在云上跑通。
+
+## 感知层（图片 → 结构化）
+
+引擎本身只吃 CSV。要把手机拍的报价单直接变成审计报告，用感知层：
+
+```bash
+# 自检（不读图片，验代码路径）
+python3 scripts/parse_doc.py --selftest
+
+# 华为云「表格识别」：需要 AK/SK + 控制台开通服务（有免费额度）
+HW_ACCESS_KEY=... HW_SECRET_KEY=... HW_PROJECT_ID=... \
+  python3 scripts/parse_doc.py 报价单.jpg --provider ocr_table --out /tmp/x.csv
+
+# ModelArts Studio 视觉模型：需要 API Key
+MAAS_API_KEY=... MAAS_MODEL=qwen2.5-vl-72b \
+  python3 scripts/parse_doc.py 报价单.jpg --out /tmp/x.csv
+```
+
+网页版：`GET /perceive` 上传照片 → 识别 → 直接出审计报告。
+
+**三条设计约束**（都写进代码与单测）：
+
+1. 感知层只负责「看见」，不做任何「漏项/重复」判断；
+2. 识别不出表头**直接抛异常**，绝不返回空表——空表会被当成「这份单据没问题」；
+3. 每行做算术自校验（`数量 × 单价 = 合价`），不符必须报出来，由人回原图核对。
+
+`mock` 是单测用的固定样例，返回里带 `fixture: true`，网页上会用红字标明
+「这不是对这张图的识别结果」，防止演示时误用。
+
+接入细节与踩过的坑见 `../装明白_校赛材料/感知层接入说明.md`。
+
+## 测试
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+- `tests/test_perception.py`：表头映射（含「单价(元)」这类变体）、算术校验、
+  无凭据时给可执行提示而不是 KeyError；
+- `tests/test_regression.py`：三单基线（400 / 22,164 / 3,168）、两份真实单据的对齐与漏项计数、
+  以及两条不变量——**每条结论必须带 basis/formula/checked_words**、
+  **低于 0.90 的结论不得进入核减金额**。
+
+回归线是硬约束：任何改动跑一遍，全绿才算完。

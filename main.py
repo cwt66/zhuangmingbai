@@ -17,7 +17,7 @@ import tempfile
 import zipfile
 from typing import List
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -25,6 +25,7 @@ if BASE not in sys.path:
     sys.path.insert(0, BASE)
 
 from src import pipeline  # noqa: E402
+from src import perception  # noqa: E402
 
 app = FastAPI(title="装明白 · 可计算审计", version="0.3.0")
 
@@ -132,7 +133,7 @@ ERR = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 </div></body></html>"""
 
 NAV = """<div class="nav"><b>装明白 · 可计算审计</b>
-<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/review">解析校对</a>
+<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/perceive">图片识别</a><a href="/review">解析校对</a>
 <span class="right">浏览器 Ctrl/⌘+P 可另存为 PDF · <a href="/health">健康检查</a></span></div>"""
 
 
@@ -162,7 +163,7 @@ def _load_rules():
     return onto, templates, rules, coverage
 
 
-def _audit(paths):
+def _audit(paths, template_key="old_house"):
     """paths: [(label, csv_path)] -> (html, res, quotes)"""
     onto, templates, rules, coverage = _load_rules()
     quotes = [pipeline.build_line_index(pipeline.load_quote(p, lb), onto) for lb, p in paths]
@@ -170,7 +171,8 @@ def _audit(paths):
         if not q["rows"]:
             raise EmptyRowsError("《%s》没有解析到任何行项，请检查表头是否为 "
                                  "项目名称/规格工艺/单位/数量/单价/合价。" % q["label"])
-    res = pipeline.audit(quotes, onto, templates, rules, coverage)
+    res = pipeline.audit(quotes, onto, templates, rules, coverage,
+                         template_key=template_key)
     html = pipeline.build_html(quotes, res)
     if "<body>" in html:
         html = html.replace("<body>", "<body>" + NAV, 1)
@@ -224,6 +226,88 @@ def real():
         html, _, _ = _audit([("上海卓观 · 两房半包（真实单据）", path)])
     except Exception as e:  # noqa: BLE001
         return _err("真实单据跑失败", str(e), 500)
+    return HTMLResponse(html)
+
+
+
+
+@app.get("/perceive", response_class=HTMLResponse)
+def perceive_page():
+    """图片识别入口：一张单据照片 → 结构化行项 → 审计报告。"""
+    has_key = bool(os.environ.get("MAAS_API_KEY"))
+    has_ak = bool(os.environ.get("HW_ACCESS_KEY") and os.environ.get("HW_SECRET_KEY"))
+    prov = os.environ.get("PERCEPTION_PROVIDER", "maas")
+    status = []
+    status.append('<li>provider：<b>%s</b>（改 <code>PERCEPTION_PROVIDER</code> 切换）</li>' % prov)
+    status.append('<li>MaaS API Key：%s</li>' % ("已配置" if has_key else
+                  '未配置 — <code>export MAAS_API_KEY=...</code>'))
+    status.append('<li>华为云 AK/SK（表格识别用）：%s</li>' % ("已配置" if has_ak else
+                  '未配置 — 需同时设置 <code>HW_ACCESS_KEY</code> / <code>HW_SECRET_KEY</code>'))
+    html = _page().replace("__BODY__", """
+<h1>图片识别 → 审计</h1>
+<p class="lead">上传一张报价单照片。识别只负责「看见」，判断仍走规则——两层分开，才能分开定位错误。</p>
+<form method="post" action="/perceive" enctype="multipart/form-data" class="card">
+  <input type="file" name="file" accept="image/jpeg,image/png" required>
+  <label>模板
+    <select name="template_key">
+      <option value="new_house">新房毛坯（28 项）</option>
+      <option value="old_house">老房翻新（39 项）</option>
+    </select>
+  </label>
+  <button type="submit">识别并审计</button>
+</form>
+<h2>感知层状态</h2>
+<ul class="plain">""" + "".join(status) + """</ul>
+<p class="note">识别失败会**明确报错**，不会拿空结果往下走——空表被判成「没有漏项」是最危险的失败方式。</p>
+""")
+    return HTMLResponse(html)
+
+
+@app.post("/perceive", response_class=HTMLResponse)
+async def perceive_run(file: UploadFile = File(default=None),
+                       template_key: str = Form(default="new_house")):
+    if file is None or not (file.filename or "").strip():
+        return _err("没有收到文件", "请选择一张 JPG/PNG 报价单照片。", 400)
+    raw = await file.read()
+    if not raw:
+        return _err("文件为空", "上传的图片没有内容。", 400)
+    if len(raw) > 10 * 1024 * 1024:
+        return _err("图片过大", "请压缩到 10MB 以内（华为云 OCR 单张上限）。", 400)
+
+    todo = tempfile.NamedTemporaryFile(suffix=os.path.splitext(file.filename)[1] or ".jpg",
+                                       delete=False)
+    try:
+        todo.write(raw)
+        todo.close()
+        try:
+            rows, meta, report = perception.perceive(todo.name)
+        except perception.PerceptionError as e:
+            return _err("感知层未能完成识别", "%s<br><br>"
+                        "失败不等于「这张单据没问题」——因此不输出任何审计结论。" % e, 503)
+        if not rows:
+            return _err("没有识别出行项", "识别成功但行项为空，请检查图片是否清晰、是否是报价表。", 400)
+
+        csv_path = todo.name + ".csv"
+        perception.write_csv(rows, csv_path)
+        html, _, _ = _audit([(_label_from_name(file.filename), csv_path)],
+                            template_key=template_key)
+    finally:
+        for f_ in (todo.name, todo.name + ".csv"):
+            try:
+                os.unlink(f_)
+            except OSError:
+                pass
+
+    banner = ('<div class="banner">识别：<b>%s</b> ｜ 行项 <b>%d</b> ｜ '
+              '算术自校验 <b>%d</b> 行%s ｜ 合价合计 <b>%s</b>%s</div>') % (
+        meta.get("provider"), report.get("rows", len(rows)), report.get("arith_checked") or 0,
+        "全部通过" if not report.get("arith_bad") else
+        "，<b style='color:#B33A2B'>%d 行不符（须回原图核对）</b>" % len(report["arith_bad"]),
+        ("%.2f" % report["total"]) if report.get("total") is not None else "—",
+        "<br><b style='color:#B33A2B'>注意：本次用的是固定样例（mock），不是对这张图的识别结果。</b>"
+        if meta.get("fixture") else "")
+    if "<body>" in html:
+        html = html.replace("<body>", "<body>" + banner, 1)
     return HTMLResponse(html)
 
 

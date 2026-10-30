@@ -23,7 +23,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_OUT = os.path.join(os.path.dirname(ROOT), "装明白_校赛材料", "装明白_离线演示包.zip")
 
 # 不进包：太大了或与"能跑起来"无关
-EXCLUDE_PREFIX = (".git/", ".auto-deploy/", "__pycache__/", "eval/predictions/")
+# 预测快照要进包：评委可以拿它比对指纹，验证结论没被事后改过
+EXCLUDE_PREFIX = (".git/", ".auto-deploy/", "__pycache__/")
 
 
 def tracked_files():
@@ -71,7 +72,9 @@ def main():
     # 关键文件自检：这几个缺任何一个，包就是残的
     must = ["LICENSE", "run_offline.sh", "docs/使用文档.md", "main.py", "requirements.txt",
             "data/real/sh_zhuoguan_halfpack.csv", "data/real/huaxibeian_newhouse.csv",
-            "data/coverage_v0.json", "scripts/snapshot_predictions.py", "scripts/eval_audit.py"]
+            "data/coverage_v0.json", "scripts/snapshot_predictions.py", "scripts/eval_audit.py",
+            "src/perception.py", "scripts/parse_doc.py", "tests/test_regression.py",
+            "eval/predictions/huaxibeian.json"]
     miss = [k for k in must if not any(n.endswith(k) for n in names)]
     print("关键文件：", "全在" if not miss else "缺 " + str(miss))
     return 1 if (miss or bad) else 0
