@@ -70,6 +70,14 @@ class Ontology:
                 best, best_r = cid, r
         if best_r >= 0.62:
             return best, round(best_r * 0.9, 3), "fuzzy"
+        # 包含匹配兜底：真实单据常写成「安装人造大理石门槛」「封管道（湿封）」，
+        # 精确与编辑距离都打不中。取被包含的最长别名词（≥2 字），置信度低于别名命中。
+        contain, clen = None, 0
+        for a, cid in self.alias.items():
+            if len(a) >= 2 and (a in n or n in a) and len(a) > clen:
+                contain, clen = cid, len(a)
+        if contain:
+            return contain, 0.85, "contains"
         return None, 0.0, "unmatched"
 
 
@@ -110,9 +118,38 @@ def tier(c):
     return "auto" if c >= 0.90 else ("review" if c >= 0.60 else "manual")
 
 
-def find_missing(quote, others, template, onto, rule):
+def _row_text(row):
+    return " ".join([row.get("name") or "", row.get("spec") or "", row.get("note") or ""])
+
+
+# 「含拆除，不含垃圾外运」——词出现了，但意思相反。证据词命中前必须先看否定语境。
+NEG_PREFIX = ("不含", "不含在", "不包括", "除外", "另计", "另收", "自理", "自购", "不包", "另付")
+
+
+def _evidence_hit(words, texts):
+    """返回第一个「非否定语境」下命中的证据词，没有则返回 None。"""
+    for w in words:
+        for t in texts:
+            i = t.find(w)
+            while i >= 0:
+                pre = t[max(0, i - 6):i]
+                if not any(n in pre for n in NEG_PREFIX):
+                    return w
+                i = t.find(w, i + 1)
+    return None
+
+
+def find_missing(quote, others, template, onto, rule, coverage=None):
     have = {r["cid"] for r in quote["rows"] if r["cid"]}
     have_cats = {onto.by_id[c].get("c") for c in have if c in onto.by_id}
+    texts = [_row_text(r) for r in quote["rows"]]
+    ev = (coverage or {}).get("evidence") or {}
+    absorbed_by = (coverage or {}).get("soft", {}).get("absorbed_by") or {}
+
+    def present(cid):
+        """模板项是否已被满足：概念命中，或行项文本里出现其证据词。"""
+        return cid in have or bool(_evidence_hit(ev.get(cid, []), texts))
+
     out = []
     for cid in template:
         if cid in have:
@@ -121,6 +158,11 @@ def find_missing(quote, others, template, onto, rule):
         # （真实报价单按材料/线路逐行列，不会出现"水电改造"这四个字）
         if cid == "mep" and "mep" in have_cats:
             continue
+        # 文本证据覆盖：真实报价单是复合行，一行可含多个工序。
+        # 「墙面基础处理+批嵌砂光」同时是基层处理与批腻子，仅靠概念 1:1 对齐
+        # 会把后者判成漏项。词表见 data/coverage_v0.json，逐条可人工审阅。
+        if _evidence_hit(ev.get(cid, []), texts):
+            continue
         refs = []
         for o in others:
             vals = [r["amount"] for r in o["rows"] if r.get("cid") == cid and r["amount"] > 0]
@@ -128,10 +170,19 @@ def find_missing(quote, others, template, onto, rule):
                 refs.append({"quote": o["label"], "amount": round(statistics.median(vals), 2)})
         ref_amt = round(statistics.median([x["amount"] for x in refs]), 2) if refs else None
         c = confidence(rule["strength"], 0.95, 0.90, True)
+        basis = "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中"
+        formula = "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项"
+        absorbers = [a for a in absorbed_by.get(cid, []) if present(a)]
+        if absorbers:
+            # 复合工序在，而它没单列：可能被打包进去了，降为建议复核
+            c = min(c, 0.85)
+            basis = "未单列，但复合工序「%s」已在报价中，可能已含" % "／".join(
+                onto.by_id[a]["n"] for a in absorbers if a in onto.by_id)
+            formula = "T \\ S 未命中，且存在可吸收它的复合工序"
         out.append({"cid": cid, "concept": onto.by_id[cid]["n"], "rule": rule["id"],
                     "ref_amount": ref_amt, "ref_source": refs, "confidence": c, "tier": tier(c),
-                    "evidence": {"basis": "标准工序模板（老房翻新）",
-                                 "formula": "T \\\\ S（模板必做项 − 实列项）"}})
+                    "evidence": {"basis": basis, "formula": formula,
+                                 "checked_words": ev.get(cid, [])}})
     return out
 
 
@@ -144,8 +195,31 @@ def _zone(row):
     return m.group(1) if m else ""
 
 
+def _variant_residual(onto, row):
+    """行名里去掉「概念的正式名」之后剩下的部分，作为变体标识。
+
+    只剥正式名、不剥别名：别名本身常带部位词（顶面涂料／墙面涂料都是 topcoat 的别名），
+    剥别名会把部位信息抹掉，导致顶面和墙面被判成重复计价。
+    「墙面找平」−「墙面找平」= 空，两条同名仍是重复；顶面/墙面各留部位词，不判重复。
+    """
+    n = norm(row["name"])
+    item = onto.by_id.get(row["cid"]) or {}
+    base = norm(item.get("n"))
+    if base and base in n:
+        return n.replace(base, "", 1)
+    return n
+
+
 def find_duplicates(quote, onto, rule_pair, rule_same, template):
+    """返回 (重复项, 已排除的同概念不同变体组数)。
+
+    同一概念在同一分区出现多行，先看变体（行名去掉正式名后的剩余部分）：
+    变体不同说明是不同部位/不同规格的两件事（12 个不同柜子、4 种电线、
+    墙面防水与地面防水），不是重复计价，直接排除而不是降级——
+    否则报告里堆满假阳性，用户会把真结论一起忽略。
+    """
     out = []
+    excluded = 0
     by_cid = defaultdict(list)
     for r in quote["rows"]:
         if r["cid"]:
@@ -153,14 +227,18 @@ def find_duplicates(quote, onto, rule_pair, rule_same, template):
             by_cid[(r["cid"], _zone(r))].append(r)
     for (cid, zone), lines in by_cid.items():
         if len(lines) >= 2:
+            variants = {_variant_residual(onto, x) for x in lines}
+            if len(variants) > 1:
+                excluded += 1
+                continue
             ls = sorted(lines, key=lambda x: -x["amount"])
             dup = round(sum(x["amount"] for x in ls[1:]), 2)
             c = confidence(rule_same["strength"], 0.95, min(x["align_conf"] for x in lines), cid in template)
+            basis = ("本体归一后同一概念在「%s」内多行计费" % zone) if zone else "本体归一后同一概念多行计费"
             out.append({"cid": cid, "concept": onto.by_id[cid]["n"], "rule": rule_same["id"],
                         "lines": [x["no"] for x in lines], "amount": dup, "confidence": c, "tier": tier(c),
-                        "evidence": {"basis": ("本体归一后同一概念在「%s」内多行计费" % zone) if zone
-                                               else "本体归一后同一概念多行计费",
-                                     "formula": "count(concept, zone) >= 2",
+                        "evidence": {"basis": basis,
+                                     "formula": "count(concept, zone) >= 2 且行名去掉正式名后完全一致",
                                      "line_nos": [x["no"] for x in lines]}})
     present = {r["cid"] for r in quote["rows"] if r["cid"]}
     for p in rule_pair["pairs"]:
@@ -173,7 +251,7 @@ def find_duplicates(quote, onto, rule_pair, rule_same, template):
                         "confidence": c, "tier": tier(c),
                         "evidence": {"basis": f"工艺惯例：{onto.by_id[c_]['n']} 通常已含 {onto.by_id[d_]['n']}",
                                      "formula": "contained ∈ container 的工艺范围"}})
-    return out
+    return out, excluded
 
 
 def find_vague(quote, rule):
@@ -328,14 +406,14 @@ def exposure(quote, others, rule):
     return out
 
 
-def audit(quotes, onto, templates, rules):
+def audit(quotes, onto, templates, rules, coverage=None):
     R = {r["id"]: r for r in rules["rules"]}
     template = templates["old_house"]
     results = {}
     for q in quotes:
         others = [x for x in quotes if x is not q]
-        missing = find_missing(q, others, template, onto, R["R1_missing_item"])
-        dups = find_duplicates(q, onto, R["R2_duplicate_known"], R["R3_duplicate_same_concept"], template)
+        missing = find_missing(q, others, template, onto, R["R1_missing_item"], coverage)
+        dups, dup_excluded = find_duplicates(q, onto, R["R2_duplicate_known"], R["R3_duplicate_same_concept"], template)
         risks = []
         risks += find_vague(q, R["R4_vague_term"])
         risks += find_unit_anomaly(q, onto, R["R6_unit_anomaly"])
@@ -351,6 +429,7 @@ def audit(quotes, onto, templates, rules):
             "quote": q, "missing": missing, "duplicates": dups, "risks": risks,
             "exposure": exposure(q, others, R["R4_vague_term"]),
             "missing_cost": round(miss_cost, 2), "duplicate_cut": round(dup_cut, 2),
+            "dup_excluded": dup_excluded,
             "effective": round(q["total"] + miss_cost - dup_cut, 2),
         }
     results["_cross_unit"] = cross_unit_mix(quotes, onto, R["R5_unit_mix"])
@@ -544,10 +623,12 @@ def main():
     onto = Ontology(os.path.join(DATA, "ontology_v0.json"))
     templates = json.load(open(os.path.join(DATA, "templates_v0.json"), encoding="utf-8"))
     rules = json.load(open(os.path.join(DATA, "rules_v0.json"), encoding="utf-8"))
+    cover_path = os.path.join(DATA, "coverage_v0.json")
+    coverage = json.load(open(cover_path, encoding="utf-8")) if os.path.exists(cover_path) else None
     files = [("A 公司（规范型）", "company_a.csv"), ("B 公司（低价引流型）", "company_b.csv"),
              ("C 公司（高价项全型）", "company_c.csv")]
     quotes = [build_line_index(load_quote(os.path.join(DATA, "samples", fn), label), onto) for label, fn in files]
-    res = audit(quotes, onto, templates, rules)
+    res = audit(quotes, onto, templates, rules, coverage)
     os.makedirs(OUT, exist_ok=True)
     md = build_markdown(quotes, res)
     open(os.path.join(OUT, "audit_report.md"), "w", encoding="utf-8").write(md)

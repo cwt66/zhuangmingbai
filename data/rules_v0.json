@@ -46,11 +46,6 @@
           "note": "陶粒回填通常已含找平"
         },
         {
-          "container": "build_wall",
-          "contained": "level_wall",
-          "note": "新砌墙通常已含找平"
-        },
-        {
           "container": "demo_putty",
           "contained": "putty",
           "note": "批荡层铲除通常已含腻子铲除"
@@ -80,7 +75,7 @@
           "formula": "count(concept) ≥ 2"
         }
       },
-      "strength": 0.7
+      "strength": 0.9
     },
     {
       "id": "R4_vague_term",
