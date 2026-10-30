@@ -44,10 +44,15 @@ class Ontology:
             self.items = json.load(f)
         self.by_id = {it["id"]: it for it in self.items}
         self.alias = {}
-        for it in self.items:
+        # 「按实结算/暂估」是口径标记，不是工序：精确命中仍保留（它确实是原表里的词），
+        # 但在候选竞争时不优先——否则「水路（预收）据实结算」会被吸成「按实结算」，
+        # 导致给水管缺失 + 误报口径风险。
+        for it in self.items:                       # 正式名优先占位
             self.alias[norm(it["n"])] = it["id"]
+        for it in self.items:                       # 别名不覆盖正式名
             for a in it["a"]:
                 self.alias.setdefault(norm(a), it["id"])
+        self.fee_ids = {it["id"] for it in self.items if it.get("c") == "fee"}
 
     def align(self, name):
         # 真实单据常把规格写进括号：「铺墙砖（300*450）」——先按原名匹配，再试去括号后的名字
@@ -63,19 +68,24 @@ class Ontology:
         n = max(cands, key=len)
         if not n:
             return None, 0.0, "empty"
-        best, best_r = None, 0.0
+        best, best_r, best_fee = None, 0.0, False
         for a, cid in self.alias.items():
             r = difflib.SequenceMatcher(None, n, a).ratio()
-            if r > best_r:
-                best, best_r = cid, r
+            is_fee = cid in self.fee_ids
+            # 同分时工序优先于口径；分更高则照常覆盖
+            if r > best_r + 1e-9 or (abs(r - best_r) <= 1e-9 and best_fee and not is_fee):
+                best, best_r, best_fee = cid, r, is_fee
         if best_r >= 0.62:
             return best, round(best_r * 0.9, 3), "fuzzy"
         # 包含匹配兜底：真实单据常写成「安装人造大理石门槛」「封管道（湿封）」，
         # 精确与编辑距离都打不中。取被包含的最长别名词（≥2 字），置信度低于别名命中。
-        contain, clen = None, 0
+        contain, clen, c_fee = None, 0, True
         for a, cid in self.alias.items():
-            if len(a) >= 2 and (a in n or n in a) and len(a) > clen:
-                contain, clen = cid, len(a)
+            if len(a) < 2 or not (a in n or n in a):
+                continue
+            is_fee = cid in self.fee_ids
+            if len(a) > clen or (len(a) == clen and c_fee and not is_fee):
+                contain, clen, c_fee = cid, len(a), is_fee
         if contain:
             return contain, 0.85, "contains"
         return None, 0.0, "unmatched"
