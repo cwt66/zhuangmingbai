@@ -132,7 +132,7 @@ ERR = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 </div></body></html>"""
 
 NAV = """<div class="nav"><b>装明白 · 可计算审计</b>
-<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/review">解析校对</a>
+<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/review">解析校对</a>
 <span class="right">浏览器 Ctrl/⌘+P 可另存为 PDF · <a href="/health">健康检查</a></span></div>"""
 
 
@@ -153,18 +153,24 @@ def _load_rules():
         templates = json.load(f)
     with open(os.path.join(pipeline.DATA, "rules_v0.json"), encoding="utf-8") as f:
         rules = json.load(f)
-    return onto, templates, rules
+    # 漏项判定的第二路证据（复合行文本证据词）。缺文件时引擎仍可跑，只是回到纯概念对齐。
+    cover = os.path.join(pipeline.DATA, "coverage_v0.json")
+    coverage = None
+    if os.path.exists(cover):
+        with open(cover, encoding="utf-8") as f:
+            coverage = json.load(f)
+    return onto, templates, rules, coverage
 
 
 def _audit(paths):
     """paths: [(label, csv_path)] -> (html, res, quotes)"""
-    onto, templates, rules = _load_rules()
+    onto, templates, rules, coverage = _load_rules()
     quotes = [pipeline.build_line_index(pipeline.load_quote(p, lb), onto) for lb, p in paths]
     for q in quotes:
         if not q["rows"]:
             raise EmptyRowsError("《%s》没有解析到任何行项，请检查表头是否为 "
                                  "项目名称/规格工艺/单位/数量/单价/合价。" % q["label"])
-    res = pipeline.audit(quotes, onto, templates, rules)
+    res = pipeline.audit(quotes, onto, templates, rules, coverage)
     html = pipeline.build_html(quotes, res)
     if "<body>" in html:
         html = html.replace("<body>", "<body>" + NAV, 1)
@@ -205,6 +211,19 @@ def demo():
         return _err("样例数据异常", str(e), 400)
     except Exception as e:  # noqa: BLE001
         return _err("样例跑失败", str(e), 500)
+    return HTMLResponse(html)
+
+
+@app.get("/real", response_class=HTMLResponse)
+def real():
+    """一份真实业主报价单（127 行，54,936 元，来源见 data/real/README）。"""
+    path = os.path.join(pipeline.DATA, "real", "sh_zhuoguan_halfpack.csv")
+    if not os.path.isfile(path):
+        return _err("真实单据缺失", "仓库内未找到 data/real/sh_zhuoguan_halfpack.csv。", 404)
+    try:
+        html, _, _ = _audit([("上海卓观 · 两房半包（真实单据）", path)])
+    except Exception as e:  # noqa: BLE001
+        return _err("真实单据跑失败", str(e), 500)
     return HTMLResponse(html)
 
 
@@ -255,7 +274,7 @@ def review():
 
     真实链路由 MaaS Qwen-VL 返回字段级置信度；此处用样例数据展示同一套校对交互。
     """
-    onto, _, _ = _load_rules()
+    onto, _, _, _ = _load_rules()
     paths = [(lb, os.path.join(pipeline.DATA, "samples", fn)) for lb, fn in SAMPLES]
     quotes = [pipeline.build_line_index(pipeline.load_quote(p, lb), onto) for lb, p in paths]
     data = pipeline.build_review_data(quotes, onto)
