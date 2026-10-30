@@ -406,9 +406,11 @@ def exposure(quote, others, rule):
     return out
 
 
-def audit(quotes, onto, templates, rules, coverage=None):
+def audit(quotes, onto, templates, rules, coverage=None, template_key="old_house"):
+    """template_key: old_house（老房翻新，38 项）或 new_house（新房毛坯，25 项）。
+    模板选错，漏项结论全错——所以做成显式参数，并在报告里写明用的是哪套。"""
     R = {r["id"]: r for r in rules["rules"]}
-    template = templates["old_house"]
+    template = templates[template_key]
     results = {}
     for q in quotes:
         others = [x for x in quotes if x is not q]
@@ -427,6 +429,7 @@ def audit(quotes, onto, templates, rules, coverage=None):
         dup_cut = sum(d["amount"] for d in dups if d["tier"] == "auto") or 0.0
         results[q["label"]] = {
             "quote": q, "missing": missing, "duplicates": dups, "risks": risks,
+            "template_key": template_key, "template_size": len(template),
             "exposure": exposure(q, others, R["R4_vague_term"]),
             "missing_cost": round(miss_cost, 2), "duplicate_cut": round(dup_cut, 2),
             "dup_excluded": dup_excluded,

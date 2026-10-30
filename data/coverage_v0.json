@@ -10,44 +10,161 @@
     "note": "这类工序确实常被打包进复合行：墙固、界面剂多含在「墙面基础处理」里，底漆多含在「涂料」里。只有当吸收它的复合工序确实存在、而它本身未单列时，才降为「建议复核」；复合工序也不存在则仍是确定漏项。",
     "why_not_demo_putty": "『铲墙皮』不在此列。拆旧只含拆除，是否含铲除原墙面涂层行业上并不统一，且它是老房最典型的漏项——不降级。",
     "absorbed_by": {
-      "wall_glue": ["wall_base"],
-      "interface_agent": ["wall_base"],
-      "primer": ["topcoat"],
+      "wall_glue": [
+        "wall_base"
+      ],
+      "interface_agent": [
+        "wall_base"
+      ],
+      "primer": [
+        "topcoat"
+      ],
       "mgmt_fee": []
     }
   },
   "evidence": {
-    "demo_putty": ["铲墙", "铲除墙面", "铲皮", "铲除原墙"],
-    "debris_out": ["垃圾清运", "清运", "垃圾外运"],
-    "protect_door": ["门窗保护", "门保护", "门窗成品保护"],
-    "protect_floor": ["地面保护"],
-    "protect_finish": ["成品保护"],
-    "putty": ["批嵌", "腻子", "批刮"],
-    "primer": ["底漆"],
-    "topcoat": ["涂料", "面漆", "乳胶漆"],
-    "wall_base": ["基础处理", "基层处理"],
-    "wall_glue": ["墙固"],
-    "interface_agent": ["界面剂"],
-    "mesh": ["挂网", "网格布", "防开裂"],
-    "corner_straight": ["阴阳角", "护角"],
-    "water_test": ["闭水"],
-    "pressure_test": ["打压", "试压"],
-    "wp_height": ["防水加高", "墙面防水"],
-    "clean": ["保洁", "清洁"],
-    "caulk": ["打胶", "硅胶", "密封胶"],
-    "material_lift": ["搬运", "上楼"],
-    "mgmt_fee": ["管理费"],
-    "sanitary": ["洁具", "台盆", "座便", "马桶", "立盆"],
-    "skirting": ["踢脚"],
-    "sill": ["窗台"],
-    "threshold": ["门槛"],
-    "pipe_wrap": ["封管道", "包管", "立管"],
-    "level_wall": ["墙面找平", "粉平", "新粉墙面"],
-    "tile_corner": ["倒角", "阳角"],
-    "door_install": ["门锁", "门安装", "灌浆"],
-    "door_frame": ["门套"],
-    "ceiling": ["吊顶"],
-    "switch_install": ["开关", "插座", "面板"],
-    "light_install": ["灯具", "灯头", "灯盒"]
+    "demo_putty": [
+      "铲墙",
+      "铲皮",
+      "铲除原墙",
+      "铲除墙面"
+    ],
+    "debris_out": [
+      "垃圾外运",
+      "垃圾清运",
+      "清运"
+    ],
+    "protect_door": [
+      "门保护",
+      "门窗保护",
+      "门窗成品保护"
+    ],
+    "protect_floor": [
+      "地面保护"
+    ],
+    "protect_finish": [
+      "成品保护"
+    ],
+    "putty": [
+      "批刮",
+      "批嵌",
+      "腻子"
+    ],
+    "primer": [
+      "底漆"
+    ],
+    "topcoat": [
+      "乳胶漆",
+      "涂料",
+      "面漆"
+    ],
+    "wall_base": [
+      "基层处理",
+      "基础处理"
+    ],
+    "wall_glue": [
+      "墙固"
+    ],
+    "interface_agent": [
+      "界面剂"
+    ],
+    "mesh": [
+      "挂网",
+      "网格布",
+      "防开裂"
+    ],
+    "corner_straight": [
+      "护角",
+      "阴阳角"
+    ],
+    "water_test": [
+      "闭水"
+    ],
+    "pressure_test": [
+      "打压",
+      "试压"
+    ],
+    "wp_height": [
+      "墙面防水",
+      "防水加高"
+    ],
+    "clean": [
+      "保洁",
+      "清洁"
+    ],
+    "caulk": [
+      "密封胶",
+      "打胶",
+      "硅胶"
+    ],
+    "material_lift": [
+      "上楼",
+      "搬运"
+    ],
+    "mgmt_fee": [
+      "管理费"
+    ],
+    "sanitary": [
+      "台盆",
+      "坐便",
+      "座便",
+      "洁具",
+      "洗脸盆",
+      "浴缸",
+      "立盆",
+      "蹲便",
+      "马桶"
+    ],
+    "skirting": [
+      "踢脚"
+    ],
+    "sill": [
+      "窗台"
+    ],
+    "threshold": [
+      "门槛"
+    ],
+    "pipe_wrap": [
+      "下水管",
+      "包下水管",
+      "包管",
+      "封管道",
+      "立管"
+    ],
+    "level_wall": [
+      "墙面找平",
+      "新粉墙面",
+      "粉平"
+    ],
+    "tile_corner": [
+      "倒角",
+      "阳角"
+    ],
+    "door_install": [
+      "套装门",
+      "木门",
+      "灌浆",
+      "门安装",
+      "门锁"
+    ],
+    "door_frame": [
+      "门套"
+    ],
+    "ceiling": [
+      "吊顶"
+    ],
+    "switch_install": [
+      "开关",
+      "插座",
+      "面板"
+    ],
+    "light_install": [
+      "灯具",
+      "灯头",
+      "灯盒"
+    ],
+    "grout": [
+      "美缝"
+    ]
   }
 }
