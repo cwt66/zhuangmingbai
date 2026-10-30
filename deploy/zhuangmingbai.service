@@ -1,0 +1,24 @@
+[Unit]
+Description=装明白 · 装修报价可计算审计服务 (FastAPI)
+After=network.target
+
+[Service]
+User=deploy
+Group=deploy
+WorkingDirectory=/opt/zhuangmingbai
+Environment=PORT=8000
+ExecStart=/opt/zhuangmingbai/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=5
+
+# 日志
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=zhuangmingbai
+
+# 安全沙箱
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

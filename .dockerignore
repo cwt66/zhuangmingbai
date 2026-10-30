@@ -1,0 +1,61 @@
+# Git 版本控制
+.git
+.gitignore
+
+# Python 编译产物
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# 打包产物
+*.egg-info
+*.egg
+dist/
+build/
+.eggs/
+develop-eggs/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+.installed.cfg
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE 配置
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 临时文件
+*.log
+*.tmp
+*.bak
+*~
+.DS_Store
+
+# 输出目录（运行时生成）
+out/
+
+# 部署与工具配置
+.auto-deploy/
+.codeartsdoer/
+
+# 临时脚本
+temp_*.py
+coverage_*.py

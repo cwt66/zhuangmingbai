@@ -74,6 +74,11 @@ table.s td:first-child{color:var(--ink);font-weight:600}
 .nav .right{float:right}
 """
 
+
+class EmptyRowsError(ValueError):
+    """CSV 解析后没有行项（只有表头或空数据）"""
+    pass
+
 PAGE = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>装明白 · 装修报价可计算审计</title><style>__CSS__</style></head><body>
@@ -157,8 +162,8 @@ def _audit(paths):
     quotes = [pipeline.build_line_index(pipeline.load_quote(p, lb), onto) for lb, p in paths]
     for q in quotes:
         if not q["rows"]:
-            raise ValueError("《%s》没有解析到任何行项，请检查表头是否为 "
-                             "项目名称/规格工艺/单位/数量/单价/合价。" % q["label"])
+            raise EmptyRowsError("《%s》没有解析到任何行项，请检查表头是否为 "
+                                 "项目名称/规格工艺/单位/数量/单价/合价。" % q["label"])
     res = pipeline.audit(quotes, onto, templates, rules)
     html = pipeline.build_html(quotes, res)
     if "<body>" in html:
@@ -196,6 +201,8 @@ def demo():
     paths = [(lb, os.path.join(pipeline.DATA, "samples", fn)) for lb, fn in SAMPLES]
     try:
         html, _, _ = _audit(paths)
+    except EmptyRowsError as e:
+        return _err("样例数据异常", str(e), 400)
     except Exception as e:  # noqa: BLE001
         return _err("样例跑失败", str(e), 500)
     return HTMLResponse(html)
@@ -226,6 +233,8 @@ async def audit(files: List[UploadFile] = File(default=None)):
             paths.append((_label_from_name(f.filename or "报价%d" % i), dst))
         html, _, _ = _audit(paths)
         return HTMLResponse(html)
+    except EmptyRowsError as e:
+        return _err("没有解析到行项", str(e), 400)
     except Exception as e:  # noqa: BLE001
         return _err("审计失败", "解析或计算过程中出错：%s" % e, 500)
     finally:
