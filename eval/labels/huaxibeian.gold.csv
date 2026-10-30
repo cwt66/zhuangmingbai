@@ -1,0 +1,29 @@
+cid,truth,evidence,annotator,status
+mep,0,行109 电路改造 170㎡×72.8=12376；行110 水路预收,first-pass,pending
+waterproof,0,行76/87/98 墙地面做防水，备注含返400mm/淋浴1800mm,first-pass,pending
+water_test,0,行76 备注：施工结束后需做48小时闭水实验无渗漏,first-pass,pending
+pressure_test,1,行110 水路备注：只写敷设/调试/竣工图，全文无打压、试压,first-pass,pending
+tile_wall,0,行70/77/88/99 粘贴墙地砖,first-pass,pending
+tile_floor,0,行5/14/22/29/40/49/65 粘贴地砖/粘贴墙地砖,first-pass,pending
+level_floor,1,无独立找平行；行5 备注为32.5号水泥中粗砂，是否含找平待仲裁,first-pass,pending
+grout,0,行118 美缝 320㎡（美缝替代填缝）,first-pass,pending
+threshold,1,无门槛石/过门石；行119 大理石台面17米用途为台面,first-pass,pending
+sill,0,行116 窗台、台面大理石,first-pass,pending
+skirting,0,行9/18/26/36/46/59 铝合金踢脚线,first-pass,pending
+pipe_wrap,0,行117 包下水管 2根,first-pass,pending
+ceiling,0,行15/23/31/42/51/64/69 石膏板吊顶/铝扣板/防水石膏板,first-pass,pending
+door_install,0,行37/45/58 套装门 2371.2/套,first-pass,pending
+door_frame,0,行37 备注：门框400 门扇2600，套装门含门套,first-pass,pending
+wall_base,0,行2/12/20/28/39/48/61 墙顶面基层处理,first-pass,pending
+putty,0,行2 备注：批刮耐水腻子平均两遍打磨,first-pass,pending
+primer,1,行1/11 备注只写面漆两遍，全文无底漆,first-pass,pending
+topcoat,0,行1/11/19/27/38/47/60 滚涂立邦乳胶漆,first-pass,pending
+interface_agent,1,全文无墙固、界面剂；行3 仅石膏找平,first-pass,pending
+sanitary,0,行82/83/85/93/94/95 洗脸盆/坐便器/淋浴器,first-pass,pending
+switch_install,0,行111 开关面板 1项 1872,first-pass,pending
+light_install,0,行7/8/16/17 筒灯/灯带/线性灯/集成灯,first-pass,pending
+clean,0,行120 保洁费 170㎡×5.2,first-pass,pending
+mgmt_fee,1,全文无管理费/工程管理费,first-pass,pending
+water_pipe,0,行110 水路（预收）据实结算 4项×1404,first-pass,pending
+wire,0,行109 电路改造 170㎡×72.8=12376,first-pass,pending
+floor_drain,0,行84/96/107 地漏 2个×104,first-pass,pending

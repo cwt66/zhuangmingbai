@@ -3,7 +3,8 @@
     "version": "0.1",
     "note": "工序模板 v0：按房型场景定义必做项。W3 用 30 份单据做人工校验后修订（增删由标注仲裁会决定）。",
     "old_house_note": "老房翻新在基础模板上增加拆旧、铲墙、清运、保护、找平、防潮等高频增项项",
-    "new_house_note": "新房毛坯：不含拆旧/铲墙/清运（但含少量保护与保洁）"
+    "new_house_note": "新房毛坯：不含拆旧/铲墙/清运（但含少量保护与保洁）",
+    "v0_1_note": "v0.1：依据第三方「基础装修套餐施工项目表」（32 行，外部标准清单）补齐 drain/water_pipe/wire；tile_corner 与 wp_height 暂不加入模板，理由见 装明白_校赛材料/评测方法学_可信度说明.md（倒角可能已含在贴砖工费、防水高度属参数而非工序）"
   },
   "old_house": [
     "demo_putty",
@@ -43,7 +44,8 @@
     "clean",
     "caulk",
     "material_lift",
-    "mgmt_fee"
+    "mgmt_fee",
+    "floor_drain"
   ],
   "new_house": [
     "mep",
@@ -70,6 +72,9 @@
     "switch_install",
     "light_install",
     "clean",
-    "mgmt_fee"
+    "mgmt_fee",
+    "water_pipe",
+    "wire",
+    "floor_drain"
   ]
 }

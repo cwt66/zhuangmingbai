@@ -155,6 +155,9 @@ def find_missing(quote, others, template, onto, rule, coverage=None):
     texts = [_row_text(r) for r in quote["rows"]]
     ev = (coverage or {}).get("evidence") or {}
     absorbed_by = (coverage or {}).get("soft", {}).get("absorbed_by") or {}
+    # 父类目吸收：只写「水电改造」这一行时，电/水的子项已含在里面，不应再判漏。
+    # 与「别名把同一工序拆开」是相反方向的问题，必须显式声明（见 coverage_v0.json absorb）。
+    absorb = (coverage or {}).get("absorb") or {}
 
     def present(cid):
         """模板项是否已被满足：概念命中，或行项文本里出现其证据词。"""
@@ -167,6 +170,8 @@ def find_missing(quote, others, template, onto, rule, coverage=None):
         # 类目级覆盖：模板项是"水电改造"这类父类目时，只要已有同类目行项即视为未漏
         # （真实报价单按材料/线路逐行列，不会出现"水电改造"这四个字）
         if cid == "mep" and "mep" in have_cats:
+            continue
+        if any(p_ in have for p_ in absorb.get(cid, [])):
             continue
         # 文本证据覆盖：真实报价单是复合行，一行可含多个工序。
         # 「墙面基础处理+批嵌砂光」同时是基层处理与批腻子，仅靠概念 1:1 对齐
