@@ -5,45 +5,50 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>装明白 · 解析校对台</title>
 <style>
-  :root{--ink:#1f2329;--muted:#646a73;--line:#e5e6eb;--bg:#f7f8fa;--blue:#185fa5;--blue-bg:#e8f3ff;--amber:#b95000;--amber-bg:#fff7e8;--green:#0f7b4f;--green-bg:#e8f7ef}
+  :root{--ink:#0A0A0A;--muted:#6B7280;--faint:#8A877F;--line:#E4E2DC;--bg:#F2F1EC;--paper:#FAFAF8;--ikb:#002FA7;--ikb-bg:#EDF1FA;--amber:#B45309;--amber-bg:#FBF3E8;--green:#0F7B4F;--green-bg:#EAF4EE}
   *{box-sizing:border-box}
-  body{margin:0;font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;color:var(--ink);background:#fff;line-height:1.6}
-  header{padding:22px 28px 14px;border-bottom:1px solid var(--line)}
-  h1{margin:0;font-size:20px;font-weight:600}
-  .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;color:var(--ink);background:var(--paper);line-height:1.6}
+  .masthead{background:var(--ikb);color:#fff;padding:8px 28px;display:flex;justify-content:space-between;align-items:baseline}
+  .masthead .brand{font-weight:700;letter-spacing:.12em;font-size:12px}
+  .masthead .brand span{opacity:.75;font-weight:400;margin-left:10px;font-size:10px;letter-spacing:.28em}
+  .masthead .no{font-size:11px;letter-spacing:.08em;opacity:.92}
+  header{padding:20px 28px 14px;border-bottom:2px solid var(--ink)}
+  h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
+  .sub{color:var(--faint);font-size:13px;margin-top:4px}
   .wrap{padding:18px 28px 40px}
   .tabs{display:flex;gap:8px;margin:8px 0 14px;flex-wrap:wrap}
-  .tab{padding:7px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13px;cursor:pointer}
-  .tab.active{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
-  .tab .dot{display:inline-block;min-width:18px;padding:0 5px;margin-left:6px;border-radius:9px;background:var(--amber-bg);color:var(--amber);font-size:11px;text-align:center}
+  .tab{padding:7px 14px;border:1px solid var(--line);border-radius:3px;background:#fff;font-size:13px;cursor:pointer}
+  .tab.active{border-color:var(--ikb);color:var(--ikb);background:var(--ikb-bg);font-weight:600}
+  .tab .dot{display:inline-block;min-width:18px;padding:0 5px;margin-left:6px;border-radius:2px;background:var(--amber-bg);color:var(--amber);font-size:11px;text-align:center}
   .stats{display:flex;gap:12px;margin:6px 0 16px;flex-wrap:wrap}
-  .stat{border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-width:130px}
+  .stat{border:1px solid var(--line);border-top:2px solid var(--ink);border-radius:0;padding:10px 14px;min-width:130px;background:#fff}
   .stat .l{font-size:11px;color:var(--muted)}
-  .stat .v{font-size:18px;font-weight:600;margin-top:2px}
+  .stat .v{font-size:18px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
   table{border-collapse:collapse;width:100%;font-size:13px}
-  th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:middle}
-  th{background:var(--bg);font-weight:500;text-align:left;position:sticky;top:0}
+  th,td{border:none;border-bottom:1px solid var(--line);padding:6px 8px;vertical-align:middle}
+  th{font-size:11px;color:var(--muted);letter-spacing:.05em;font-weight:600;text-align:left;position:sticky;top:0;background:var(--paper);border-bottom:2px solid var(--ink)}
   tr.low{background:var(--amber-bg)}
   tr.done{background:var(--green-bg)}
-  input,select{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fff;width:100%}
-  input.num{text-align:right}
+  input,select{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:3px;background:#fff;width:100%}
+  input.num{text-align:right;font-variant-numeric:tabular-nums}
   td.amt{text-align:right;font-variant-numeric:tabular-nums}
-  .badge{display:inline-block;padding:1px 7px;border-radius:9px;font-size:11px}
-  .b-low{background:var(--amber-bg);color:var(--amber)}
-  .b-ok{background:var(--green-bg);color:var(--green)}
-  .b-mid{background:var(--blue-bg);color:var(--blue)}
+  .badge{display:inline-block;padding:1px 7px;border-radius:2px;font-size:11px;border:1px solid}
+  .b-low{background:var(--amber-bg);color:var(--amber);border-color:var(--amber)}
+  .b-ok{background:var(--green-bg);color:var(--green);border-color:var(--green)}
+  .b-mid{background:var(--ikb-bg);color:var(--ikb);border-color:var(--ikb)}
   .bar{display:flex;gap:10px;margin:14px 0}
-  button{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer}
-  button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
-  button.ghost{color:var(--muted)}
-  .note{margin-top:18px;padding:12px 14px;background:var(--bg);border-radius:8px;color:var(--muted);font-size:12px}
-  .err{padding:16px;background:var(--amber-bg);color:var(--amber);border-radius:8px;margin:20px 0}
-  @media print{header,.bar,.tabs{display:none}body{font-size:11px}}
+  button{font:inherit;padding:8px 14px;border-radius:3px;border:1px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer}
+  button.primary{background:var(--ikb);border-color:var(--ikb);color:#fff;font-weight:600}
+  button.ghost{color:var(--muted);border-color:var(--line)}
+  .note{margin-top:18px;padding:12px 14px;background:var(--bg);border-left:3px solid var(--ikb);color:var(--muted);font-size:12px;border-radius:0}
+  .err{padding:16px;background:var(--amber-bg);color:var(--amber);border-left:3px solid var(--amber);margin:20px 0;border-radius:0}
+  @media print{.masthead,header,.bar,.tabs{display:none}body{font-size:11px}}
 </style>
 </head>
 <body>
+<div class="masthead"><div class="brand">装明白<span>COMPUTABLE AUDIT</span></div><div class="no">解析校对台</div></div>
 <header>
-  <h1>装明白 · 解析校对台</h1>
+  <h1>解析校对台</h1>
   <div class="sub">VLM 解析结果逐行校对：低置信度标黄 → 修改 → 确认 → 导出 CSV 进入审计引擎</div>
 </header>
 <div class="wrap">
@@ -78,7 +83,7 @@ if (!window.REVIEW_DATA) {
     const pending = q.rows.filter(r => !r.confirmed && r.conf < 0.85).reduce((s,r)=>s+r.amount,0);
     return `<div class="stats">
       <div class="stat"><div class="l">单据行数</div><div class="v">${q.rows.length}</div></div>
-      <div class="stat"><div class="l">低置信度待确认</div><div class="v" style="color:${low?'#b95000':'#0f7b4f'}">${low}</div></div>
+      <div class="stat"><div class="l">低置信度待确认</div><div class="v" style="color:${low?'#B45309':'#0F7B4F'}">${low}</div></div>
       <div class="stat"><div class="l">待确认金额</div><div class="v">¥${pending.toLocaleString()}</div></div>
       <div class="stat"><div class="l">当前合计</div><div class="v">¥${q.rows.reduce((s,r)=>s+r.amount,0).toLocaleString()}</div></div>
     </div>`;

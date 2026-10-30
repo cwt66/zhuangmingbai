@@ -16,11 +16,13 @@
 """
 import csv
 import difflib
+import hashlib
 import json
 import os
 import re
 import statistics
 from collections import defaultdict
+from datetime import datetime
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(BASE, "data")
@@ -567,49 +569,89 @@ HTML_TPL = """<!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8">
 <title>装明白 · 报价审计报告</title>
 <style>
-body{font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;color:#1f2329;background:#fff;margin:0;padding:40px 56px;line-height:1.7}
-h1{font-size:26px;margin:0 0 6px;font-weight:600}
-.sub{color:#646a73;font-size:13px;margin-bottom:28px}
-.kpis{display:flex;gap:16px;margin:24px 0}
-.kpi{flex:1;border:1px solid #e5e6eb;border-radius:10px;padding:16px 18px}
-.kpi .l{font-size:12px;color:#646a73}
-.kpi .v{font-size:24px;font-weight:600;margin-top:6px}
-.kpi .n{font-size:12px;color:#8f959e;margin-top:4px}
-table{border-collapse:collapse;width:100%;margin:12px 0 24px;font-size:13px}
-th,td{border:1px solid #e5e6eb;padding:8px 10px;text-align:left;vertical-align:top}
-th{background:#f7f8fa;font-weight:500}
-td.num,th.num{text-align:right}
-h2{font-size:18px;margin:34px 0 10px;font-weight:600;border-left:3px solid #185fa5;padding-left:10px}
-.note{background:#f7f8fa;border-radius:8px;padding:12px 16px;font-size:13px;color:#4e5969;margin:16px 0}
-.tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;background:#e8f3ff;color:#185fa5}
-.bar{height:10px;background:#e8f3ff;border-radius:5px;position:relative;margin-top:4px}
-.bar i{display:block;height:10px;background:#185fa5;border-radius:5px}
-.barcell{min-width:160px}
-footer{margin-top:40px;color:#8f959e;font-size:12px;border-top:1px solid #e5e6eb;padding-top:16px}
-@media print{body{padding:20mm}.kpis{break-inside:avoid}tr{break-inside:avoid}}
+:root{--ink:#0A0A0A;--paper:#FAFAF8;--ikb:#002FA7;--amber:#B45309;--grey:#6B7280;--hair:#E4E2DC;--faint:#8A877F}
+*{box-sizing:border-box}
+body{font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;color:var(--ink);background:var(--paper);margin:0;line-height:1.75;font-size:14px}
+.masthead{background:var(--ikb);color:#fff;padding:10px 48px;display:flex;justify-content:space-between;align-items:baseline}
+.masthead .brand{font-weight:700;letter-spacing:.12em;font-size:13px}
+.masthead .brand span{opacity:.75;font-weight:400;margin-left:10px;font-size:11px;letter-spacing:.28em}
+.masthead .no{font-size:12px;letter-spacing:.08em;opacity:.92;font-variant-numeric:tabular-nums}
+.wrap{max-width:980px;margin:0 auto;padding:0 48px 56px}
+h1{font-size:34px;line-height:1.25;margin:38px 0 6px;font-weight:700;letter-spacing:-.01em}
+.sub{color:var(--faint);font-size:13px;margin-bottom:8px}
+.meta{font-size:12px;color:var(--grey);margin-bottom:24px}
+.meta code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;background:#EFEEE9;padding:2px 6px;border-radius:3px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);border-top:2px solid var(--ink);border-bottom:1px solid var(--hair);margin:22px 0 30px}
+.kpi{padding:16px 20px;border-left:1px solid var(--hair)}
+.kpi:first-child{border-left:none;padding-left:0}
+.kpi .l{font-size:12px;color:var(--grey)}
+.kpi .v{font-size:30px;font-weight:700;margin:2px 0;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi .n{font-size:12px;color:var(--faint)}
+h2{font-size:15px;margin:34px 0 12px;font-weight:700;letter-spacing:.05em}
+h2 .idx{color:var(--ikb);margin-right:10px;font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;margin:10px 0 26px;font-size:13px}
+th{font-size:11px;font-weight:600;color:var(--grey);letter-spacing:.05em;text-align:left;padding:8px 10px;border-bottom:2px solid var(--ink);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--hair);vertical-align:top}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:1px solid var(--ink)}
+.bar{height:6px;background:#EFEEE9;position:relative;margin-top:5px;width:140px}
+.bar i{display:block;height:6px;background:var(--ikb)}
+.barcell{min-width:170px}
+.tag{display:inline-block;padding:0 8px;font-size:11px;font-weight:600;letter-spacing:.04em;border:1px solid;white-space:nowrap}
+.tag.auto{color:var(--ikb);border-color:var(--ikb)}
+.tag.review{color:var(--amber);border-color:var(--amber)}
+.tag.manual{color:var(--grey);border-color:var(--grey)}
+.evid{font-size:12px;color:var(--grey)}
+.evid b{color:var(--ink);font-weight:600}
+.evid code{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:#EFEEE9;padding:1px 5px;border-radius:3px}
+.note{border-left:3px solid var(--ikb);background:#F2F1EC;padding:12px 16px;font-size:13px;color:#3D3B36;margin:14px 0 26px}
+.concl{border-top:2px solid var(--ink);margin-top:38px;padding-top:12px}
+.concl ul{margin:8px 0;padding-left:1.2em}
+.concl li{margin:6px 0}
+footer{margin-top:44px;padding-top:14px;border-top:1px solid var(--hair);color:var(--faint);font-size:11.5px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+footer code{font-family:ui-monospace,Menlo,monospace}
+@media print{body{background:#fff;padding:14mm 16mm}.masthead{margin:-14mm -16mm 8mm;padding:10px 16mm}.wrap{max-width:none;padding:0}.kpis,tr,.note{break-inside:avoid}}
 </style></head><body>
-<h1>装明白 · 报价审计报告</h1>
-<div class="sub">可计算审计（Computable Audit）｜80㎡ 老房翻新场景｜只做计费核对，不判断贵不贵</div>
+<div class="masthead"><div class="brand">装明白<span>COMPUTABLE AUDIT</span></div><div class="no">{{DOC_NO}}</div></div>
+<div class="wrap">
+<h1>{{TITLE}}</h1>
+<div class="sub">可计算审计报告 —— 只做计费核对，不判断贵不贵</div>
+<div class="meta">{{META}}</div>
 <div class="kpis">{{KPIS}}</div>
-<h2>一、总览</h2>
+<h2><span class="idx">01</span>总览</h2>
 {{SUMMARY}}
 <div class="note">{{NOTE}}</div>
 {{SECTIONS}}
-<h2>结论口径</h2>
+<div class="concl">
+<h2><span class="idx">{{CONCL_IDX}}</span>结论口径</h2>
 <ul>
 <li>本报告不判断哪家便宜，只回答：缺了什么、重了什么、哪些口径不可核、补漏后真实成本是多少。</li>
 <li>最低报价不等于最低成本：补齐漏项后排序会变化；开口项另计敞口。</li>
 <li>低置信度结论不进入核减金额，只进入待确认清单——宁可少报，不可错报。</li>
 </ul>
-<footer>装明白 v0.2 引擎自动生成｜证据链：原表行号 + 对照基准 + 计算公式 + 置信度｜置信度校准与 ECE 报告见评测文档</footer>
-</body></html>"""
+</div>
+<footer><div>装明白 v0.2 引擎自动生成｜证据链：原表行号 + 对照基准 + 计算公式 + 置信度</div><div>判定指纹 <code>{{FP}}</code>｜ECE 校准报告见评测文档</div></footer>
+</div></body></html>"""
+
+
+def _report_fingerprint(res):
+    """报告判定指纹：对审计结果做规范化序列化后取 sha256 前 16 位。
+    与 scripts/snapshot_predictions.py 的冻结口径同源（sort_keys + ensure_ascii=False）。"""
+    body = json.dumps(res, sort_keys=True, ensure_ascii=False, default=str)
+    return hashlib.sha256(body.encode()).hexdigest()[:16]
 
 
 def build_html(quotes, res):
+    fp = _report_fingerprint(res)
+    doc_no = "№ ZMB-%s-%s" % (datetime.now().strftime("%Y%m%d"), fp[:4])
+    title = "%d 家报价 · 可计算审计" % len(quotes) if len(quotes) > 1 else "单份报价 · 可计算审计"
+    meta = ("%s ｜ 生成于 %s ｜ 判定结果可由 <code>out/audit_result.json</code> 逐条复核"
+            % (quotes[0].get("scene", "多单对比场景"), datetime.now().strftime("%Y-%m-%d %H:%M")))
     kpis = []
     for q in quotes:
         r = res[q["label"]]
-        kpis.append('<div class="kpi"><div class="l">%s · 真实成本</div><div class="v">%s</div>'
+        kpis.append('<div class="kpi"><div class="l">%s · 真实成本</div>'
+                    '<div class="v">%s <small>元</small></div>'
                     '<div class="n">报价 %s ｜ 漏项 %d 项 ｜ 重复 %d 项</div></div>' %
                     (q["label"], fmt_money(r["effective"]), fmt_money(q["total"]),
                      len(r["missing"]), len(r["duplicates"])))
@@ -633,35 +675,45 @@ def build_html(quotes, res):
     note = ("漏项成本 = 按同批报价横向参照补齐要花的钱（不是省钱）；重复计价剔除 = 可从总价砍掉的重复项；"
             "真实成本 = 总价 + 漏项 − 重复；风险敞口单列，不计入。")
     secs = []
+    idx = 1
     for q in quotes:
         r = res[q["label"]]
-        h = ["<h2>%s 明细</h2>" % q["label"],
+        idx += 1
+        h = ["<h2><span class='idx'>%02d</span>%s 明细</h2>" % (idx, q["label"]),
              "<p>总价 <b>%s</b>；漏项补项 <b>%s</b>；重复剔除 <b>%s</b>；真实成本 <b>%s</b>。</p>" %
              (fmt_money(q["total"]), fmt_money(r["missing_cost"]), fmt_money(r["duplicate_cut"]), fmt_money(r["effective"]))]
         if r["missing"]:
             h.append("<table><tr><th>漏项工序</th><th class='num'>参照金额</th><th>参照来源</th><th class='num'>置信度</th><th>档位</th></tr>")
             for m in r["missing"]:
                 src = "、".join(x["quote"] for x in m["ref_source"]) or "无参照"
-                h.append("<tr><td>%s</td><td class='num'>%s</td><td>%s</td><td class='num'>%.2f</td><td><span class='tag'>%s</span></td></tr>" %
-                         (m["concept"], fmt_money(m["ref_amount"]), src, m["confidence"], m["tier"]))
+                h.append("<tr><td>%s</td><td class='num'>%s</td><td class='evid'>%s</td><td class='num'>%.2f</td>"
+                         "<td><span class='tag %s'>%s</span></td></tr>" %
+                         (m["concept"], fmt_money(m["ref_amount"]), src, m["confidence"], m["tier"], m["tier"]))
             h.append("</table>")
         if r["duplicates"]:
             h.append("<table><tr><th>重复工序</th><th>行号</th><th class='num'>金额</th><th>依据</th><th class='num'>置信度</th></tr>")
             for d in r["duplicates"]:
-                h.append("<tr><td>%s</td><td>%s</td><td class='num'>%s</td><td>%s</td><td class='num'>%.2f</td></tr>" %
-                         (d["concept"], ",".join(d["lines"]), fmt_money(d["amount"]), d["evidence"]["basis"], d["confidence"]))
+                h.append("<tr><td>%s</td><td class='evid'><code>%s</code></td><td class='num'>%s</td>"
+                         "<td class='evid'>%s</td><td class='num'>%.2f</td></tr>" %
+                         (d["concept"], ",".join(d["lines"]), fmt_money(d["amount"]),
+                          d["evidence"]["basis"], d["confidence"]))
             h.append("</table>")
         if r["risks"]:
             h.append("<table><tr><th>行号</th><th>项目</th><th>问题</th><th>依据</th><th>档位</th></tr>")
             for x in r["risks"][:12]:
                 ln = x.get("line") or ",".join(x.get("lines", []))
-                h.append("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><span class='tag'>%s</span></td></tr>" %
-                         (ln, x["concept"], x["issue"], x["evidence"]["basis"], x["tier"]))
+                h.append("<tr><td class='evid'><code>%s</code></td><td>%s</td><td>%s</td>"
+                         "<td class='evid'>%s</td><td><span class='tag %s'>%s</span></td></tr>" %
+                         (ln, x["concept"], x["issue"], x["evidence"]["basis"], x["tier"], x["tier"]))
             h.append("</table>")
         secs.append("".join(h))
-    return (HTML_TPL.replace("{{KPIS}}", "".join(kpis))
+    return (HTML_TPL.replace("{{DOC_NO}}", doc_no).replace("{{TITLE}}", title)
+            .replace("{{META}}", meta)
+            .replace("{{KPIS}}", "".join(kpis))
             .replace("{{SUMMARY}}", summary).replace("{{NOTE}}", note)
-            .replace("{{SECTIONS}}", "".join(secs)))
+            .replace("{{SECTIONS}}", "".join(secs))
+            .replace("{{CONCL_IDX}}", "%02d" % (idx + 1))
+            .replace("{{FP}}", fp))
 
 
 def build_review_data(quotes, onto):

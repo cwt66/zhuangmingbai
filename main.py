@@ -39,7 +39,7 @@ SAMPLES = [
 ]
 
 CSS = """
-:root{--paper:#F6F4EF;--ink:#12181F;--ink2:#56606C;--amber:#C8791E;--line:#DCD6C8;--red:#B33A2B}
+:root{--paper:#FAFAF8;--ink:#0A0A0A;--ink2:#56606C;--amber:#002FA7;--line:#E4E2DC;--red:#B33A2B}
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);
  font-family:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
@@ -52,23 +52,23 @@ h1{font-size:52px;line-height:1.15;margin:14px 0 10px;letter-spacing:-1px}
 .lead{font-size:19px;color:var(--ink2);line-height:1.7;max-width:760px}
 .rule{height:2px;background:var(--ink);margin:34px 0 0}
 .grid{display:grid;grid-template-columns:1.35fr .95fr;gap:44px;margin-top:38px}
-.card{background:#fff;border:1px solid #E4DED0;border-radius:4px;padding:30px}
+.card{background:#fff;border:1px solid #E4E2DC;border-radius:3px;padding:30px;border-top:2px solid var(--ink)}
 .card h2{font-size:20px;margin:0 0 6px}
 .card p{font-size:15px;color:var(--ink2);line-height:1.7;margin:0 0 18px}
-.drop{border:1.5px dashed #CFC7B4;border-radius:4px;padding:26px;text-align:center;background:#FBFAF6}
+.drop{border:1.5px dashed #C9C5BA;border-radius:3px;padding:26px;text-align:center;background:#fff}
 .drop input{display:block;margin:0 auto;font-size:14px;color:var(--ink2)}
 .btn{display:inline-block;border:0;cursor:pointer;background:var(--ink);color:#fff;
  font-size:17px;font-weight:600;padding:14px 30px;border-radius:3px;margin-top:20px;font-family:inherit}
-.btn:hover{background:#1E2A36}
+.btn:hover{background:var(--amber)}
 .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--ink);padding:12px 24px}
-.meta{font-size:13px;color:#8A8578;margin-top:12px;line-height:1.7}
+.meta{font-size:13px;color:#8A877F;margin-top:12px;line-height:1.7}
 ol.steps{padding-left:20px;margin:0;color:var(--ink2);font-size:15px;line-height:2}
 table.s{margin-top:22px;border-collapse:collapse;width:100%;font-size:14px}
 table.s td{border-bottom:1px solid var(--line);padding:9px 0;color:var(--ink2)}
 table.s td:first-child{color:var(--ink);font-weight:600}
 .err{background:#fff;border-left:4px solid var(--red);padding:22px 26px;margin-top:30px}
 .err h2{margin:0 0 8px;font-size:20px}
-.nav{position:sticky;top:0;z-index:9;background:rgba(246,244,239,.95);border-bottom:1px solid var(--line);
+.nav{position:sticky;top:0;z-index:9;background:rgba(250,250,248,.95);border-bottom:1px solid var(--line);
  padding:12px 32px;font-size:14px;color:var(--ink2);backdrop-filter:blur(6px)}
 .nav b{color:var(--ink)}
 .nav a{margin-right:18px}
