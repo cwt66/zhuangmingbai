@@ -1,0 +1,33 @@
+MIT License
+
+Copyright (c) 2026 装明白 (Zhuang Mingbai)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+说明（非许可证正文）
+
+本项目为第十一届华为 ICT 大赛中国创新赛赛题1 参赛作品。
+
+数据相关：仓库内 `data/real/` 下的真实报价单来自公开装修日记，仅用于算法回归测试，
+不构成任何定价建议，也不对原始数据的真实性作担保。`data/samples/` 下的三份样例
+为结构取自真实晒单、金额重制的合成数据。
+
+本软件不构成法律、财务或工程意见。
