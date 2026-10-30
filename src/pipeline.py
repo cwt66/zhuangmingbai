@@ -27,6 +27,7 @@ DATA = os.path.join(BASE, "data")
 OUT = os.path.join(BASE, "out")
 
 PUNCT = re.compile(r"[\s\-—_（）()【】\[\]、，,。.:：;；/\\|·\"'“”‘’]+")
+PAREN = re.compile(r"[（(][^）)]*[）)]")
 
 
 def norm(s):
@@ -49,13 +50,19 @@ class Ontology:
                 self.alias.setdefault(norm(a), it["id"])
 
     def align(self, name):
-        n = norm(name)
+        # 真实单据常把规格写进括号：「铺墙砖（300*450）」——先按原名匹配，再试去括号后的名字
+        cands = [norm(name)]
+        stripped = norm(PAREN.sub("", name or ""))
+        if stripped and stripped != cands[0]:
+            cands.append(stripped)
+        for n in cands:
+            if n and n in self.alias:
+                cid = self.alias[n]
+                exact = norm(self.by_id[cid]["n"]) == n
+                return cid, (0.98 if exact else 0.95), ("exact" if exact else "alias")
+        n = max(cands, key=len)
         if not n:
             return None, 0.0, "empty"
-        if n in self.alias:
-            cid = self.alias[n]
-            exact = norm(self.by_id[cid]["n"]) == n
-            return cid, (0.98 if exact else 0.95), ("exact" if exact else "alias")
         best, best_r = None, 0.0
         for a, cid in self.alias.items():
             r = difflib.SequenceMatcher(None, n, a).ratio()
@@ -105,9 +112,14 @@ def tier(c):
 
 def find_missing(quote, others, template, onto, rule):
     have = {r["cid"] for r in quote["rows"] if r["cid"]}
+    have_cats = {onto.by_id[c].get("c") for c in have if c in onto.by_id}
     out = []
     for cid in template:
         if cid in have:
+            continue
+        # 类目级覆盖：模板项是"水电改造"这类父类目时，只要已有同类目行项即视为未漏
+        # （真实报价单按材料/线路逐行列，不会出现"水电改造"这四个字）
+        if cid == "mep" and "mep" in have_cats:
             continue
         refs = []
         for o in others:
@@ -123,21 +135,32 @@ def find_missing(quote, others, template, onto, rule):
     return out
 
 
+ZONE_RE = re.compile(r"分区[:：]\s*([^\s;；,，|]+)")
+
+
+def _zone(row):
+    """取行项所属分区（客餐厅 / 主卧 / 厨房 …）。无分区标注时返回空串。"""
+    m = ZONE_RE.search(row.get("spec") or "")
+    return m.group(1) if m else ""
+
+
 def find_duplicates(quote, onto, rule_pair, rule_same, template):
     out = []
     by_cid = defaultdict(list)
     for r in quote["rows"]:
         if r["cid"]:
-            by_cid[r["cid"]].append(r)
-    for cid, lines in by_cid.items():
+            # 按「概念 + 分区」分组：不同房间各做一次吊顶不是重复计价
+            by_cid[(r["cid"], _zone(r))].append(r)
+    for (cid, zone), lines in by_cid.items():
         if len(lines) >= 2:
             ls = sorted(lines, key=lambda x: -x["amount"])
             dup = round(sum(x["amount"] for x in ls[1:]), 2)
             c = confidence(rule_same["strength"], 0.95, min(x["align_conf"] for x in lines), cid in template)
             out.append({"cid": cid, "concept": onto.by_id[cid]["n"], "rule": rule_same["id"],
                         "lines": [x["no"] for x in lines], "amount": dup, "confidence": c, "tier": tier(c),
-                        "evidence": {"basis": "本体归一后同一概念多行计费",
-                                     "formula": "count(concept) >= 2",
+                        "evidence": {"basis": ("本体归一后同一概念在「%s」内多行计费" % zone) if zone
+                                               else "本体归一后同一概念多行计费",
+                                     "formula": "count(concept, zone) >= 2",
                                      "line_nos": [x["no"] for x in lines]}})
     present = {r["cid"] for r in quote["rows"] if r["cid"]}
     for p in rule_pair["pairs"]:

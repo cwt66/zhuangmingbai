@@ -80,7 +80,7 @@
           "formula": "count(concept) ≥ 2"
         }
       },
-      "strength": 0.9
+      "strength": 0.7
     },
     {
       "id": "R4_vague_term",
