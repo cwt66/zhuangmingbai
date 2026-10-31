@@ -1,0 +1,40 @@
+﻿cid,quote_doc,golden_state,first_annotator,second_annotator,arbitrated,note
+demo_putty,feitai,present,A1,,,
+debris_out,feitai,present,A1,,,
+protect_door,feitai,missing,A1,,,全文无门窗保护；地砖成品保护/专用地坪保护不能替代
+protect_finish,feitai,present,A1,,,
+protect_floor,feitai,present,A1,,,备注'专用地坪保护'多处=地面保护（别名表无'地坪'写法，检索盲区）
+mep,feitai,present,A1,,,
+waterproof,feitai,present,A1,,,
+wp_height,feitai,present,A1,,,防水处理面积大（30.8/38/38m2）且含卫生间墙面；原图未分高度，不作为漏项；引擎按模板保守报（防水未注明 1.8m 高度），与花溪案例同口径，接受为保守假阳性
+water_test,feitai,missing,A1,,,全文检索 闭水/蓄水/试水 零命中；防水备注仅写卷材
+pressure_test,feitai,missing,A1,,,全文检索 打压/试压 零命中
+tile_wall,feitai,present,A1,,,
+tile_floor,feitai,present,A1,,,
+level_floor,feitai,present,A1,,,
+level_wall,feitai,missing,A1,,,只有地面找平/找平二排，无墙面找平行
+tile_corner,feitai,present,A1,,,
+grout,feitai,present,A1,,present（口径分歧保留）,行121 环氧彩砂 180m2 承担填缝美缝；本体已有独立概念 epoxy_sand 但不在模板 39 项内——概念粒度分歧：模板口径下引擎报 missing 可辩护，用户口径下填缝已做。留作模板演进讨论点。
+threshold,feitai,present,A1,,,
+sill,feitai,present,A1,,,
+skirting,feitai,present,A1,,,
+pipe_wrap,feitai,present,A1,,,
+ceiling,feitai,present,A1,,,
+door_install,feitai,present,A1,,,
+door_frame,feitai,present,A1,,,
+wall_base,feitai,present,A1,,,
+putty,feitai,present,A1,,,
+primer,feitai,present,A1,,,
+topcoat,feitai,present,A1,,,
+wall_glue,feitai,present,A1,,,备注'界面剂胶'承担墙固作用，与 interface_agent 合并判定
+interface_agent,feitai,present,A1,,,
+mesh,feitai,missing,A1,,,无挂网/钢丝网字样
+corner_straight,feitai,missing,A1,,,墙砖碰角处理是阳角收边，非阴阳角找直
+sanitary,feitai,present,A1,,,
+switch_install,feitai,present,A1,,,行127 开关插座面板 2080 元（西门子/公牛），面板价含安装惯例
+light_install,feitai,missing,A1,,,全文无灯具安装（洁具/开关面板有，灯无）
+clean,feitai,present,A1,,,
+caulk,feitai,missing,A1,,,无打胶/密封胶字样
+material_lift,feitai,present,A1,,,行88 '材料采运费及上楼'（子串不匹配检索词'材料上楼'，检索盲区）
+mgmt_fee,feitai,present,A1,,,
+floor_drain,feitai,present,A1,,,
