@@ -1,0 +1,11 @@
+﻿cid,quote_doc,golden_state,first_annotator,second_annotator,arbitrated,note
+# 格式说明：
+# golden_state ∈ {present, missing, not_applicable}
+#   present        = 单据中有该工序（含别名/备注中的证据词）
+#   missing        = 单据中确实没有（真漏项候选）
+#   not_applicable = 该房型/计价体系下此项不适用（如全案含主材时不单列管理费）
+# first/second_annotator 填写标注人代号；两人不一致时 arbitrated 填仲裁结果
+# 每份单据复制本模板，cid 与 templates_v0.json 对应模板的 item id 一致
+# ==== 示例行（篱笆·卓观 old_house 模板）====
+cha_qiangpi,sh_zhuoguan,missing,A,A,,已核实：全文检索 铲/铲除/铲皮 零命中
+bi_shui,sh_zhuoguan,present,A,,,
