@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="330" viewBox="0 0 960 330" font-family="-apple-system, 'PingFang SC', 'Noto Sans SC', sans-serif">
+  <defs>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8A877F"/>
+    </marker>
+  </defs>
+  <rect width="960" height="330" fill="#FAFAF8"/>
+  <text x="40" y="38" font-size="15" font-weight="700" fill="#0A0A0A">一次判定怎么走完（翡翠台真实单据实测）</text>
+  <text x="40" y="58" font-size="11.5" fill="#6B7280">每一步都留下可回原文核对的东西：行号、基准、公式、档位</text>
+
+  <!-- 步骤 -->
+  <g font-size="11.5">
+    <!-- 1 -->
+    <rect x="40" y="80" width="160" height="120" rx="2" fill="#fff" stroke="#E4E2DC"/>
+    <text x="54" y="102" font-size="10.5" fill="#002FA7" letter-spacing="1">01 分层</text>
+    <text x="54" y="126" fill="#0A0A0A">131 行 → 123 工序</text>
+    <text x="54" y="146" fill="#0A0A0A">+ 8 行汇总取费</text>
+    <text x="54" y="170" font-size="10.5" fill="#8A877F">判据：算术门控</text>
+    <text x="54" y="186" font-size="10.5" fill="#8A877F">不按关键词一刀切</text>
+
+    <!-- 2 -->
+    <rect x="216" y="80" width="160" height="120" rx="2" fill="#fff" stroke="#E4E2DC"/>
+    <text x="230" y="102" font-size="10.5" fill="#002FA7" letter-spacing="1">02 对齐</text>
+    <text x="230" y="126" fill="#0A0A0A">102 / 123 = 82.9%</text>
+    <text x="230" y="146" fill="#0A0A0A">21 行标为未对齐</text>
+    <text x="230" y="170" font-size="10.5" fill="#8A877F">不假装对齐：</text>
+    <text x="230" y="186" font-size="10.5" fill="#8A877F">未对齐行不参与概念判定</text>
+
+    <!-- 3 -->
+    <rect x="392" y="80" width="160" height="120" rx="2" fill="#fff" stroke="#E4E2DC"/>
+    <text x="406" y="102" font-size="10.5" fill="#002FA7" letter-spacing="1">03 判漏 / 判重</text>
+    <text x="406" y="126" fill="#0A0A0A">漏项 8 确定 + 2 复核</text>
+    <text x="406" y="146" fill="#0A0A0A">重复 1（同区找平 182）</text>
+    <text x="406" y="170" font-size="10.5" fill="#8A877F">概念 + 证据词 + 否定语境</text>
+    <text x="406" y="186" font-size="10.5" fill="#8A877F">复合行不误判</text>
+
+    <!-- 4 -->
+    <rect x="568" y="80" width="160" height="120" rx="2" fill="#fff" stroke="#E4E2DC"/>
+    <text x="582" y="102" font-size="10.5" fill="#002FA7" letter-spacing="1">04 对账</text>
+    <text x="582" y="126" fill="#0A0A0A">153,384 + 11,748</text>
+    <text x="582" y="146" fill="#0A0A0A">vs 印刷 176,843</text>
+    <text x="582" y="170" font-size="10.5" fill="#C2410C">差 11,711 → 不符</text>
+    <text x="582" y="186" font-size="10.5" fill="#8A877F">差额本身是一条结论</text>
+
+    <!-- 5 -->
+    <rect x="744" y="80" width="176" height="120" rx="2" fill="#002FA7"/>
+    <text x="758" y="102" font-size="10.5" fill="#B9C6F2" letter-spacing="1">05 出报告 / 问询单</text>
+    <text x="758" y="126" fill="#fff">编号 + 判定指纹</text>
+    <text x="758" y="146" fill="#fff">每条带行号/基准/公式</text>
+    <text x="758" y="170" font-size="10.5" fill="#D7DFF7">17 条问询可直接发出</text>
+    <text x="758" y="186" font-size="10.5" fill="#D7DFF7">审计包可离线复算</text>
+  </g>
+
+  <!-- 箭头 -->
+  <line x1="200" y1="140" x2="214" y2="140" stroke="#8A877F" marker-end="url(#b)"/>
+  <line x1="376" y1="140" x2="390" y2="140" stroke="#8A877F" marker-end="url(#b)"/>
+  <line x1="552" y1="140" x2="566" y2="140" stroke="#8A877F" marker-end="url(#b)"/>
+  <line x1="728" y1="140" x2="742" y2="140" stroke="#8A877F" marker-end="url(#b)"/>
+
+  <!-- 底线 -->
+  <rect x="40" y="226" width="880" height="66" rx="2" fill="#F2F1EC"/>
+  <text x="56" y="250" font-size="11.5" fill="#0A0A0A">每一步都能被单独质疑：分层错了看行数、对齐错了看未对齐行、判漏错了回原文搜关键词、对账错了拿计算器加一遍。</text>
+  <text x="56" y="272" font-size="11.5" fill="#6B7280">这是「不让大模型直接判」的真正理由 —— 不是能力不足，是出错时要能定位到是哪一步错了。</text>
+</svg>

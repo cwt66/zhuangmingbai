@@ -107,7 +107,8 @@ def _make_xlsx(csv_path, xlsx_path):
     import csv as _csv
     import zipfile as _zip
 
-    rows = list(_csv.reader(open(csv_path, encoding="utf-8-sig")))
+    with open(csv_path, encoding="utf-8-sig") as f:
+        rows = list(_csv.reader(f))
 
     def col(i):
         s = ""

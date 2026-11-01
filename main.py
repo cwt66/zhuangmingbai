@@ -26,6 +26,7 @@ if BASE not in sys.path:
 
 from src import pipeline  # noqa: E402
 from src import perception  # noqa: E402
+from src import inquiry as inquiry_mod  # noqa: E402
 fmt_money = pipeline.fmt_money
 
 app = FastAPI(title="装明白 · 可计算审计", version="0.3.0")
@@ -150,7 +151,7 @@ ERR = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 </div></body></html>"""
 
 NAV = """<div class="nav"><b>装明白 · 可计算审计</b>
-<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/perceive">图片识别</a><a href="/review">解析校对</a>
+<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/perceive">图片识别</a><a href="/review">解析校对</a><a href="/inquiry">问询单</a>
 <span class="right">浏览器 Ctrl/⌘+P 可另存为 PDF · <a href="/health">健康检查</a></span></div>"""
 
 
@@ -246,6 +247,27 @@ def real():
     return HTMLResponse(html)
 
 
+
+
+@app.get("/inquiry", response_class=HTMLResponse)
+def inquiry_page():
+    """把真实单据的审计结论渲染成「可以直接发给报价方」的逐条问询。
+
+    为什么要单独一屏：审计报告是给业主看的结论，问询单是给业主**拿去用**的动作。
+    绝大多数人拿到结论后不知道第一句该说什么，这一屏就是那第一句。
+    """
+    path = os.path.join(pipeline.DATA, "real", "sh_zhuoguan_halfpack.csv")
+    if not os.path.isfile(path):
+        return _err("真实单据缺失", "仓库内未找到 data/real/sh_zhuoguan_halfpack.csv。", 404)
+    try:
+        onto, templates, rules, coverage = _load_rules()
+        q = pipeline.build_line_index(pipeline.load_quote(path, "上海卓观 · 两房半包（真实单据）"), onto)
+        res = pipeline.audit([q], onto, templates, rules, coverage,
+                             template_key="old_house")[q["label"]]
+        html = inquiry_mod.to_html(inquiry_mod.build(q, res))
+    except Exception as e:  # noqa: BLE001
+        return _err("问询单生成失败", str(e), 500)
+    return HTMLResponse(html)
 
 
 @app.get("/perceive", response_class=HTMLResponse)

@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620" font-family="-apple-system, 'PingFang SC', 'Noto Sans SC', sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8A877F"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" fill="#FAFAF8"/>
+
+  <!-- 标题 -->
+  <text x="48" y="46" font-size="21" font-weight="700" fill="#0A0A0A" letter-spacing="-0.3">装明白 · 可计算审计</text>
+  <text x="48" y="70" font-size="12.5" fill="#6B7280" letter-spacing="0.4">判定能力不在代码里，在三份 JSON 里 —— 换数据即可换行业</text>
+
+  <!-- 输入 -->
+  <rect x="48" y="96" width="150" height="440" rx="2" fill="#fff" stroke="#E4E2DC"/>
+  <text x="64" y="122" font-size="11" fill="#6B7280" letter-spacing="1.2">输入</text>
+  <text x="64" y="152" font-size="13" fill="#0A0A0A">手机照片</text>
+  <text x="64" y="176" font-size="13" fill="#0A0A0A">PDF / Excel</text>
+  <text x="64" y="200" font-size="13" fill="#0A0A0A">CSV / TSV</text>
+  <text x="64" y="232" font-size="11" fill="#8A877F">编码 UTF-8 / GBK</text>
+  <text x="64" y="250" font-size="11" fill="#8A877F">表头别名自动识别</text>
+  <text x="64" y="286" font-size="11" fill="#6B7280" letter-spacing="1.2">一行样例</text>
+  <text x="64" y="310" font-size="11.5" fill="#0A0A0A">地面贴砖</text>
+  <text x="64" y="328" font-size="11.5" fill="#6B7280">m² · 40 · 75 · 3,000</text>
+
+  <!-- 感知层 -->
+  <rect x="228" y="96" width="186" height="196" rx="2" fill="#fff" stroke="#E4E2DC"/>
+  <text x="244" y="122" font-size="11" fill="#002FA7" letter-spacing="1.2">感知层 · 只负责看见</text>
+  <text x="244" y="150" font-size="12.5" fill="#0A0A0A">file（CSV/XLSX/PDF）</text>
+  <text x="244" y="174" font-size="12.5" fill="#0A0A0A">ocr_table（华为云）</text>
+  <text x="244" y="198" font-size="12.5" fill="#0A0A0A">maas（Qwen-VL）</text>
+  <text x="244" y="222" font-size="12.5" fill="#0A0A0A">mock（固定样例）</text>
+  <rect x="244" y="240" width="154" height="36" fill="#F2F1EC"/>
+  <text x="252" y="256" font-size="11" fill="#0A0A0A">逐行算术自校验</text>
+  <text x="252" y="270" font-size="10.5" fill="#6B7280">数量×单价 ≠ 合价 → 报出来</text>
+
+  <!-- 判定层 -->
+  <rect x="444" y="96" width="250" height="196" rx="2" fill="#002FA7"/>
+  <text x="460" y="122" font-size="11" fill="#B9C6F2" letter-spacing="1.2">判定层 · 零第三方依赖</text>
+  <text x="460" y="150" font-size="12.5" fill="#fff">13 条规则（R1–R13）</text>
+  <text x="460" y="172" font-size="11" fill="#D7DFF7">漏项 · 重复 · 算术 · 对账 · 口径</text>
+  <line x1="460" y1="186" x2="678" y2="186" stroke="#3B5BC4"/>
+  <text x="460" y="208" font-size="12.5" fill="#fff">三份 JSON 驱动</text>
+  <text x="460" y="228" font-size="11" fill="#D7DFF7">模板 39+28 项 · 本体 119 概念/388 别名</text>
+  <text x="460" y="246" font-size="11" fill="#D7DFF7">覆盖率词表 · 参照价库 · 范围标签</text>
+  <line x1="460" y1="260" x2="678" y2="260" stroke="#3B5BC4"/>
+  <text x="460" y="280" font-size="11" fill="#D7DFF7">三档处置：≥0.90 自动 / 0.60–0.90 复核 / &lt;0.60 转人工</text>
+
+  <!-- 表达层 -->
+  <rect x="724" y="96" width="188" height="196" rx="2" fill="#fff" stroke="#E4E2DC"/>
+  <text x="740" y="122" font-size="11" fill="#6B7280" letter-spacing="1.2">表达层</text>
+  <text x="740" y="150" font-size="12.5" fill="#0A0A0A">审计报告</text>
+  <text x="740" y="174" font-size="12.5" fill="#0A0A0A">问询单（可发给对方）</text>
+  <text x="740" y="198" font-size="12.5" fill="#0A0A0A">审计包 + 离线校验器</text>
+  <text x="740" y="222" font-size="12.5" fill="#0A0A0A">解析校对台</text>
+
+  <!-- 箭头 -->
+  <line x1="198" y1="194" x2="226" y2="194" stroke="#8A877F" marker-end="url(#a)"/>
+  <line x1="414" y1="194" x2="442" y2="194" stroke="#8A877F" marker-end="url(#a)"/>
+  <line x1="694" y1="194" x2="722" y2="194" stroke="#8A877F" marker-end="url(#a)"/>
+
+  <!-- 第二行：质量保障 -->
+  <rect x="228" y="318" width="684" height="106" rx="2" fill="#fff" stroke="#E4E2DC"/>
+  <text x="244" y="342" font-size="11" fill="#6B7280" letter-spacing="1.2">质量保障 · 判断凭什么可信</text>
+  <text x="244" y="368" font-size="12" fill="#0A0A0A">① 冻结指纹：三份预测 sha256 比对，改一个字即漂移</text>
+  <text x="244" y="390" font-size="12" fill="#0A0A0A">② 黄金标注：先标注后跑引擎（防污染），双人模板 + 仲裁字段</text>
+  <text x="244" y="412" font-size="12" fill="#0A0A0A">③ 注入实验：197 个程序已知缺陷，测检出与定位（下限校验，非召回率）</text>
+  <text x="560" y="368" font-size="12" fill="#0A0A0A">④ 文档对账：明细 + 取费 vs 印刷合计</text>
+  <text x="560" y="390" font-size="12" fill="#0A0A0A">⑤ 58 个单元测试 · 回归线 400/22,164/3,168</text>
+  <text x="560" y="412" font-size="12" fill="#0A0A0A">⑥ 审计包：任何人 30 秒离线复算</text>
+
+  <!-- 第三行：数据资产 -->
+  <rect x="228" y="442" width="684" height="94" rx="2" fill="#fff" stroke="#E4E2DC"/>
+  <text x="244" y="466" font-size="11" fill="#6B7280" letter-spacing="1.2">自有数据资产</text>
+  <text x="244" y="492" font-size="12" fill="#0A0A0A">5 份真实单据 / 603 行明细（家装 4 + 工装 1）</text>
+  <text x="244" y="514" font-size="12" fill="#0A0A0A">2 份完整黄金标注（含 not_applicable 三分类）</text>
+  <text x="560" y="492" font-size="12" fill="#0A0A0A">迁移验证：汽修维保单（引擎零改动 · 7 个测试）</text>
+  <text x="560" y="514" font-size="12" fill="#0A0A0A">17 个缺陷由真实数据打穿并修复</text>
+
+  <!-- 页脚 -->
+  <text x="48" y="580" font-size="11" fill="#8A877F">不判断贵不贵、活儿好不好、值不值；只判断漏没漏、重没重、算得对不对、说得清不清。</text>
+  <text x="48" y="600" font-size="11" fill="#8A877F">github/gitee: Cwt66/zhuangmingbai · MIT</text>
+</svg>

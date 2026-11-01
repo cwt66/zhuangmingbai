@@ -17,6 +17,7 @@
 import csv
 import difflib
 import hashlib
+import io
 import json
 import os
 import re
@@ -171,28 +172,100 @@ def reconcile(detail_rows, summary_rows):
     return out
 
 
+# 真实用户给我们的表头几乎不会正好是「项目名称/规格工艺」。Windows 版 Excel 另存 CSV
+# 默认 GBK 编码，装企模板常写「项目 / 工程量 / 金额」，从 Excel 复制粘贴则是 TAB 分隔。
+# 这些都不是边缘情况，是主流情况——所以表头要认别名，编码要认 GBK，分隔符要认 TAB。
+HEADER_ALIASES = {
+    "序号": ("序号", "编号", "序", "no", "No", "NO", "项次", "行号"),
+    "项目名称": ("项目名称", "项目", "名称", "施工项目", "工序", "工程项目", "费用名称", "材料名称", "品名"),
+    "规格工艺": ("规格工艺", "规格", "工艺", "做法", "工艺说明", "规格型号", "品牌型号", "说明"),
+    "单位": ("单位", "计量单位"),
+    "数量": ("数量", "工程量", "数 量", "工程量合计"),
+    "单价": ("单价", "综合单价", "单价(元)", "单价（元）", "单价/元"),
+    "合价": ("合价", "金额", "合计", "小计", "总价", "合价(元)", "合价（元）", "金额(元)", "金额（元）"),
+    "备注": ("备注", "备 注", "说明", "附注"),
+}
+
+_ENCODINGS = ("utf-8-sig", "gb18030", "utf-16")
+
+
+def _read_text(path):
+    """按 UTF-8(BOM) → GB18030 → UTF-16 顺序解码。
+
+    GB18030 是 GBK 的超集，覆盖 Windows Excel 的中文默认编码；放第二位是因为
+    它几乎不会解码失败（会把别的编码解成乱码），必须在 UTF-8 之后尝试。
+    返回 (文本, 实际编码)；全部失败时用替换模式，并在 meta 里标注「有损」。
+    """
+    with open(path, "rb") as f:
+        raw = f.read()
+    for enc in _ENCODINGS:
+        try:
+            return raw.decode(enc), enc
+        except (UnicodeDecodeError, UnicodeError):
+            continue
+    return raw.decode("utf-8", errors="replace"), "utf-8(有损)"
+
+
+def _sniff_delimiter(text):
+    """从表头行猜分隔符：逗号 / 制表符 / 分号 / 竖线。"""
+    head = text.split("\n", 1)[0]
+    best, best_n = ",", 0
+    for d in ("\t", ",", ";", "|"):
+        n = head.count(d)
+        if n > best_n:
+            best, best_n = d, n
+    return best
+
+
+def _map_columns(fieldnames):
+    """把实际表头映射到标准列名。先精确匹配，再别名匹配。"""
+    got = [f.strip() for f in (fieldnames or []) if f and f.strip()]
+    mapping = {}
+    for canon, aliases in HEADER_ALIASES.items():
+        if canon in got:
+            mapping[canon] = canon
+            continue
+        for g in got:
+            if g in aliases:
+                mapping[canon] = g
+                break
+    return mapping, got
+
+
 def load_quote(path, label):
+    text, encoding = _read_text(path)
+    delim = _sniff_delimiter(text)
+    reader = csv.DictReader(io.StringIO(text), delimiter=delim)
+    mapping, got = _map_columns(reader.fieldnames)
+    if "项目名称" not in mapping:
+        raise ValueError(
+            "没找到「项目名称」列。识别到的表头：%s｜支持的别名：项目/名称/施工项目/工序…"
+            % ("、".join(got) or "（空）"))
     rows = []
-    with open(path, encoding="utf-8-sig") as f:
-        for i, r in enumerate(csv.DictReader(f), start=1):
-            def num(k):
-                v = (r.get(k) or "").replace(",", "").strip()
-                try:
-                    return float(v)
-                except ValueError:
-                    return 0.0
-            rows.append({
-                "no": (r.get("序号") or str(i)).strip(),
-                "name": (r.get("项目名称") or "").strip(),
-                "spec": (r.get("规格工艺") or "").strip(),
-                "unit": (r.get("单位") or "").strip(),
-                "qty": num("数量"), "price": num("单价"), "amount": num("合价"),
-                "note": (r.get("备注") or "").strip(),
-            })
+    for i, r in enumerate(reader, start=1):
+        def cell(canon):
+            col = mapping.get(canon)
+            return (r.get(col) or "").strip() if col else ""
+
+        def num(canon):
+            v = cell(canon).replace(",", "").replace("，", "")
+            try:
+                return float(v)
+            except ValueError:
+                return 0.0
+        rows.append({
+            "no": cell("序号") or str(i),
+            "name": cell("项目名称"),
+            "spec": cell("规格工艺"),
+            "unit": cell("单位"),
+            "qty": num("数量"), "price": num("单价"), "amount": num("合价"),
+            "note": cell("备注"),
+        })
     summary = [x for x in rows if _is_summary_row(x)]
     detail = [x for x in rows if not _is_summary_row(x)]
     return {"label": label, "file": os.path.basename(path), "rows": detail,
             "summary_rows": summary,
+            "encoding": encoding, "delimiter": delim, "columns": mapping,
             "total": round(sum(x["amount"] for x in detail), 2),
             "recon": reconcile(detail, summary)}
 
