@@ -451,7 +451,12 @@ def find_unit_anomaly(quote, onto, rule):
     for r in quote["rows"]:
         if not r["cid"]:
             continue
-        default = onto.by_id[r["cid"]]["u"]
+        # 单位异常规则依赖本体里声明的「默认单位」。这不是所有领域都需要的字段
+        # （汽修按「次/套/支」计价，没有默认面积单位）——缺字段就跳过，不能崩。
+        # 这条是迁移实验（装修→汽修）跑出来的隐式依赖。
+        default = onto.by_id[r["cid"]].get("u")
+        if not default:
+            continue
         if default in ("㎡", "m") and r["unit"] == "项":
             c = confidence(rule["strength"], 0.95, r["align_conf"], True)
             out.append({"cid": r["cid"], "concept": onto.by_id[r["cid"]]["n"], "line": r["no"],
@@ -789,7 +794,7 @@ def build_markdown(quotes, res):
             e = r["exposure"][0]
             L.append(f"\n### 风险敞口（不计入核减）\n\n- {e['concept']}：现报 {fmt_money(e['current'])}，{e['basis']}，预计上浮 **{fmt_money(e['low'])}–{fmt_money(e['high'])}**。\n")
     L.append(f"\n## {cn[len(quotes)]}、跨单口径对比\n")
-    if res["_cross_unit"]:
+    if res.get("_cross_unit"):
         L.append("| 工序 | 各单位口径 | 依据 |")
         L.append("|---|---|---|")
         for x in res["_cross_unit"]:

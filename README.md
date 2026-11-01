@@ -44,7 +44,7 @@
 | 规则 DSL | ✅ **12 条**，全部可逐条审阅（`data/rules_v0.json`） |
 | 感知层 | ✅ 四 provider：`file`（CSV/XLSX/PDF 零依赖）/ `maas`（Qwen-VL）/ `ocr_table`（华为云通用表格识别）/ `mock` |
 | 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总行**；两份完整黄金标注（含 not_applicable 三分类）；注入实验 197 例 |
-| 单元测试 | ✅ **51 个全绿**（PDF 坐标 5 / 回归线 / 对账分层 9 / 四项创新 14） |
+| 单元测试 | ✅ **58 个全绿**（PDF 坐标 5 / 回归线 / 对账分层 9 / 四项创新 14 / 跨领域迁移 7） |
 | 可打印报告 | ✅ `out/audit_report.html`（判定指纹上封面，打印级版式） |
 | 解析校对台 | ✅ `web/review.html`（低置信度标黄 → 修改 → 导出 CSV） |
 | 在线 Demo | ✅ `python3 -m uvicorn main:app --port 8000` |
@@ -77,6 +77,32 @@
 | **审计包 + 离线校验器** | 45KB 的包，任何人 `python3 verify.py` 30 秒复算；改一个数字立即 FAIL |
 | **计价体系识别** | 先认「工程量清单 / 按面积 / 套餐 / 汇总列表」，再决定怎么读、提示什么 |
 | **条款 → 义务 → 验收证据** | 把「按实结算/暂定/另计」翻译成「签约前必须问什么、验收要留什么凭证」 |
+| **跨领域迁移** | 引擎零改动，只换本体/模板/覆盖率三份 JSON，同一套 13 条规则可审汽修维保单（`data/repair/` + `scripts/audit_with.py`） |
+
+### 换个行业还能用吗（迁移实验）
+
+能，而且是**跑出来的**，不是「理论上可以」：
+
+```bash
+python3 scripts/audit_with.py \
+  --ontology data/repair/ontology_repair.json \
+  --templates data/repair/templates_repair.json --template major_service \
+  --coverage data/repair/coverage_repair.json \
+  --csv data/repair/sample_major_service.csv --out out/repair
+```
+
+| 换什么 | 装修 | 汽修 |
+|---|---|---|
+| 本体 | 119 概念 / 388 别名 | 40 概念 / 97 别名 |
+| 模板 | 老房 39 / 新房 28 | 大保养 18 / 小保养 8 |
+| 规则 | 13 条 | **同一份，原样复用** |
+| 引擎代码 | `src/pipeline.py` | **同一个文件，零改动** |
+
+实测：对齐 19/19、漏项 4、重复 1、算术 1、对账差 30 元、开口条款 2 类，报告版式自动继承。
+
+> 迁移实验顺带抓出两处「只在自己领域成立」的假设（R6 直接取 `onto["u"]`、报告函数假设
+> `_cross_unit` 存在），已修并锁进 `tests/test_migration.py`。
+> **「可迁移」不是形容词，是 7 个测试用例。**
 
 > 判断凭什么可信：见 [`docs/判断正确性如何保证.md`](docs/判断正确性如何保证.md)。核心是四条——
 > 只判可判定的命题、每条结论带行号/基准/公式、真值来自四路独立来源、任何人可拿审计包离线复算。
@@ -94,7 +120,7 @@
 ```bash
 cd zhuangmingbai
 bash run_offline.sh                   # 合成三单 → out/audit_report.html
-python3 -m unittest discover -s tests # 51 个用例
+python3 -m unittest discover -s tests # 58 个用例
 ```
 
 ### 2. 在线 Demo
@@ -142,7 +168,7 @@ data/rules_v0.json      12 条审计规则
 data/coverage_v0.json   33 组证据词 + 父类吸收表
 data/real/              5 份真实单据（公开晒单/公开 PDF 的人工转录，无个人信息）
 eval/                   可复现评测：冻结指纹 / 混淆矩阵 / 黄金标注 / 对照实验协议 / A-B 框架
-tests/                  51 个单元测试（含回归线：400 / 22,164 / 3,168）
+tests/                  58 个单元测试（含回归线：400 / 22,164 / 3,168）
 scripts/                感知层 CLI / 指纹快照 / 离线包构建
 docs/                   评测报告 / 部署手册 / 缺陷登记册 / 感知层接入说明
 ```

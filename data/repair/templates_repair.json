@@ -1,0 +1,19 @@
+{
+ "meta": {
+  "version": "v0",
+  "domain": "汽车维保（迁移验证用）",
+  "note": "同一份引擎审不同领域：模板只是「这个领域里什么叫该做的事」的显式声明。键名换成 major_service / minor_service，引擎代码一行没改。",
+  "major_service_note": "大保养（4 万公里口径 18 项）：油液、三滤、点火、制动、底盘与灯检。燃油滤/变速箱油属按里程另定，不列入，避免用模板制造争议。",
+  "minor_service_note": "小保养（8 项）：机油机滤 + 常规检查，其余按需另计"
+ },
+ "major_service": [
+  "engine_oil", "oil_filter", "air_filter", "cabin_filter",
+  "spark_plug", "brake_fluid", "coolant", "tire_rotate",
+  "alignment", "brake_pad", "battery_test", "computer_diag", "inspection",
+  "chassis", "suspension", "lamp", "wiper", "ac_clean"
+ ],
+ "minor_service": [
+  "engine_oil", "oil_filter", "air_filter", "cabin_filter",
+  "brake_fluid", "inspection", "lamp", "tire_rotate"
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "meta": {
+  "version": "v0",
+  "domain": "汽车维保（迁移验证用）",
+  "note": "文本证据词：一行里出现哪些词，可以认为该工序已被覆盖。维保单的复合行比装修更常见（「更换机油机滤」「四轮保养」），这一层同样必要。",
+  "principle": "词表逐条可人工审阅；命中前仍走否定语境判断（不含/另计/按需）。"
+ },
+ "evidence": {
+  "engine_oil": ["更换机油", "全合成机油", "机油4L", "机油（"],
+  "oil_filter": ["机油滤清", "机滤", "机油格"],
+  "air_filter": ["空气滤清", "空滤"],
+  "cabin_filter": ["空调滤清", "空调格", "花粉滤"],
+  "spark_plug": ["火花塞", "火嘴"],
+  "brake_fluid": ["刹车油", "制动液"],
+  "coolant": ["防冻液", "冷却液"],
+  "atf": ["变速箱油", "波箱油", "ATF"],
+  "tire_rotate": ["轮胎换位", "前后轮换位"],
+  "alignment": ["四轮定位", "车轮定位"],
+  "brake_pad": ["刹车片", "制动片"],
+  "battery_test": ["电瓶检测", "蓄电池检测", "测压"],
+  "computer_diag": ["电脑诊断", "读取故障码", "解码"],
+  "inspection": ["全车检测", "整车检查", "例行检查"],
+  "chassis": ["底盘检查", "底盘紧固"],
+  "suspension": ["悬挂检查", "减震检查"],
+  "lamp": ["灯光检查", "灯光调试"],
+  "wiper": ["雨刮片", "雨刷"],
+  "ac_clean": ["空调清洗", "蒸发箱清洗"],
+  "brake_bleed": ["刹车排气", "排空气"]
+ },
+ "absorb": {
+  "note": "父类目吸收：只写「大保养套餐」一行时，套餐内的机油机滤等已含在其中，不应再判漏。这与家装里「水电改造」吸收强弱电是同一个机制，换个领域仍然适用。",
+  "engine_oil": ["major_package"],
+  "oil_filter": ["major_package"],
+  "air_filter": ["major_package"],
+  "cabin_filter": ["major_package"]
+ },
+ "soft": {
+  "note": "柔性覆盖：没单列，但复合工序在，降为建议复核而不是确定漏项。",
+  "absorbed_by": {
+   "brake_bleed": ["brake_fluid"]
+  }
+ }
+}
