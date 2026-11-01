@@ -1,0 +1,29 @@
+﻿cid,quote_doc,golden_state,first_annotator,second_annotator,arbitrated,note
+mep,guijiao124,present,A1,,,
+waterproof,guijiao124,present,A1,,,
+water_test,guijiao124,present,A1,,,备注明确「闭水实验24-48小时」×4 处（防水行）
+pressure_test,guijiao124,missing,A1,,,全房水电工艺备注未提打压（只写管材与工艺）
+tile_wall,guijiao124,present,A1,,,
+tile_floor,guijiao124,present,A1,,,
+level_floor,guijiao124,not_applicable,A1,,,地面贴砖工艺（32.5#水泥+中粗砂）已含找平，本单不单列——模板口径 vs 真实工艺
+grout,guijiao124,present,A1,,,
+threshold,guijiao124,not_applicable,A1,,,门槛石属主材/安装项，本单为基础报价（主材另计）
+sill,guijiao124,present,A1,,,
+skirting,guijiao124,not_applicable,A1,,,踢脚线属主材/安装项，本单不覆盖
+pipe_wrap,guijiao124,present,A1,,,
+ceiling,guijiao124,present,A1,,,
+door_install,guijiao124,not_applicable,A1,,,门属主材，本单不覆盖
+door_frame,guijiao124,not_applicable,A1,,,门套属主材，本单不覆盖（有「门洞修复」但非门套）
+wall_base,guijiao124,present,A1,,,乳胶漆工艺含「批刮环保腻子两遍、打磨平整」即基层处理
+putty,guijiao124,present,A1,,,备注「批刮环保腻子」
+primer,guijiao124,missing,A1,,,乳胶漆备注只写「三棵树面漆两遍」，未提底漆
+topcoat,guijiao124,present,A1,,,
+interface_agent,guijiao124,missing,A1,,,全文无墙固/界面剂；批刮腻子前无界面处理表述
+sanitary,guijiao124,not_applicable,A1,,,洁具属主材，本单不覆盖
+switch_install,guijiao124,present,A1,,,行 60 正泰开关面板 1500 元（面板价含安装惯例）
+light_install,guijiao124,not_applicable,A1,,,灯具属主材/业主自购，本单不覆盖
+clean,guijiao124,present,A1,,,
+mgmt_fee,guijiao124,missing,A1,,,总价=费用总合计，无管理费科目
+water_pipe,guijiao124,present,A1,,,全房水电工艺备注「水路：PPR管，热熔工艺；主管25/20环保管」
+wire,guijiao124,present,A1,,,全房水电工艺备注「主线2.5㎡三卷塑铜线，支线1.5㎡塑铜线」
+floor_drain,guijiao124,present,A1,,,防水基层处理备注「清理上下水管、地漏周围」（地漏已安装/存在）

@@ -576,6 +576,55 @@ def _num_ratio(rows, col):
     return sum(1 for v in vals if _num(v) is not None) / len(vals)
 
 
+def detect_header(raw_rows, max_scan=8):
+    """在前 max_scan 行里找表头，返回 (index, mapping)；找不到返回 (None, {})。
+
+    真实单据的表头形态差异极大，按优先级依次尝试（每一步都留痕，便于复盘）：
+      ① 标准：映射 ≥4 列且含「项目名称」
+      ② 两行表头：主行缺「合价」，把下一行（人工+材料/小计 子表头）补进来
+      ③ 无「项目名称」列名：取数据行中文占比最高且未映射的列补上
+         （反例：124㎡ 单的表头只有 数量/单价/合计/说明，项目名所在的列没有表头文字）
+      ④ 结构兜底：合价=单价右列、备注=最右列，用数值占比做安全阀（不猜）
+    """
+    for i, cells in enumerate(raw_rows[:max_scan]):
+        m = map_header(cells)
+        if not m:
+            continue
+        body = raw_rows[i + 1:]
+        # ② 两行表头合并
+        if "合价" not in m and i + 1 < len(raw_rows):
+            for k, v in map_header(raw_rows[i + 1]).items():
+                m.setdefault(k, v)
+        # ③ 项目名称兜底：中文占比最高的未映射列
+        if "项目名称" not in m and ("单价" in m or "合价" in m):
+            best, score = None, 0.0
+            for c in sorted({c for r in body for c in r if (r.get(c) or "").strip()}):
+                if c in m.values():
+                    continue
+                vals = [(r.get(c) or "").strip() for r in body]
+                vals = [v for v in vals if v]
+                if len(vals) < 3:
+                    continue
+                ratio = sum(1 for v in vals if re.search(r"[\u4e00-\u9fa5]", v)) / len(vals)
+                if ratio > score:
+                    best, score = c, ratio
+            if best and score >= 0.5:
+                m["项目名称"] = best
+        if "项目名称" not in m or len(m) < 4:
+            continue
+        # ④ 结构兜底
+        if "合价" not in m and m.get("单价"):
+            cand = _next_col(m["单价"])
+            if _num_ratio(body, cand) >= 0.5:
+                m["合价"] = cand
+        if "备注" not in m:
+            cols = sorted({c for r in body for c in r if (r.get(c) or "").strip()})
+            if cols and cols[-1] not in m.values() and _num_ratio(body, cols[-1]) < 0.5:
+                m["备注"] = cols[-1]
+        return i, m
+    return None, {}
+
+
 def rows_to_quote(raw_rows, header_row_index=None):
     """把网格行转成标准行项。返回 (rows, report)。
 
@@ -585,34 +634,9 @@ def rows_to_quote(raw_rows, header_row_index=None):
     if not raw_rows:
         raise PerceptionError("没有可解析的行")
 
-    header_idx, mapping = None, {}
-    for i, cells in enumerate(raw_rows[:8]):        # 表头通常在前 8 行
-        m = map_header(cells)
-        if len(m) >= 4 and "项目名称" in m:
-            header_idx, mapping = i, m
-            break
+    header_idx, mapping = detect_header(raw_rows)
     if header_idx is None:
         raise PerceptionError("前 8 行里没找到可识别的表头（至少需要 项目名称/单位/数量/合价）")
-
-    # 两行表头：真实单据常见「单价（元）」下分「人工+材料 / 小计」子表头。
-    # 主表头行会缺「合价」，此时把下一行的映射补进来（子行自身没有项目名，会被当空名行丢弃）。
-    if "合价" not in mapping and header_idx + 1 < len(raw_rows):
-        m2 = map_header(raw_rows[header_idx + 1])
-        for k, v in m2.items():
-            mapping.setdefault(k, v)
-
-    # 结构兜底：OCR 会把「小计」识成「小科」、「备注」识成「备性」，字面匹配必然丢列。
-    # 财务表格的稳定惯例是：合价紧邻单价右列、备注在最右列。用数据行数值占比做安全阀，
-    # 不猜、不放宽阈值（宁可缺列让上层报错，不可错列污染审计）。
-    body = raw_rows[header_idx + 1:]
-    if "合价" not in mapping and mapping.get("单价"):
-        cand = _next_col(mapping["单价"])
-        if _num_ratio(body, cand) >= 0.5:
-            mapping["合价"] = cand
-    if "备注" not in mapping:
-        all_cols = sorted({c for r in body for c in r if (r.get(c) or "").strip()})
-        if all_cols and all_cols[-1] not in mapping.values() and _num_ratio(body, all_cols[-1]) < 0.5:
-            mapping["备注"] = all_cols[-1]
 
     out, bad_arith, no_name = [], [], 0
     for cells in raw_rows[header_idx + 1:]:

@@ -3,14 +3,14 @@
     "slug": "szxinxin_clinic",
     "doc": "深圳新新·诊所装饰（公开 PDF）",
     "template_key": "new_house",
-    "git_commit": "ba213c6",
-    "created_at": "2026-10-30 20:03:41",
+    "git_commit": "379a83c",
+    "created_at": "2026-11-01 14:29:15",
     "fingerprint": "3d33c49caf60f48d",
     "hashes": {
       "data": "28f45cc9e57b6d7f",
       "template": "ac907aae6c55f0ef",
-      "ontology": "20089f0a8a53b642",
-      "rules": "51c5afb8842bce26",
+      "ontology": "f22bb82ae253f42f",
+      "rules": "238c7ed0cbe62f6a",
       "coverage": "a687c69917c45cc4"
     }
   },

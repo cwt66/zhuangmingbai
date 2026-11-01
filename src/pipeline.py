@@ -261,27 +261,67 @@ def find_duplicates(quote, onto, rule_pair, rule_same, template):
     for p in rule_pair["pairs"]:
         c_, d_ = p["container"], p["contained"]
         if c_ in present and d_ in present and d_ in template and c_ not in template:
-            amt = round(sum(r["amount"] for r in quote["rows"] if r["cid"] == d_), 2)
+            # 同分区约束：工艺包含惯例只在同一空间内成立。
+            # 反例（真实数据）：翡翠台「回填宝回填」在卫生间，却被拿来扣掉
+            # 阳台/厨房/两个卫生间的全部「地面找平」700 元——该惯例对阳台厨房不适用。
+            # scope_hint：进一步限定 container 行必须含某类词（如「卫生间」），
+            # 否则「空调机位回填」会把厨房也算成卫生间回填的同区。
+            hint = p.get("scope_hint") or ""
+            c_rows = [r for r in quote["rows"] if r["cid"] == c_]
+            if hint:
+                c_rows = [r for r in c_rows if hint in (r["name"] + r["spec"] + r["note"])]
+            c_zones = {_zone(r) for r in c_rows if _zone(r)}
+            d_rows = [r for r in quote["rows"] if r["cid"] == d_]
+            if c_zones:
+                hit = [r for r in d_rows if (not _zone(r)) or _zone(r) in c_zones]
+                scope = "同分区（%s）" % "、".join(sorted(c_zones))
+            else:
+                hit = d_rows
+                scope = "未标分区（保守全保留）"
+            if not hit:
+                continue
+            amt = round(sum(r["amount"] for r in hit), 2)
             c = confidence(rule_pair["strength"], 0.95, 0.9, True)
             out.append({"cid": d_, "concept": onto.by_id[d_]["n"], "rule": rule_pair["id"],
-                        "lines": [r["no"] for r in quote["rows"] if r["cid"] == d_], "amount": amt,
+                        "lines": [r["no"] for r in hit], "amount": amt,
                         "confidence": c, "tier": tier(c),
                         "evidence": {"basis": f"工艺惯例：{onto.by_id[c_]['n']} 通常已含 {onto.by_id[d_]['n']}",
-                                     "formula": "contained ∈ container 的工艺范围"}})
+                                     "formula": "contained ∈ container 的工艺范围；命中范围=" + scope}})
     return out, excluded
 
 
 def find_vague(quote, rule):
-    out = []
+    """口径风险：同一风险表述在同一单据内聚合为一条。
+
+    为什么聚合：真实单据里「另计 / 按根 / 单边」大量出现在工艺说明备注里，
+    逐行报会把真正该看的结论淹没（实测花溪单 12 条里 10 条是同一句「…等另计」）。
+    聚合后每条给出：命中的模式、行号列表、涉及金额——信息不减，噪声大幅下降。
+    只有 1 处命中时保持单行形态，方便直接定位。
+    """
+    by_pat = defaultdict(list)
     for r in quote["rows"]:
         text = " ".join([r["name"], r["spec"], r["note"], r["unit"]])
         for p in rule["patterns"]:
             if p in text:
-                c = confidence(rule["strength"], 0.95, r["align_conf"] or 0.85, False)
-                out.append({"cid": r["cid"], "concept": r["name"], "line": r["no"], "issue": f"命中「{p}」",
-                            "amount": r["amount"], "rule": rule["id"], "confidence": c, "tier": tier(c),
-                            "evidence": {"basis": "报价单风险表述清单 v0", "formula": f"命中「{p}」"}})
-                break
+                by_pat[p].append(r)
+                break  # 一行只归入第一个命中的模式，避免重复计数
+    out = []
+    for p, rows in by_pat.items():
+        if len(rows) == 1:
+            r = rows[0]
+            c = confidence(rule["strength"], 0.95, r["align_conf"] or 0.85, False)
+            out.append({"cid": r["cid"], "concept": r["name"], "line": r["no"], "issue": f"命中「{p}」",
+                        "amount": r["amount"], "rule": rule["id"], "confidence": c, "tier": tier(c),
+                        "evidence": {"basis": "报价单风险表述清单 v0", "formula": f"命中「{p}」"}})
+        else:
+            amt = round(sum(r["amount"] for r in rows), 2)
+            c = confidence(rule["strength"], 0.95, min(r["align_conf"] or 0.85 for r in rows), False)
+            out.append({"cid": None, "concept": f"「{p}」×{len(rows)} 行",
+                        "line": ",".join(r["no"] for r in rows),
+                        "issue": f"命中「{p}」{len(rows)} 处，合并为 1 条口径风险",
+                        "amount": amt, "rule": rule["id"], "confidence": c, "tier": tier(c),
+                        "evidence": {"basis": "报价单风险表述清单 v0（按单据聚合）",
+                                     "formula": f"同一模式命中 {len(rows)} 行 → 合并，行号与金额见左"}})
     return out
 
 

@@ -3,14 +3,14 @@
     "slug": "huaxibeian",
     "doc": "花溪北岸·5 页施工报价",
     "template_key": "new_house",
-    "git_commit": "ba213c6",
-    "created_at": "2026-10-30 20:03:41",
-    "fingerprint": "81cd13be7eabc126",
+    "git_commit": "379a83c",
+    "created_at": "2026-11-01 14:29:15",
+    "fingerprint": "456e1bd94ab39a08",
     "hashes": {
       "data": "f2dc5e131c73da2e",
       "template": "ac907aae6c55f0ef",
-      "ontology": "20089f0a8a53b642",
-      "rules": "51c5afb8842bce26",
+      "ontology": "f22bb82ae253f42f",
+      "rules": "238c7ed0cbe62f6a",
       "coverage": "a687c69917c45cc4"
     }
   },
@@ -423,142 +423,16 @@
   "risks": [
     {
       "cid": null,
-      "concept": "顶面石膏板平面直线造型天花（宽度小于60公分）",
-      "line": "4",
-      "issue": "命中「另计」",
-      "amount": 4160.0,
-      "rule": "R4_vague_term",
-      "confidence": 0.78,
-      "tier": "review",
-      "evidence": {
-        "basis": "报价单风险表述清单 v0",
-        "formula": "命中「另计」"
-      }
-    },
-    {
-      "cid": "ceiling",
-      "concept": "顶面石膏板平面吊顶（宽度大于60公分）",
-      "line": "15",
-      "issue": "命中「另计」",
-      "amount": 3993.6,
-      "rule": "R4_vague_term",
-      "confidence": 0.78,
-      "tier": "review",
-      "evidence": {
-        "basis": "报价单风险表述清单 v0",
-        "formula": "命中「另计」"
-      }
-    },
-    {
-      "cid": "ceiling",
-      "concept": "顶面石膏板平面吊顶（宽度大于60公分）",
-      "line": "23",
-      "issue": "命中「另计」",
-      "amount": 2246.4,
-      "rule": "R4_vague_term",
-      "confidence": 0.78,
-      "tier": "review",
-      "evidence": {
-        "basis": "报价单风险表述清单 v0",
-        "formula": "命中「另计」"
-      }
-    },
-    {
-      "cid": "ceiling",
-      "concept": "顶面石膏板平面吊顶（宽度大于60公分）",
-      "line": "31",
-      "issue": "命中「另计」",
-      "amount": 4492.8,
-      "rule": "R4_vague_term",
-      "confidence": 0.78,
-      "tier": "review",
-      "evidence": {
-        "basis": "报价单风险表述清单 v0",
-        "formula": "命中「另计」"
-      }
-    },
-    {
-      "cid": "ceiling",
-      "concept": "顶面石膏板平面吊顶（宽度大于60公分）",
-      "line": "42",
-      "issue": "命中「另计」",
-      "amount": 2745.6,
-      "rule": "R4_vague_term",
-      "confidence": 0.78,
-      "tier": "review",
-      "evidence": {
-        "basis": "报价单风险表述清单 v0",
-        "formula": "命中「另计」"
-      }
-    },
-    {
-      "cid": "ceiling",
-      "concept": "顶面石膏板平面吊顶（宽度大于60公分）",
-      "line": "51",
-      "issue": "命中「另计」",
-      "amount": 2496.0,
-      "rule": "R4_vague_term",
-      "confidence": 0.78,
-      "tier": "review",
-      "evidence": {
-        "basis": "报价单风险表述清单 v0",
-        "formula": "命中「另计」"
-      }
-    },
-    {
-      "cid": "tile_wall",
-      "concept": "粘贴墙地砖",
-      "line": "70",
-      "issue": "命中「另计」",
-      "amount": 5335.2,
+      "concept": "「另计」×10 行",
+      "line": "4,15,23,31,42,51,70,77,88,99",
+      "issue": "命中「另计」10 处，合并为 1 条口径风险",
+      "amount": 38667.2,
       "rule": "R4_vague_term",
       "confidence": 0.745,
       "tier": "review",
       "evidence": {
-        "basis": "报价单风险表述清单 v0",
-        "formula": "命中「另计」"
-      }
-    },
-    {
-      "cid": "tile_wall",
-      "concept": "粘贴墙地砖",
-      "line": "77",
-      "issue": "命中「另计」",
-      "amount": 4914.0,
-      "rule": "R4_vague_term",
-      "confidence": 0.745,
-      "tier": "review",
-      "evidence": {
-        "basis": "报价单风险表述清单 v0",
-        "formula": "命中「另计」"
-      }
-    },
-    {
-      "cid": "tile_wall",
-      "concept": "粘贴墙地砖",
-      "line": "88",
-      "issue": "命中「另计」",
-      "amount": 4352.4,
-      "rule": "R4_vague_term",
-      "confidence": 0.745,
-      "tier": "review",
-      "evidence": {
-        "basis": "报价单风险表述清单 v0",
-        "formula": "命中「另计」"
-      }
-    },
-    {
-      "cid": "tile_wall",
-      "concept": "粘贴墙地砖",
-      "line": "99",
-      "issue": "命中「另计」",
-      "amount": 3931.2,
-      "rule": "R4_vague_term",
-      "confidence": 0.745,
-      "tier": "review",
-      "evidence": {
-        "basis": "报价单风险表述清单 v0",
-        "formula": "命中「另计」"
+        "basis": "报价单风险表述清单 v0（按单据聚合）",
+        "formula": "同一模式命中 10 行 → 合并，行号与金额见左"
       }
     },
     {
