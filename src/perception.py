@@ -554,6 +554,28 @@ def _num(v):
     return float(m.group()) if m else None
 
 
+def _next_col(letter):
+    """列字母右移一位：A→B，Z→AA。"""
+    i = 0
+    for ch in letter:
+        i = i * 26 + (ord(ch) - 64)
+    i += 1
+    s = ""
+    while i:
+        i, rem = divmod(i - 1, 26)
+        s = chr(65 + rem) + s
+    return s
+
+
+def _num_ratio(rows, col):
+    """某列非空单元格中「能解析为数字」的比例。用于结构兜底的安全阀。"""
+    vals = [(r.get(col) or "").strip() for r in rows]
+    vals = [v for v in vals if v]
+    if not vals:
+        return 0.0
+    return sum(1 for v in vals if _num(v) is not None) / len(vals)
+
+
 def rows_to_quote(raw_rows, header_row_index=None):
     """把网格行转成标准行项。返回 (rows, report)。
 
@@ -571,6 +593,26 @@ def rows_to_quote(raw_rows, header_row_index=None):
             break
     if header_idx is None:
         raise PerceptionError("前 8 行里没找到可识别的表头（至少需要 项目名称/单位/数量/合价）")
+
+    # 两行表头：真实单据常见「单价（元）」下分「人工+材料 / 小计」子表头。
+    # 主表头行会缺「合价」，此时把下一行的映射补进来（子行自身没有项目名，会被当空名行丢弃）。
+    if "合价" not in mapping and header_idx + 1 < len(raw_rows):
+        m2 = map_header(raw_rows[header_idx + 1])
+        for k, v in m2.items():
+            mapping.setdefault(k, v)
+
+    # 结构兜底：OCR 会把「小计」识成「小科」、「备注」识成「备性」，字面匹配必然丢列。
+    # 财务表格的稳定惯例是：合价紧邻单价右列、备注在最右列。用数据行数值占比做安全阀，
+    # 不猜、不放宽阈值（宁可缺列让上层报错，不可错列污染审计）。
+    body = raw_rows[header_idx + 1:]
+    if "合价" not in mapping and mapping.get("单价"):
+        cand = _next_col(mapping["单价"])
+        if _num_ratio(body, cand) >= 0.5:
+            mapping["合价"] = cand
+    if "备注" not in mapping:
+        all_cols = sorted({c for r in body for c in r if (r.get(c) or "").strip()})
+        if all_cols and all_cols[-1] not in mapping.values() and _num_ratio(body, all_cols[-1]) < 0.5:
+            mapping["备注"] = all_cols[-1]
 
     out, bad_arith, no_name = [], [], 0
     for cells in raw_rows[header_idx + 1:]:
