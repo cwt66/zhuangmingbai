@@ -134,7 +134,10 @@ class Store:
                 if self.kind == "postgres":
                     with self._pg() as c:
                         with c.cursor() as cur:
-                            cur.execute(SCHEMA_POSTGRES)
+                            # psycopg 不建议一次 execute 多条语句；逐条执行，失败信息更清楚
+                            for stmt in SCHEMA_POSTGRES.split(";"):
+                                if stmt.strip():
+                                    cur.execute(stmt)
                 else:
                     with self._sqlite() as c:
                         c.executescript(SCHEMA_SQLITE)
