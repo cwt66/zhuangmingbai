@@ -1,0 +1,14 @@
+﻿system,doc,item_id,conclusion,has_line,has_basis,has_formula,grounded,note
+# 填写说明（这些注释行会被统计脚本忽略）：
+# system ∈ {renopit, zhuangmingbai}；doc ∈ {sh_zhuoguan, huaxibeian, feitai}
+# has_line / has_basis / has_formula / grounded ∈ {yes, no, partial}
+#   has_line=yes   能指到原表具体行号
+#   has_basis=yes  有对照基准（模板项 / 国标 / 规则名 / 工序惯例）
+#   has_formula=yes 有可复算的公式或金额推导
+#   grounded=no    回原文核实不成立（=幻觉）
+#   partial 一律按 no 计（保守口径）
+# ==== 示例（demo 数据，仅演示格式，不是实验结果；统计前请清空）====
+renopit,feitai,R-F-01,水路未做打压试验,no,no,no,yes,示例：只说"应做打压试验"未给行号基准
+renopit,feitai,R-F-02,防水施工未做闭水试验,no,partial,no,yes,示例
+zhuangmingbai,feitai,Z-F-01,打压试验漏项（模板差集）,yes,yes,yes,yes,示例：行号+模板+集合差公式
+zhuangmingbai,feitai,Z-F-02,闭水试验漏项（模板差集）,yes,yes,yes,yes,示例

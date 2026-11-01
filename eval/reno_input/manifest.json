@@ -1,0 +1,29 @@
+{
+  "note": "两系统输入必须完全一致；本文件用于核对。",
+  "docs": [
+    {
+      "slug": "sh_zhuoguan",
+      "doc": "上海卓观·两房半包（篱笆网公开晒单）",
+      "rows": 127,
+      "chars": 6187,
+      "sha256_16": "8ed8b8a39b566291",
+      "file": "sh_zhuoguan.txt"
+    },
+    {
+      "slug": "huaxibeian",
+      "doc": "花溪北岸·5 页施工报价",
+      "rows": 120,
+      "chars": 8106,
+      "sha256_16": "f3aff72bab957ffc",
+      "file": "huaxibeian.txt"
+    },
+    {
+      "slug": "feitai",
+      "doc": "上海翡翠台·老房全案",
+      "rows": 131,
+      "chars": 7953,
+      "sha256_16": "fce7c274da0cfa0f",
+      "file": "feitai.txt"
+    }
+  ]
+}
