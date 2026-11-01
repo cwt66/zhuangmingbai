@@ -74,7 +74,12 @@ def main():
             "data/real/sh_zhuoguan_halfpack.csv", "data/real/huaxibeian_newhouse.csv",
             "data/coverage_v0.json", "scripts/snapshot_predictions.py", "scripts/eval_audit.py",
             "src/perception.py", "scripts/parse_doc.py", "tests/test_regression.py",
-            "eval/predictions/huaxibeian.json"]
+            "eval/predictions/huaxibeian.json",
+            # v0.4.0 云原生与评测
+            "src/store.py", "src/cache.py", "src/llm.py", "src/privacy.py",
+            "eval/golden_eval.py", "eval/ablation.py", "scripts/check_all.sh",
+            "scripts/pii_scan.py", "tests/test_cloud.py", "docs/ARCHITECTURE.md",
+            "docs/BENCHMARK.md", "SECURITY.md", "docker-compose.yml", ".env.example"]
     miss = [k for k in must if not any(n.endswith(k) for n in names)]
     print("关键文件：", "全在" if not miss else "缺 " + str(miss))
     return 1 if (miss or bad) else 0
