@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 """对照实验统计：读盲评评分表 → 算 M2 可溯源率 / M4 幻觉数 → 出对照表
 
-预注册口径（先于实验冻结，见 eval/对照实验协议_RenoPit.md）：
-  traceable = has_line==yes 且 has_basis==yes 且 has_formula==yes（三缺一即不可溯源）
+口径（v1.1，见 eval/对照实验协议_RenoPit.md 的修订记录）：
+  traceable = has_line ∈ {yes, n/a} 且 has_basis==yes 且 has_formula==yes
   hallucination = grounded==no（回原文核实不成立）
+
+为什么 has_line 允许 n/a：漏项类结论的主张是「原文没有这一项」，它**本来就没有行号**。
+旧口径要求 has_line==yes，等于把「报漏项」这个核心能力直接判成不可溯源——
+对所有系统都不公平（RenoPit 也会报漏项）。修正为 n/a 仍要求 has_basis + has_formula，
+不放宽「有依据、有算法」这两个实质要求。此修订发生在对手跑批之前，两侧同时适用。
 
 输入：eval/对照实验_评分表.csv
   列：system, doc, item_id, conclusion, has_line, has_basis, has_formula, grounded, note
@@ -44,7 +49,9 @@ def main():
                                "by_doc": defaultdict(lambda: {"n": 0, "trace": 0, "halluc": 0})})
     for r in rows:
         s = norm(r["system"])
-        traceable = all(norm(r.get(k)) == "yes" for k in ("has_line", "has_basis", "has_formula"))
+        line_ok = norm(r.get("has_line")) in ("yes", "n/a", "na", "不适用")
+        traceable = line_ok and all(
+            norm(r.get(k)) == "yes" for k in ("has_basis", "has_formula"))
         halluc = norm(r.get("grounded")) == "no"
         a = agg[s]
         a["n"] += 1
@@ -63,6 +70,7 @@ def main():
         "",
         "> 由 `eval/ab_tally.py` 从盲评评分表生成；口径见 `eval/对照实验协议_RenoPit.md`（预注册）。",
         "> **partial 一律按 no 计**（保守口径，防自评放水）。",
+        "> 漏项类结论的本主张是「原文没有这一项」，无行号属正常，`has_line` 记 `n/a` 不扣分，但仍需基准+公式。",
         "",
         "| 指标 | RenoPit | 装明白 |",
         "|---|---:|---:|",

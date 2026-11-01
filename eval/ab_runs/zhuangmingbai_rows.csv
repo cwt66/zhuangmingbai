@@ -1,0 +1,50 @@
+﻿system,doc,item_id,conclusion,has_line,has_basis,has_formula,grounded,note
+zhuangmingbai,sh_zhuoguan,zb-01,漏项：铲墙皮（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,sh_zhuoguan,zb-02,漏项：门窗保护（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,sh_zhuoguan,zb-03,漏项：成品保护（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,sh_zhuoguan,zb-04,漏项：地面保护（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,sh_zhuoguan,zb-05,漏项：闭水试验（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,sh_zhuoguan,zb-06,漏项：打压试验（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,sh_zhuoguan,zb-07,漏项：踢脚线（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,sh_zhuoguan,zb-08,漏项：刷底漆（review）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S 未命中，且存在可吸收它的复合工序
+zhuangmingbai,sh_zhuoguan,zb-09,漏项：墙固（review）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S 未命中，且存在可吸收它的复合工序
+zhuangmingbai,sh_zhuoguan,zb-10,漏项：界面剂（review）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S 未命中，且存在可吸收它的复合工序
+zhuangmingbai,sh_zhuoguan,zb-11,漏项：竣工保洁（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,sh_zhuoguan,zb-12,漏项：打胶（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,sh_zhuoguan,zb-13,漏项：管理费（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,sh_zhuoguan,zb-14,R4_vague_term：命中「按实结算」,yes,yes,yes,yes,机器生成；行 100
+zhuangmingbai,sh_zhuoguan,zb-15,R6_unit_anomaly：面积/长度类工序按「项」报价，工程量不可核,yes,yes,yes,yes,机器生成；行 27
+zhuangmingbai,sh_zhuoguan,zb-16,R6_unit_anomaly：面积/长度类工序按「项」报价，工程量不可核,yes,yes,yes,yes,机器生成；行 49
+zhuangmingbai,sh_zhuoguan,zb-17,R6_unit_anomaly：面积/长度类工序按「项」报价，工程量不可核,yes,yes,yes,yes,机器生成；行 81
+zhuangmingbai,sh_zhuoguan,zb-18,R6_unit_anomaly：面积/长度类工序按「项」报价，工程量不可核,yes,yes,yes,yes,机器生成；行 82
+zhuangmingbai,sh_zhuoguan,zb-19,R6_unit_anomaly：面积/长度类工序按「项」报价，工程量不可核,yes,yes,yes,yes,机器生成；行 109
+zhuangmingbai,sh_zhuoguan,zb-20,R7_split_billing：疑似拆分报价（人工/材料分开计费）,yes,yes,yes,yes,"机器生成；行 80,81"
+zhuangmingbai,huaxibeian,zb-01,漏项：打压试验（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,huaxibeian,zb-02,漏项：地面找平（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,huaxibeian,zb-03,漏项：门槛石（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,huaxibeian,zb-04,漏项：刷底漆（review）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S 未命中，且存在可吸收它的复合工序
+zhuangmingbai,huaxibeian,zb-05,漏项：界面剂（review）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S 未命中，且存在可吸收它的复合工序
+zhuangmingbai,huaxibeian,zb-06,漏项：管理费（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,huaxibeian,zb-07,R4_vague_term：命中「另计」10 处，合并为 1 条口径风险,yes,yes,yes,yes,"机器生成；行 4,15,23,31,42,51,70,77,88,99"
+zhuangmingbai,huaxibeian,zb-08,R4_vague_term：命中「按实际」,yes,yes,yes,yes,机器生成；行 110
+zhuangmingbai,huaxibeian,zb-09,R6_unit_anomaly：面积/长度类工序按「项」报价，工程量不可核,yes,yes,yes,yes,机器生成；行 110
+zhuangmingbai,feitai,zb-01,漏项：门窗保护（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,feitai,zb-02,漏项：墙面防水加高（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,feitai,zb-03,漏项：闭水试验（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,feitai,zb-04,漏项：打压试验（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,feitai,zb-05,漏项：墙面找平（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,feitai,zb-06,漏项：填缝（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,feitai,zb-07,漏项：墙固（review）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S 未命中，且存在可吸收它的复合工序
+zhuangmingbai,feitai,zb-08,漏项：界面剂（review）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S 未命中，且存在可吸收它的复合工序
+zhuangmingbai,feitai,zb-09,漏项：墙面挂网（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,feitai,zb-10,漏项：阴阳角找直（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,feitai,zb-11,漏项：灯具安装（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,feitai,zb-12,漏项：打胶（auto）,n/a,yes,yes,yes,机器生成：模板项未命中；依据=T \ S（模板必做项 − 实列项），再扣除文本证据命中项
+zhuangmingbai,feitai,zb-13,"重复：地面找平 行 38,57",yes,yes,yes,yes,机器生成：工艺惯例：陶粒回填 通常已含 地面找平
+zhuangmingbai,feitai,zb-14,R4_vague_term：命中「另计」14 处，合并为 1 条口径风险,yes,yes,yes,yes,"机器生成；行 7,23,27,28,34,38,53,54,57,90,99,100,101,113"
+zhuangmingbai,feitai,zb-15,R6_unit_anomaly：面积/长度类工序按「项」报价，工程量不可核,yes,yes,yes,yes,机器生成；行 30
+zhuangmingbai,feitai,zb-16,R6_unit_anomaly：面积/长度类工序按「项」报价，工程量不可核,yes,yes,yes,yes,机器生成；行 91
+zhuangmingbai,feitai,zb-17,R8_arithmetic：合价与数量×单价不一致（差 +9 元）,yes,yes,yes,yes,机器生成；行 78
+zhuangmingbai,feitai,zb-18,R8_arithmetic：合价与数量×单价不一致（差 -8840 元）,yes,yes,yes,yes,机器生成；行 109
+zhuangmingbai,feitai,zb-19,R7_split_billing：疑似拆分报价（人工/材料分开计费）,yes,yes,yes,yes,"机器生成；行 84,87"
+zhuangmingbai,feitai,zb-20,"R13_doc_recon：整单加总对不上：明细 153,384 + 取费 11,748 = 165,132，印刷合计 17",yes,yes,yes,yes,机器生成；行 130
