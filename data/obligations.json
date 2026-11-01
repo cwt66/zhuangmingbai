@@ -1,0 +1,101 @@
+{
+ "meta": {
+  "version": "v0",
+  "why": "报价单里最贵的往往不是列出来的钱，而是「没说清的钱」——按实结算、暂定、另计、多退少补这些词，等于在合同里留了一个可以随时加价的开口。审计不该只数漏项，还要把这些开口翻译成签约前必须问清楚的问题。",
+  "how": "扫描项目名/工艺说明/备注，命中模式即产出一条「义务」：要确认什么、要留什么证据、最坏情况下大概多少钱。",
+  "principle": "只把「原文里的词」翻译成行动项，不推断对方的动机，也不替用户判断贵不贵。",
+  "boundary": "本表不构成法律意见；它只是把「该问的问题」列出来，答案要写进合同。"
+ },
+ "obligations": [
+  {
+   "id": "ob_settle_actual",
+   "match": ["按实结算", "按实际", "据实", "以实际为准"],
+   "title": "按实结算 → 结算口径未定",
+   "confirm": "结算按什么量、什么单价、谁来计量？是否约定「结算总额不超过报价的 X%」？",
+   "evidence": "结算时必须提供：实测工程量记录（双方签字）+ 变更单 + 单价表",
+   "exposure": "open",
+   "severity": "high",
+   "note": "这是最容易被写成「暂估」的一项，实际结算可能显著高于报价。"
+  },
+  {
+   "id": "ob_provisional",
+   "match": ["暂定", "暂估"],
+   "title": "暂定价 → 金额不是最终价",
+   "confirm": "暂定部分的最终价如何确定？上限是多少？超出部分谁承担？",
+   "evidence": "合同附件里写明暂定项的计价规则与上限",
+   "exposure": "open",
+   "severity": "high",
+   "note": ""
+  },
+  {
+   "id": "ob_extra",
+   "match": ["另计", "另收", "另付", "不含", "不包括"],
+   "title": "另计/不含 → 范围外费用",
+   "confirm": "「另计」的具体单价与触发条件是什么？能不能在签约时写死？",
+   "evidence": "范围外项目的价目表作为合同附件；变更需书面确认",
+   "exposure": "bounded_if_priced",
+   "severity": "medium",
+   "note": "有单价即风险可控；只写「另计」不写单价，等于没有上限。"
+  },
+  {
+   "id": "ob_multi_ret",
+   "match": ["多退少补"],
+   "title": "多退少补 → 结算机制",
+   "confirm": "「少补」的上限？退的触发条件与时点？",
+   "evidence": "完工结算单 + 双方确认的工程量",
+   "exposure": "open",
+   "severity": "medium",
+   "note": ""
+  },
+  {
+   "id": "ob_site_measure",
+   "match": ["按现场", "现场确定", "现场确认"],
+   "title": "按现场确定 → 需现场二次定价",
+   "confirm": "现场确认后是否重新报价并书面签认？未签认是否视为不施工？",
+   "evidence": "现场确认单（含照片与尺寸）+ 单价",
+   "exposure": "open",
+   "severity": "medium",
+   "note": ""
+  },
+  {
+   "id": "ob_per_unit",
+   "match": ["按根", "按米", "按个", "按樘"],
+   "title": "按根/按米计价 → 工程量口径",
+   "confirm": "计量起点与终点怎么算？管道根数按几根计？损耗谁承担？",
+   "evidence": "隐蔽工程验收记录 + 计量照片",
+   "exposure": "bounded_if_priced",
+   "severity": "low",
+   "note": "单位计价本身不是问题，问题是不写计量规则。"
+  },
+  {
+   "id": "ob_single_side",
+   "match": ["单边"],
+   "title": "单边 → 只做一面，另一面另计",
+   "confirm": "另一面是否必须做？不做会不会影响验收？谁承担？",
+   "evidence": "施工范围确认单（标明单/双面）",
+   "exposure": "bounded_if_priced",
+   "severity": "low",
+   "note": ""
+  },
+  {
+   "id": "ob_self_buy",
+   "match": ["自购", "自理", "甲供"],
+   "title": "自购/甲供 → 责任分界",
+   "confirm": "自购件的到场时间、验收责任、损耗与二次上门费谁承担？",
+   "evidence": "材料进场验收单 + 品牌型号清单",
+   "exposure": "bounded_if_priced",
+   "severity": "medium",
+   "note": "自购件延误导致的工期与二次上门费，是最常见的扯皮点。"
+  },
+  {
+   "id": "ob_acceptance_hidden",
+   "match": ["闭水", "打压", "蓄水"],
+   "title": "隐蔽工程验收 → 必须有记录",
+   "confirm": "闭水/打压是否做、由谁见证、记录是否随合同存档？",
+   "evidence": "闭水试验照片（含时间水印）+ 打压记录表（压力/时长/签字）",
+   "exposure": "none",
+   "severity": "high",
+   "note": "这不是钱的问题——没做且没记录，漏水时无法追责。"
+  }
+ ]
+}

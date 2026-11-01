@@ -24,6 +24,13 @@ import statistics
 from collections import defaultdict
 from datetime import datetime
 
+try:                      # 作为包引用（main.py: from src import pipeline）
+    from . import obligations as oblig
+    from . import pricing_system as pricing
+except ImportError:       # 作为脚本/顶层模块引用（scripts 里 sys.path 指向 src）
+    import obligations as oblig
+    import pricing_system as pricing
+
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(BASE, "data")
 OUT = os.path.join(BASE, "out")
@@ -656,11 +663,45 @@ def find_doc_recon(quote, rule):
     }]
 
 
-def audit(quotes, onto, templates, rules, coverage=None, template_key="old_house"):
-    """template_key: old_house（老房翻新，38 项）或 new_house（新房毛坯，25 项）。
-    模板选错，漏项结论全错——所以做成显式参数，并在报告里写明用的是哪套。"""
+_SCOPES = {"loaded": False, "material": set(), "meta": {}}
+
+
+def template_scopes():
+    """报价范围标签：哪些模板项属于「主材/安装」（业主可自购或另计）。"""
+    if not _SCOPES["loaded"]:
+        p = os.path.join(DATA, "template_scopes.json")
+        if os.path.isfile(p):
+            with open(p, encoding="utf-8") as f:
+                d = json.load(f)
+            _SCOPES["material"] = set(d.get("material_concepts") or [])
+            _SCOPES["meta"] = d.get("meta") or {}
+        _SCOPES["loaded"] = True
+    return _SCOPES
+
+
+def trim_template(template, scope):
+    """按报价范围裁剪模板。
+
+    scope='full'（默认，行为等同历史版本）——全部模板项参与判漏；
+    scope='base'——只对基础施工负责，主材/安装类模板项不参与判漏。
+
+    为什么必须有这个开关：124㎡ 那份是「基础报价单」，模板按全包口径要求门槛石/踢脚线/
+    木门/洁具/灯具，7 条全被判漏——**不是判定能力差，是模板不知道单据范围**。
+    裁剪只减少「要求项」，不改任何已列项的判定，避免范围声明变成漏报的挡箭牌。
+    """
+    if scope != "base":
+        return list(template)
+    mat = template_scopes()["material"]
+    return [cid for cid in template if cid not in mat]
+
+
+def audit(quotes, onto, templates, rules, coverage=None, template_key="old_house",
+          scope="full"):
+    """template_key: old_house（老房翻新，39 项）或 new_house（新房毛坯，28 项）。
+    scope: full（全包，默认）或 base（只报基础施工，主材/安装类不判漏）。
+    模板与范围都会写进报告——选错模板，漏项结论全错，所以做成显式参数。"""
     R = {r["id"]: r for r in rules["rules"]}
-    template = templates[template_key]
+    template = trim_template(templates[template_key], scope)
     results = {}
     for q in quotes:
         others = [x for x in quotes if x is not q]
@@ -681,6 +722,9 @@ def audit(quotes, onto, templates, rules, coverage=None, template_key="old_house
         results[q["label"]] = {
             "quote": q, "missing": missing, "duplicates": dups, "risks": risks,
             "template_key": template_key, "template_size": len(template),
+            "template_full_size": len(templates[template_key]), "scope": scope,
+            "pricing": pricing.classify(q),
+            "obligations": oblig.extract(q),
             "exposure": exposure(q, others, R["R4_vague_term"]),
             "missing_cost": round(miss_cost, 2), "duplicate_cut": round(dup_cut, 2),
             "dup_excluded": dup_excluded,
@@ -798,6 +842,7 @@ tr:last-child td{border-bottom:1px solid var(--ink)}
 .evid{font-size:12px;color:var(--grey)}
 .evid b{color:var(--ink);font-weight:600}
 .evid code{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:#EFEEE9;padding:1px 5px;border-radius:3px}
+.sub-h{font-size:13px;letter-spacing:.05em;margin:26px 0 8px;font-weight:700}
 .note{border-left:3px solid var(--ikb);background:#F2F1EC;padding:12px 16px;font-size:13px;color:#3D3B36;margin:14px 0 26px}
 .recon{border-top:2px solid var(--hair);border-bottom:1px solid var(--hair);padding:11px 0;margin:0 0 22px;font-size:12.5px;display:flex;gap:16px;flex-wrap:wrap;align-items:baseline}
 .recon .t{font-weight:700;letter-spacing:.06em;font-size:11px;color:var(--grey);min-width:56px}
@@ -898,6 +943,14 @@ def build_html(quotes, res):
                + "".join(rows) + "</table>")
     note = ("漏项成本 = 按同批报价横向参照补齐要花的钱（不是省钱）；重复计价剔除 = 可从总价砍掉的重复项；"
             "真实成本 = 总价 + 漏项 − 重复；风险敞口单列，不计入。")
+    tpl_name = {"old_house": "老房翻新", "new_house": "新房毛坯"}
+    scope_name = {"full": "全包（含主材）", "base": "基础施工（主材另计）"}
+    r0 = res[quotes[0]["label"]]
+    note += ("<br><b>本次口径</b>：模板「%s」%d 项（完整 %d 项）｜报价范围「%s」。"
+             "范围只减少「要求项」，不改任何已列项的判定。" % (
+                 tpl_name.get(r0.get("template_key"), r0.get("template_key")),
+                 r0.get("template_size") or 0, r0.get("template_full_size") or 0,
+                 scope_name.get(r0.get("scope"), r0.get("scope"))))
     secs = []
     idx = 1
     for q in quotes:
@@ -906,6 +959,12 @@ def build_html(quotes, res):
         h = ["<h2><span class='idx'>%02d</span>%s 明细</h2>" % (idx, q["label"]),
              "<p>总价 <b>%s</b>；漏项补项 <b>%s</b>；重复剔除 <b>%s</b>；真实成本 <b>%s</b>。</p>" %
              (fmt_money(q["total"]), fmt_money(r["missing_cost"]), fmt_money(r["duplicate_cut"]), fmt_money(r["effective"]))]
+        pr = r.get("pricing") or {}
+        if pr:
+            h.append("<div class='note'><b>计价体系：%s</b>（置信度 %.2f）｜%s"
+                     "<br><span class='evid'>依据：%s</span></div>" % (
+                         pr.get("label"), pr.get("confidence", 0), pr.get("implication", ""),
+                         "；".join(pr.get("evidence") or [])))
         if r["missing"]:
             h.append("<table><tr><th>漏项工序</th><th class='num'>参照金额</th><th>参照来源</th><th class='num'>置信度</th><th>档位</th></tr>")
             for m in r["missing"]:
@@ -932,6 +991,20 @@ def build_html(quotes, res):
                          "<td class='evid'>%s</td><td><span class='tag %s'>%s</span></td></tr>" %
                          (ln, x["concept"], x["issue"], x["evidence"]["basis"], x["tier"], x["tier"]))
             h.append("</table>")
+        obs = r.get("obligations") or []
+        if obs:
+            h.append("<h3 class='sub-h'>签约前必须书面确认（%d 类开口条款）</h3>" % len(obs))
+            h.append("<table><tr><th>条款</th><th>原文命中</th><th class='num'>涉及金额</th>"
+                     "<th>要确认什么</th><th>要留什么证据</th></tr>")
+            for o in obs:
+                h.append("<tr><td><b>%s</b></td><td class='evid'>%s<br><code>行 %s</code></td>"
+                         "<td class='num'>%s</td><td>%s</td><td class='evid'>%s</td></tr>" % (
+                             o["title"], "、".join(o["patterns"]),
+                             ",".join(o["lines"][:8]) + ("…" if len(o["lines"]) > 8 else ""),
+                             fmt_money(o["amount"]) if o["amount"] else "—",
+                             o["confirm"], o["evidence"]))
+            h.append("</table>")
+            h.append("<div class='note'>%s</div>" % oblig.summary(obs))
         secs.append("".join(h))
 
     # 对账条：整单加起来对不对。差额本身是一条结论，不是噪声——
@@ -940,7 +1013,7 @@ def build_html(quotes, res):
     for q in quotes:
         rec = (res[q["label"]] or {}).get("recon") or {}
         head = ('<span class="t">对账</span>' if len(quotes) == 1
-                else '<span class="t">%s</span>' % q["label"])
+                else '<span class="t">对账 · %s</span>' % q["label"])
         if not rec.get("grand"):
             rec_lines.append('<div class="recon">%s<span class="k">本单未提供印刷合计，跳过对账'
                              '（明细之和 <b>%s</b>）</span></div>'
@@ -973,6 +1046,28 @@ def build_html(quotes, res):
             .replace("{{SECTIONS}}", "".join(secs))
             .replace("{{CONCL_IDX}}", "%02d" % (idx + 1))
             .replace("{{FP}}", fp))
+
+
+def result_digest(quote, res):
+    """判定摘要（16 位）。审计包用它做「同一输入 + 同一标准 → 同一结论」的比对基准。
+
+    只摘要「结论」，不摘要时间、文件名等易变字段——否则同一份单据换个文件名就对不上，
+    校验器会变成噪声。金额保留 2 位，避免浮点尾差。
+    """
+    payload = {
+        "label_total": round(quote.get("total") or 0, 2),
+        "missing": sorted([[m.get("cid") or "", m.get("tier") or "",
+                            round(m.get("ref_amount") or 0, 2)] for m in res.get("missing") or []]),
+        "duplicates": sorted([[d.get("concept") or "", sorted(d.get("lines") or []),
+                               round(d.get("amount") or 0, 2)] for d in res.get("duplicates") or []]),
+        "risks": sorted([[x.get("rule") or "", str(x.get("line") or ""),
+                          round(x.get("amount") or 0, 2)] for x in res.get("risks") or []]),
+        "recon": None if not res.get("recon") else [
+            round(res["recon"].get("detail_sum") or 0, 2),
+            None if res["recon"].get("diff") is None else round(res["recon"]["diff"], 2)],
+    }
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False)
+                          .encode()).hexdigest()[:16]
 
 
 def build_review_data(quotes, onto):

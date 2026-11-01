@@ -101,6 +101,22 @@ PAGE = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
         <div class="drop">
           <input type="file" name="files" accept=".csv" multiple required>
         </div>
+        <div class="meta" style="display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 4px">
+          <label>模板
+            <select name="template_key">
+              <option value="old_house">老房翻新（39 项）</option>
+              <option value="new_house">新房毛坯（28 项）</option>
+            </select>
+          </label>
+          <label>报价范围
+            <select name="scope">
+              <option value="full">全包（含主材，默认）</option>
+              <option value="base">基础施工（主材另计）</option>
+            </select>
+          </label>
+        </div>
+        <div class="meta">范围选「基础施工」时，门槛石/踢脚线/木门/洁具/灯具等主材项不再判漏——
+        你的单据只报基础工程，就不该按全包口径要求它。</div>
         <button class="btn" type="submit">开始审计</button>
         <div class="meta">2–4 份，单份 ≤ 4MB，UTF-8 编码（可带 BOM）</div>
       </form>
@@ -164,7 +180,7 @@ def _load_rules():
     return onto, templates, rules, coverage
 
 
-def _audit(paths, template_key="old_house"):
+def _audit(paths, template_key="old_house", scope="full"):
     """paths: [(label, csv_path)] -> (html, res, quotes)"""
     onto, templates, rules, coverage = _load_rules()
     quotes = [pipeline.build_line_index(pipeline.load_quote(p, lb), onto) for lb, p in paths]
@@ -173,7 +189,7 @@ def _audit(paths, template_key="old_house"):
             raise EmptyRowsError("《%s》没有解析到任何行项，请检查表头是否为 "
                                  "项目名称/规格工艺/单位/数量/单价/合价。" % q["label"])
     res = pipeline.audit(quotes, onto, templates, rules, coverage,
-                         template_key=template_key)
+                         template_key=template_key, scope=scope)
     html = pipeline.build_html(quotes, res)
     if "<body>" in html:
         html = html.replace("<body>", "<body>" + NAV, 1)
@@ -258,6 +274,12 @@ def perceive_page():
       <option value="old_house">老房翻新（39 项）</option>
     </select>
   </label>
+  <label>报价范围
+    <select name="scope">
+      <option value="full">全包（含主材）</option>
+      <option value="base">基础施工（主材另计）</option>
+    </select>
+  </label>
   <button type="submit">识别并审计</button>
 </form>
 <h2>感知层状态</h2>
@@ -269,7 +291,8 @@ def perceive_page():
 
 @app.post("/perceive", response_class=HTMLResponse)
 async def perceive_run(file: UploadFile = File(default=None),
-                       template_key: str = Form(default="new_house")):
+                       template_key: str = Form(default="new_house"),
+                       scope: str = Form(default="full")):
     if file is None or not (file.filename or "").strip():
         return _err("没有收到文件", "请选择一张 JPG/PNG 报价单照片。", 400)
     raw = await file.read()
@@ -304,7 +327,7 @@ async def perceive_run(file: UploadFile = File(default=None),
         csv_path = todo.name + ".csv"
         perception.write_csv(rows, csv_path)
         html, _, quotes = _audit([(_label_from_name(file.filename), csv_path)],
-                                 template_key=template_key)
+                                 template_key=template_key, scope=scope)
         # 横幅口径必须与审计主体一致：用 load_quote 分层后的「工序明细合计」，
         # 不能用识别层的全行求和——否则汇总行（费用总合计/总价）会被再加一遍。
         q0 = quotes[0]
@@ -335,7 +358,9 @@ async def perceive_run(file: UploadFile = File(default=None),
 
 
 @app.post("/audit", response_class=HTMLResponse)
-async def audit(files: List[UploadFile] = File(default=None)):
+async def audit(files: List[UploadFile] = File(default=None),
+                template_key: str = Form(default="old_house"),
+                scope: str = Form(default="full")):
     if not files:
         return _err("没有收到文件", "请选择 2–4 份 CSV 报价单。")
     if len(files) < MIN_FILES:
@@ -357,7 +382,7 @@ async def audit(files: List[UploadFile] = File(default=None)):
             with open(dst, "wb") as w:
                 w.write(raw)
             paths.append((_label_from_name(f.filename or "报价%d" % i), dst))
-        html, _, _ = _audit(paths)
+        html, _, _ = _audit(paths, template_key=template_key, scope=scope)
         return HTMLResponse(html)
     except EmptyRowsError as e:
         return _err("没有解析到行项", str(e), 400)

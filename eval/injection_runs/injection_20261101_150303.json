@@ -1,0 +1,2030 @@
+{
+ "generated_at": "20261101_150303",
+ "per_doc_cap": 5,
+ "total": 125,
+ "detected": 125,
+ "by_type": {
+  "drop_concept": [
+   25,
+   25
+  ],
+  "dup_row": [
+   25,
+   25
+  ],
+  "tamper_amount": [
+   25,
+   25
+  ],
+  "zero_qty": [
+   25,
+   25
+  ],
+  "add_vague": [
+   25,
+   25
+  ]
+ },
+ "records": [
+  {
+   "doc": "sh_zhuoguan",
+   "type": "drop_concept",
+   "target": "debris_out",
+   "detected": true,
+   "findings_after": [
+    14,
+    0,
+    7
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "drop_concept",
+   "target": "waterproof",
+   "detected": true,
+   "findings_after": [
+    16,
+    0,
+    6
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "drop_concept",
+   "target": "tile_wall",
+   "detected": true,
+   "findings_after": [
+    14,
+    0,
+    7
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "drop_concept",
+   "target": "tile_floor",
+   "detected": true,
+   "findings_after": [
+    14,
+    0,
+    7
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "drop_concept",
+   "target": "level_floor",
+   "detected": true,
+   "findings_after": [
+    14,
+    0,
+    7
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "dup_row",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    13,
+    1,
+    7
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "dup_row",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    13,
+    1,
+    7
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "dup_row",
+   "target": "8",
+   "detected": true,
+   "findings_after": [
+    13,
+    1,
+    7
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "dup_row",
+   "target": "9",
+   "detected": true,
+   "findings_after": [
+    13,
+    1,
+    7
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "dup_row",
+   "target": "10",
+   "detected": true,
+   "findings_after": [
+    13,
+    1,
+    7
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "tamper_amount",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "tamper_amount",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "tamper_amount",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "tamper_amount",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "tamper_amount",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "zero_qty",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "zero_qty",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "zero_qty",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "zero_qty",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "zero_qty",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "add_vague",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "add_vague",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "add_vague",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "add_vague",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "sh_zhuoguan",
+   "type": "add_vague",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    8
+   ],
+   "findings_base": [
+    13,
+    0,
+    7
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "drop_concept",
+   "target": "waterproof",
+   "detected": true,
+   "findings_after": [
+    8,
+    0,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "drop_concept",
+   "target": "tile_wall",
+   "detected": true,
+   "findings_after": [
+    7,
+    0,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "drop_concept",
+   "target": "tile_floor",
+   "detected": true,
+   "findings_after": [
+    7,
+    0,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "drop_concept",
+   "target": "sill",
+   "detected": true,
+   "findings_after": [
+    7,
+    0,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "drop_concept",
+   "target": "skirting",
+   "detected": true,
+   "findings_after": [
+    7,
+    0,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "dup_row",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    6,
+    1,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "dup_row",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    6,
+    1,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "dup_row",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    6,
+    1,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "dup_row",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    6,
+    1,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "dup_row",
+   "target": "9",
+   "detected": true,
+   "findings_after": [
+    6,
+    1,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "tamper_amount",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    4
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "tamper_amount",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    4
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "tamper_amount",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    4
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "tamper_amount",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    4
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "tamper_amount",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    4
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "zero_qty",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    4
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "zero_qty",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    4
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "zero_qty",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    4
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "zero_qty",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    4
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "zero_qty",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    4
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "add_vague",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "add_vague",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "add_vague",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "add_vague",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "huaxibeian",
+   "type": "add_vague",
+   "target": "6",
+   "detected": true,
+   "findings_after": [
+    6,
+    0,
+    3
+   ],
+   "findings_base": [
+    6,
+    0,
+    3
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "drop_concept",
+   "target": "waterproof",
+   "detected": true,
+   "findings_after": [
+    13,
+    3,
+    3
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "drop_concept",
+   "target": "tile_floor",
+   "detected": true,
+   "findings_after": [
+    13,
+    3,
+    5
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "drop_concept",
+   "target": "skirting",
+   "detected": true,
+   "findings_after": [
+    13,
+    3,
+    6
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "drop_concept",
+   "target": "light_install",
+   "detected": true,
+   "findings_after": [
+    13,
+    3,
+    6
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "drop_concept",
+   "target": "water_pipe",
+   "detected": true,
+   "findings_after": [
+    13,
+    3,
+    6
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "dup_row",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    12,
+    4,
+    6
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "dup_row",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    12,
+    4,
+    6
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "dup_row",
+   "target": "10",
+   "detected": true,
+   "findings_after": [
+    12,
+    4,
+    6
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "dup_row",
+   "target": "17",
+   "detected": true,
+   "findings_after": [
+    12,
+    4,
+    6
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "dup_row",
+   "target": "18",
+   "detected": true,
+   "findings_after": [
+    12,
+    4,
+    6
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "tamper_amount",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "tamper_amount",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "tamper_amount",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "tamper_amount",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "tamper_amount",
+   "target": "6",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "zero_qty",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "zero_qty",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "zero_qty",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "zero_qty",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "zero_qty",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "add_vague",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "add_vague",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "add_vague",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "add_vague",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "szxinxin",
+   "type": "add_vague",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    12,
+    3,
+    7
+   ],
+   "findings_base": [
+    12,
+    3,
+    6
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "drop_concept",
+   "target": "demo_putty",
+   "detected": true,
+   "findings_after": [
+    13,
+    1,
+    7
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "drop_concept",
+   "target": "protect_floor",
+   "detected": true,
+   "findings_after": [
+    14,
+    1,
+    7
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "drop_concept",
+   "target": "waterproof",
+   "detected": true,
+   "findings_after": [
+    13,
+    1,
+    6
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "drop_concept",
+   "target": "tile_wall",
+   "detected": true,
+   "findings_after": [
+    13,
+    1,
+    7
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "drop_concept",
+   "target": "tile_floor",
+   "detected": true,
+   "findings_after": [
+    13,
+    1,
+    7
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "dup_row",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    12,
+    2,
+    7
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "dup_row",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    12,
+    2,
+    7
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "dup_row",
+   "target": "6",
+   "detected": true,
+   "findings_after": [
+    12,
+    2,
+    7
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "dup_row",
+   "target": "7",
+   "detected": true,
+   "findings_after": [
+    12,
+    2,
+    7
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "dup_row",
+   "target": "10",
+   "detected": true,
+   "findings_after": [
+    12,
+    2,
+    7
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "tamper_amount",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    8
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "tamper_amount",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    8
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "tamper_amount",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    8
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "tamper_amount",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    8
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "tamper_amount",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    8
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "zero_qty",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    8
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "zero_qty",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    8
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "zero_qty",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    8
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "zero_qty",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    8
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "zero_qty",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    8
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "add_vague",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    7
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "add_vague",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    7
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "add_vague",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    7
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "add_vague",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    7
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "feitai",
+   "type": "add_vague",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    12,
+    1,
+    7
+   ],
+   "findings_base": [
+    12,
+    1,
+    7
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "drop_concept",
+   "target": "waterproof",
+   "detected": true,
+   "findings_after": [
+    13,
+    0,
+    4
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "drop_concept",
+   "target": "tile_wall",
+   "detected": true,
+   "findings_after": [
+    12,
+    0,
+    4
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "drop_concept",
+   "target": "tile_floor",
+   "detected": true,
+   "findings_after": [
+    12,
+    0,
+    4
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "drop_concept",
+   "target": "sill",
+   "detected": true,
+   "findings_after": [
+    12,
+    0,
+    4
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "drop_concept",
+   "target": "ceiling",
+   "detected": true,
+   "findings_after": [
+    12,
+    0,
+    3
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "dup_row",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    11,
+    1,
+    4
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "dup_row",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    11,
+    1,
+    4
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "dup_row",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    11,
+    1,
+    4
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "dup_row",
+   "target": "6",
+   "detected": true,
+   "findings_after": [
+    11,
+    1,
+    4
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "dup_row",
+   "target": "8",
+   "detected": true,
+   "findings_after": [
+    11,
+    1,
+    4
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "tamper_amount",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "tamper_amount",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "tamper_amount",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "tamper_amount",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "tamper_amount",
+   "target": "6",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "zero_qty",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "zero_qty",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "zero_qty",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "zero_qty",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "zero_qty",
+   "target": "6",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "add_vague",
+   "target": "1",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "add_vague",
+   "target": "2",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "add_vague",
+   "target": "3",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "add_vague",
+   "target": "4",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  },
+  {
+   "doc": "guijiao124",
+   "type": "add_vague",
+   "target": "5",
+   "detected": true,
+   "findings_after": [
+    11,
+    0,
+    5
+   ],
+   "findings_base": [
+    11,
+    0,
+    4
+   ]
+  }
+ ]
+}

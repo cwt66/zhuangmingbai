@@ -1,0 +1,29 @@
+{
+ "meta": {
+  "version": "v0",
+  "why": "同一套模板套在不同报价范围上必然误报：124㎡ 那份是「基础报价单」（主材另计），模板按全包口径要求门槛石/踢脚线/木门/洁具/灯具，于是 7 条全被判成漏项——精确率被拉到 0.22。这不是判定能力问题，是模板不知道单据范围。",
+  "how": "上传时声明范围。scope=full（全包，默认，行为不变）；scope=base（只报基础施工）→ 主材/安装类模板项不参与判漏。",
+  "principle": "裁剪只减少「要求项」，不改变任何一条已列项的判定——避免范围声明成为漏报的挡箭牌。",
+  "review": "material_concepts 逐条可人工审阅；新增需说明为什么它属于「业主可自购/另计」"
+ },
+ "material_concepts": [
+  "threshold",
+  "sill",
+  "skirting",
+  "door_install",
+  "door_frame",
+  "sanitary",
+  "light_install",
+  "floor_drain"
+ ],
+ "reasons": {
+  "threshold": "门槛石为石材主材，通常业主自购或按实结算",
+  "sill": "窗台石同上",
+  "skirting": "踢脚线为主材，常见「业主自购、施工方安装」",
+  "door_install": "木门为主材，多由门厂安装，不在基础施工范围",
+  "door_frame": "门套随门，同上",
+  "sanitary": "洁具为主材，业主自购后施工方安装",
+  "light_install": "灯具为主材，业主自购",
+  "floor_drain": "地漏为主材小件，随洁具采购"
+ }
+}
