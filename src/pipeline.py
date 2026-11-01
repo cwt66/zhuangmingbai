@@ -526,13 +526,23 @@ def find_qty_unit(quote, rule):
 
 
 def find_fee_rate(quote, rule):
+    """管理费率异常。
+
+    注意：2026-11-01 引入「汇总行分层」后，管理费不再作为工序行出现在 rows 里
+    （它是按费率在表尾算出来的），所以必须同时扫 summary_rows——
+    否则这条规则会静默失效，而失效的规则比没有规则更危险（以为查过了）。
+    """
     out = []
     total = quote["total"] or 1
-    for r in quote["rows"]:
-        if r["cid"] == "mgmt_fee" and r["amount"] / total > rule["threshold"]:
+    cands = [r for r in quote["rows"] if r.get("cid") == "mgmt_fee"]
+    for r in (quote.get("summary_rows") or []):
+        if "管理费" in r["name"]:
+            cands.append(r)
+    for r in cands:
+        if r["amount"] / total > rule["threshold"]:
             rate = r["amount"] / total * 100
-            c = confidence(rule["strength"], 0.95, r["align_conf"], True)
-            out.append({"cid": r["cid"], "concept": r["name"], "line": r["no"],
+            c = confidence(rule["strength"], 0.95, r.get("align_conf") or 0.95, True)
+            out.append({"cid": "mgmt_fee", "concept": r["name"], "line": r["no"],
                         "issue": f"管理费率 {rate:.1f}% 偏高（参考上限 8%）", "rule": rule["id"],
                         "confidence": c, "tier": tier(c),
                         "evidence": {"basis": "行业惯例：管理费通常 3%–8%", "formula": "管理费/总价 > 8%"}})
