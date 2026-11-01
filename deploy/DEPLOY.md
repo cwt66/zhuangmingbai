@@ -37,7 +37,7 @@ sudo chown deploy:deploy /opt/zhuangmingbai
 ```bash
 sudo -u deploy -H bash -c '
 cd /opt && \
-git clone https://github.com/<your-org>/zhuangmingbai.git zhuangmingbai && \
+git clone https://gitee.com/Cwt66/zhuangmingbai.git zhuangmingbai && \
 cd zhuangmingbai && \
 git checkout <target-tag-or-commit>
 '
@@ -52,6 +52,28 @@ python3.13 -m venv venv && \
 ./venv/bin/pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 '
 ```
+
+### 2.3.1 配置环境变量（云上必做）
+
+systemd 单元里用 `EnvironmentFile` 读取 `/opt/zhuangmingbai/.env`（已在 `.gitignore`，不要提交）：
+
+```bash
+sudo -u deploy -H bash -c '
+cd /opt/zhuangmingbai && cp .env.example .env && chmod 600 .env
+'
+# 编辑 .env，至少填：
+#   DATABASE_URL=postgresql://user:pass@<RDS内网地址>:5432/zmb
+#   REDIS_URL=redis://<DCS内网地址>:6379/0
+#   MAAS_API_KEY=<可选；不配则报告标注“规则模板生成”>
+#   MAAS_BASE_URL=https://api.modelarts-maas.com/v1
+sudo -u deploy -H bash -c 'cd /opt/zhuangmingbai && venv/bin/python - <<PY
+import os, urllib.request, json
+print(json.loads(urllib.request.urlopen("http://127.0.0.1:8000/health", timeout=5).read()))
+PY'
+```
+
+**验收标准**：`/health` 里 `db.kind == "postgres"`、`cache.kind == "redis"`；
+若显示 `sqlite` / `memory`，说明连接串没生效，先查安全组与白名单，不要继续演示。
 
 ### 2.4 配置 nginx
 
@@ -83,8 +105,9 @@ sudo systemctl start zhuangmingbai
 # 本地探活（直接访问后端）
 curl -f http://127.0.0.1:8000/health
 
-# 期望响应
-# {"status":"ok","service":"zhuangmingbai-audit","version":"0.3.0"}
+# 期望响应（云上完整版会多出 db / cache / llm 三段）
+# {"status":"ok","service":"zhuangmingbai-audit","version":"0.4.0",
+#  "db":{"kind":"postgres"},"cache":{"kind":"redis"},"llm":{"enabled":true}}
 
 # 通过 nginx 探活
 curl -f http://<server-ip>/health

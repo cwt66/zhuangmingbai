@@ -59,3 +59,13 @@ out/
 # 临时脚本
 temp_*.py
 coverage_*.py
+
+# 本地状态与密钥
+.env
+.env.local
+data/state.db
+data/*.sqlite3
+out/
+eval/injection_runs/
+eval/ab_runs/
+eval/predictions/

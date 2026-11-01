@@ -10,3 +10,11 @@ eval/dataset/labels/
 venv/
 .auto-deploy/
 *.log
+
+# 运行时状态（不要提交）
+data/state.db
+data/*.sqlite3
+eval/injection_runs/
+eval/ab_runs/
+eval/predictions/
+.env.example.bak

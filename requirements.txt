@@ -5,3 +5,11 @@ uvicorn[standard]>=0.27,<1.0
 python-multipart>=0.0.9
 # 感知层（src/perception.py）同样零第三方依赖：签名用 hmac/hashlib，
 # xlsx 解析用标准库 zipfile + 正则，不引入 openpyxl。
+
+# 可选：只有 PDF 文本层解析需要（照片/CSV/XLSX 不需要）。
+# 装了它，扫描件 PDF 会在「没有文本层」时明确报错，而不是返回空表。
+pypdf>=5.0,<7.0
+
+# 云上运行时（本地离线演示不需要；缺了会自动降级 SQLite / 进程内缓存）
+psycopg[binary]>=3.1,<4
+redis>=5.0,<7.0

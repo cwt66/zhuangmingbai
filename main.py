@@ -9,6 +9,7 @@
   解析结果落成与 data/samples/*.csv 相同的结构，因此解析链路可替换、可对照。
 - 不判断贵不贵，只判断漏没漏、重没重；低置信度结论不进核减金额。
 """
+import html as html_mod
 import io
 import json
 import os
@@ -17,7 +18,7 @@ import tempfile
 import zipfile
 from typing import List
 
-from fastapi import FastAPI, File, Form, UploadFile
+from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -27,9 +28,13 @@ if BASE not in sys.path:
 from src import pipeline  # noqa: E402
 from src import perception  # noqa: E402
 from src import inquiry as inquiry_mod  # noqa: E402
+from src import cache as cache_mod  # noqa: E402
+from src import llm as llm_mod  # noqa: E402
+from src import privacy  # noqa: E402
+from src import store as store_mod  # noqa: E402
 fmt_money = pipeline.fmt_money
 
-app = FastAPI(title="装明白 · 可计算审计", version="0.3.0")
+app = FastAPI(title="装明白 · 可计算审计", version="0.4.0")
 
 MAX_FILES = 4
 MIN_FILES = 2
@@ -75,6 +80,18 @@ table.s td:first-child{color:var(--ink);font-weight:600}
 .nav b{color:var(--ink)}
 .nav a{margin-right:18px}
 .nav .right{float:right}
+.note{font-size:13px;color:#8A877F;line-height:1.7}
+.plain{padding-left:18px;color:var(--ink2);font-size:15px;line-height:1.9}
+.plain code,code{background:#F1EFE9;padding:1px 5px;border-radius:2px;font-size:13px}
+label{display:inline-block;margin:10px 16px 0 0;font-size:14px;color:var(--ink2)}
+select{font:inherit;font-size:14px;padding:7px 10px;border:1px solid #C9C5BA;background:#fff;border-radius:2px}
+.banner{background:#0A0A0A;color:#fff;padding:14px 22px;margin:0;font-size:14px;line-height:1.7}
+.banner b{color:#F0B429}
+h2{font-size:22px;margin:30px 0 10px}
+.ai-note{background:#fff;border:1px solid #E4E2DC;border-left:4px solid #002FA7;padding:22px 26px;margin:26px 0}
+.ai-note h2{margin:0 0 8px;font-size:20px}
+.ai-note .badge{display:inline-block;font-size:12px;color:#002FA7;border:1px solid #002FA7;
+ border-radius:2px;padding:2px 8px;margin-left:8px;vertical-align:middle}
 """
 
 
@@ -140,6 +157,7 @@ PAGE = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
       <div class="meta">样例为 80㎡ 老房翻新的合成单据（结构取自真实晒单，金额重制），仅用于链路验证。</div>
     </div>
   </div>
+  __BODY__
 </div></body></html>"""
 
 ERR = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
@@ -155,8 +173,16 @@ NAV = """<div class="nav"><b>装明白 · 可计算审计</b>
 <span class="right">浏览器 Ctrl/⌘+P 可另存为 PDF · <a href="/health">健康检查</a></span></div>"""
 
 
-def _page() -> str:
-    return PAGE.replace("__CSS__", CSS)
+def _page(body: str = "") -> str:
+    """基础页：把 __BODY__ 填上，避免各路由各自拼整页（曾导致 /perceive 渲染成首页）。"""
+    hosted = PAGE.replace("__CSS__", CSS)
+    if "<body>" in hosted:
+        hosted = hosted.replace("<body>", "<body>" + NAV, 1)
+    return hosted.replace("__BODY__", body)
+
+
+def _sub_page(body: str) -> HTMLResponse:
+    return HTMLResponse(_page(body))
 
 
 def _err(title: str, detail: str, code: int = 400) -> HTMLResponse:
@@ -202,6 +228,84 @@ def _label_from_name(name: str) -> str:
     return stem[:24] or "未命名报价"
 
 
+# ---------------------------------------------------------------- 云原生落地
+def _client_ip(request):
+    xff = (request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
+    return xff or (request.client.host if request.client else "unknown")
+
+
+def _rate_ok(request, bucket="audit"):
+    """按 IP 限流。默认 60 次/分钟，可用 RATE_LIMIT 调整；返回 (ok, remaining)。"""
+    if os.environ.get("RATE_LIMIT", "1") == "0":
+        return True, 999
+    try:
+        limit = int(os.environ.get("RATE_LIMIT", "60"))
+    except ValueError:
+        limit = 60
+    ok, remain, _ = cache_mod.get_cache().rate_limit(bucket + ":" + _client_ip(request),
+                                                     limit=limit, window=60)
+    return ok, remain
+
+
+def _fingerprint(res):
+    try:
+        return pipeline._report_fingerprint(res)  # noqa: SLF001（报告指纹是引擎公开契约）
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def _persist(quotes, res, source="upload", docs=None):
+    """把摘要写进 RDS/SQLite。失败不阻断报告——演示不能因为库挂了而白屏。"""
+    try:
+        payload = {"documents": [
+            {"label": q["label"], "total": q.get("total"),
+             "missing": [{"cid": m.get("cid"), "name": m.get("name") or m.get("concept"),
+                          "amount": m.get("ref_amount"), "tier": m.get("tier")}
+                         for m in (res.get(q["label"]) or {}).get("missing", [])],
+             "duplicates": [{"cid": d.get("cid"), "name": d.get("name") or d.get("concept"),
+                             "amount": d.get("amount"), "tier": d.get("tier")}
+                            for d in (res.get(q["label"]) or {}).get("duplicates", [])],
+             }
+            for q in quotes]}
+        record = {
+            "source": source,
+            "template_key": (res.get(quotes[0]["label"]) or {}).get("template_key"),
+            "scope": (res.get(quotes[0]["label"]) or {}).get("scope"),
+            "doc_count": len(quotes),
+            "docs": docs or [q["label"] for q in quotes],
+            "total": sum(float(q.get("total") or 0) for q in quotes),
+            "missing_cost": sum(float((res.get(q["label"]) or {}).get("missing_cost") or 0)
+                                for q in quotes),
+            "duplicate_cut": sum(float((res.get(q["label"]) or {}).get("duplicate_cut") or 0)
+                                 for q in quotes),
+            "effective": sum(float((res.get(q["label"]) or {}).get("effective") or 0)
+                             for q in quotes),
+            "fingerprint": _fingerprint(res),
+            "payload": payload,
+        }
+        return store_mod.get_store().save_audit(record)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _decorate(html, quotes, res, audit_id=None, source="upload"):
+    """在报告尾部加「解读」（MaaS 或模板）与审计编号。"""
+    try:
+        facts = llm_mod.build_facts(quotes, res)
+        ai = llm_mod.get_client().explain(facts, cache=cache_mod.get_cache())
+        section = llm_mod.render_html(ai)
+    except Exception as e:  # noqa: BLE001
+        section = ('<div class="ai-note"><h2>解读</h2><p class="note">解读生成失败：%s</p></div>'
+                   % e)
+    aid = audit_id or "未入库"
+    footer = ('<div class="wrap" style="padding-top:0"><p class="note">审计编号 %s ｜ 来源 %s ｜ '
+              '<a href="/history">历史记录</a> ｜ 数据仅用于本次核对，不用于训练</p></div>'
+              % (aid, source))
+    if "</body>" in html:
+        html = html.replace("</body>", section + footer + "</body>", 1)
+    return html
+
+
 @app.get("/", response_class=HTMLResponse)
 def index():
     return HTMLResponse(_page())
@@ -209,7 +313,19 @@ def index():
 
 @app.get("/health")
 def health():
-    return JSONResponse({"status": "ok", "service": "zhuangmingbai-audit", "version": app.version})
+    store = store_mod.get_store()
+    cch = cache_mod.get_cache()
+    ok = store.health().get("status") == "ok"
+    return JSONResponse({
+        "status": "ok" if ok else "degraded",
+        "service": "zhuangmingbai-audit",
+        "version": app.version,
+        "db": store.health(),
+        "cache": cch.health(),
+        "llm": {"enabled": llm_mod.get_client().available(),
+                "model": llm_mod.get_client().model if llm_mod.get_client().available() else None},
+        "time": __import__("datetime").datetime.now().astimezone().isoformat(timespec="seconds"),
+    })
 
 
 @app.get("/samples/{name}")
@@ -226,7 +342,9 @@ def sample(name: str):
 def demo():
     paths = [(lb, os.path.join(pipeline.DATA, "samples", fn)) for lb, fn in SAMPLES]
     try:
-        html, _, _ = _audit(paths)
+        html, res, quotes = _audit(paths)
+        aid = _persist(quotes, res, source="demo")
+        html = _decorate(html, quotes, res, aid, "合成样例")
     except EmptyRowsError as e:
         return _err("样例数据异常", str(e), 400)
     except Exception as e:  # noqa: BLE001
@@ -241,7 +359,9 @@ def real():
     if not os.path.isfile(path):
         return _err("真实单据缺失", "仓库内未找到 data/real/sh_zhuoguan_halfpack.csv。", 404)
     try:
-        html, _, _ = _audit([("上海卓观 · 两房半包（真实单据）", path)])
+        html, res, quotes = _audit([("上海卓观 · 两房半包（真实单据）", path)])
+        aid = _persist(quotes, res, source="real")
+        html = _decorate(html, quotes, res, aid, "真实单据")
     except Exception as e:  # noqa: BLE001
         return _err("真实单据跑失败", str(e), 500)
     return HTMLResponse(html)
@@ -282,7 +402,7 @@ def perceive_page():
                   '未配置 — <code>export MAAS_API_KEY=...</code>'))
     status.append('<li>华为云 AK/SK（表格识别用）：%s</li>' % ("已配置" if has_ak else
                   '未配置 — 需同时设置 <code>HW_ACCESS_KEY</code> / <code>HW_SECRET_KEY</code>'))
-    html = _page().replace("__BODY__", """
+    html = _page("""
 <h1>图片识别 → 审计</h1>
 <p class="lead">上传一张报价单照片。识别只负责「看见」，判断仍走规则——两层分开，才能分开定位错误。</p>
 <form method="post" action="/perceive" enctype="multipart/form-data" class="card">
@@ -302,19 +422,22 @@ def perceive_page():
       <option value="base">基础施工（主材另计）</option>
     </select>
   </label>
-  <button type="submit">识别并审计</button>
+  <button class="btn" type="submit">识别并审计</button>
 </form>
 <h2>感知层状态</h2>
 <ul class="plain">""" + "".join(status) + """</ul>
-<p class="note">识别失败会**明确报错**，不会拿空结果往下走——空表被判成「没有漏项」是最危险的失败方式。</p>
+<p class="note">识别失败会<strong>明确报错</strong>，不会拿空结果往下走——空表被判成「没有漏项」是最危险的失败方式。</p>
 """)
     return HTMLResponse(html)
 
 
 @app.post("/perceive", response_class=HTMLResponse)
-async def perceive_run(file: UploadFile = File(default=None),
+async def perceive_run(request: Request, file: UploadFile = File(default=None),
                        template_key: str = Form(default="new_house"),
                        scope: str = Form(default="full")):
+    ok, _ = _rate_ok(request, "perceive")
+    if not ok:
+        return _err("请求过于频繁", "每个来源每分钟最多 60 次识别。请稍后再试。", 429)
     if file is None or not (file.filename or "").strip():
         return _err("没有收到文件", "请选择一张 JPG/PNG 报价单照片。", 400)
     raw = await file.read()
@@ -348,8 +471,8 @@ async def perceive_run(file: UploadFile = File(default=None),
 
         csv_path = todo.name + ".csv"
         perception.write_csv(rows, csv_path)
-        html, _, quotes = _audit([(_label_from_name(file.filename), csv_path)],
-                                 template_key=template_key, scope=scope)
+        html, res, quotes = _audit([(_label_from_name(file.filename), csv_path)],
+                                  template_key=template_key, scope=scope)
         # 横幅口径必须与审计主体一致：用 load_quote 分层后的「工序明细合计」，
         # 不能用识别层的全行求和——否则汇总行（费用总合计/总价）会被再加一遍。
         q0 = quotes[0]
@@ -376,13 +499,18 @@ async def perceive_run(file: UploadFile = File(default=None),
         if meta.get("fixture") else "")
     if "<body>" in html:
         html = html.replace("<body>", "<body>" + banner, 1)
+    aid = _persist(quotes, res, source="perceive", docs=[file.filename or "photo"])
+    html = _decorate(html, quotes, res, aid, "图片/文件识别")
     return HTMLResponse(html)
 
 
 @app.post("/audit", response_class=HTMLResponse)
-async def audit(files: List[UploadFile] = File(default=None),
+async def audit(request: Request, files: List[UploadFile] = File(default=None),
                 template_key: str = Form(default="old_house"),
                 scope: str = Form(default="full")):
+    ok, remain = _rate_ok(request)
+    if not ok:
+        return _err("请求过于频繁", "每个来源每分钟最多 60 次审计。请稍后再试。", 429)
     if not files:
         return _err("没有收到文件", "请选择 2–4 份 CSV 报价单。")
     if len(files) < MIN_FILES:
@@ -404,7 +532,10 @@ async def audit(files: List[UploadFile] = File(default=None),
             with open(dst, "wb") as w:
                 w.write(raw)
             paths.append((_label_from_name(f.filename or "报价%d" % i), dst))
-        html, _, _ = _audit(paths, template_key=template_key, scope=scope)
+        html, res, quotes = _audit(paths, template_key=template_key, scope=scope)
+        aid = _persist(quotes, res, source="upload",
+                       docs=[f.filename or "quote_%d" % (i + 1) for i, f in enumerate(files)])
+        html = _decorate(html, quotes, res, aid, "上传单据")
         return HTMLResponse(html)
     except EmptyRowsError as e:
         return _err("没有解析到行项", str(e), 400)
@@ -461,6 +592,115 @@ def api_demo():
             "exposure": [x["low"] for x in r["exposure"]] + [x["high"] for x in r["exposure"]],
         }
     return out
+
+
+@app.get("/api/audits")
+def api_audits(limit: int = 50):
+    return JSONResponse({"items": store_mod.get_store().list_audits(max(1, min(limit, 200)))})
+
+
+@app.get("/api/audits/{audit_id}")
+def api_audit_detail(audit_id: str):
+    rec = store_mod.get_store().get_audit(audit_id)
+    if not rec:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    return JSONResponse(rec)
+
+
+@app.get("/history", response_class=HTMLResponse)
+def history():
+    """审计历史：证明 RDS 真的在存业务数据，而不是只开了一台库。"""
+    rows = store_mod.get_store().list_audits(100)
+    tr = []
+    for r in rows:
+        tr.append(
+            "<tr><td><a href=\"/report/%s\">%s</a></td><td>%s</td><td>%s</td>"
+            "<td>%d</td><td>%s</td><td>%s</td><td><code>%s</code></td></tr>" % (
+                html_mod.escape(r.get("id") or ""), html_mod.escape(r.get("id") or ""),
+                html_mod.escape(str(r.get("created_at") or "")),
+                html_mod.escape(str(r.get("source") or "")),
+                int(r.get("doc_count") or 0),
+                fmt_money(r.get("total")), fmt_money(r.get("effective")),
+                html_mod.escape(str(r.get("fingerprint") or ""))))
+    body = """
+<h1>审计历史</h1>
+<p class="lead">每一次审计的摘要都落库（PostgreSQL / SQLite）。这是「关联 RDS」的业务证据：
+不是开了一台数据库，而是数据真的写进去了、能查、能回看。</p>
+<table class="s"><tr><th>编号</th><th>时间</th><th>来源</th><th>单据数</th>
+<th>总价</th><th>真实成本</th><th>指纹</th></tr>%s</table>
+<p class="note">只存摘要与结构化判定，不存原始单据文件。数据库状态见 <a href="/health">/health</a>。</p>
+""" % ("".join(tr) or "<tr><td colspan=7>还没有记录，先跑一次 <a href=\"/demo\">样例</a>。</td></tr>")
+    return _sub_page(body)
+
+
+@app.get("/report/{audit_id}", response_class=HTMLResponse)
+def report(audit_id: str):
+    rec = store_mod.get_store().get_audit(audit_id)
+    if not rec:
+        return _err("没有这条记录", "审计编号不存在，或数据库已重置。", 404)
+    docs = rec.get("docs") or []
+    payload = rec.get("payload") or {}
+    rows = []
+    for d in payload.get("documents") or []:
+        ms = d.get("missing") or []
+        rows.append("<tr><td>%s</td><td>%s</td><td>%d</td><td>%s</td></tr>" % (
+            html_mod.escape(str(d.get("label"))), fmt_money(d.get("total")), len(ms),
+            "、".join(html_mod.escape(str(m.get("name"))) for m in ms[:6])))
+    body = """
+<h1>审计记录 %s</h1>
+<p class="lead">%s ｜ 来源 %s ｜ 模板 %s / 范围 %s ｜ 判定指纹 <code>%s</code></p>
+<table class="s"><tr><th>单据</th><th>报价总价</th><th>漏项数</th><th>主要漏项</th></tr>
+%s</table>
+<p class="note">完整可交互报告请重新跑一次；历史记录只保留摘要，避免把原始单据长期留在数据库里。</p>
+""" % (html_mod.escape(audit_id), html_mod.escape(str(rec.get("created_at"))),
+       html_mod.escape(str(rec.get("source"))), html_mod.escape(str(rec.get("template_key"))),
+       html_mod.escape(str(rec.get("scope"))), html_mod.escape(str(rec.get("fingerprint"))),
+       "".join(rows) or "<tr><td colspan=4>无单据明细</td></tr>")
+    return _sub_page(body)
+
+
+@app.post("/api/audit")
+async def api_audit(request: Request, files: List[UploadFile] = File(default=None),
+                    template_key: str = Form(default="old_house"),
+                    scope: str = Form(default="full")):
+    """程序化接口：返回 JSON 摘要（供联调、批量评测、以及答辩现场 curl 复现）。"""
+    ok, _ = _rate_ok(request, "api")
+    if not ok:
+        return JSONResponse({"error": "rate limited"}, status_code=429)
+    if not files or len(files) < 2:
+        return JSONResponse({"error": "need at least 2 files"}, status_code=400)
+    tmp = tempfile.mkdtemp(prefix="zmb_api_")
+    paths = []
+    try:
+        for i, f in enumerate(files, start=1):
+            raw = await f.read()
+            if not raw.strip() or len(raw) > MAX_BYTES:
+                return JSONResponse({"error": "empty or too large: %s" % f.filename}, status_code=400)
+            dst = os.path.join(tmp, "q%d.csv" % i)
+            with open(dst, "wb") as w:
+                w.write(raw)
+            paths.append((_label_from_name(f.filename or "quote_%d" % i), dst))
+        _, res, quotes = _audit(paths, template_key=template_key, scope=scope)
+        aid = _persist(quotes, res, source="api")
+        facts = llm_mod.build_facts(quotes, res)
+        return JSONResponse({
+            "audit_id": aid,
+            "fingerprint": _fingerprint(res),
+            "documents": facts["documents"],
+            "ai": llm_mod.get_client().explain(facts, cache=cache_mod.get_cache()),
+        })
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        for _, p in paths:
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+        try:
+            os.rmdir(tmp)
+        except OSError:
+            pass
 
 
 if __name__ == "__main__":

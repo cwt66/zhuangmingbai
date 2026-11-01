@@ -204,6 +204,10 @@ class TestFileProvider(unittest.TestCase):
 
     def test_pdf_without_text_layer_must_fail_loudly(self):
         """扫描件 PDF 必须报错，不能返回空表——空表会被当成没漏项。"""
+        try:
+            import pypdf  # noqa: F401
+        except ImportError:
+            self.skipTest("pypdf 未安装：pip install -r requirements.txt 后再跑 PDF 用例")
         blank = os.path.join(self.tmp, "blank.pdf")
         with open(blank, "wb") as f:
             f.write(b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"

@@ -1,0 +1,63 @@
+# 装明白 · 一键本地云原生栈（PostgreSQL + Redis + 应用）
+#
+# 用途：在没有华为云账号的机器上，也能验证「RDS / Redis 真的被业务用到」。
+# 云上对应关系：
+#   db    -> 华为云 RDS for PostgreSQL
+#   redis -> 华为云 DCS for Redis
+#   app   -> 华为云 ECS（或 AI 开发者空间沙箱）
+#
+# 启动：docker compose up --build
+# 验证：curl -s localhost:8000/health | python3 -m json.tool
+#       应看到 "db": {"kind": "postgres"} 与 "cache": {"kind": "redis"}
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: zmb
+      POSTGRES_PASSWORD: change-me
+      POSTGRES_DB: zmb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zmb -d zmb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://zmb:change-me@db:5432/zmb
+      REDIS_URL: redis://redis:6379/0
+      RATE_LIMIT: "60"
+      LLM_ENABLED: "${LLM_ENABLED:-1}"
+      MAAS_API_KEY: "${MAAS_API_KEY:-}"
+      MAAS_BASE_URL: "${MAAS_BASE_URL:-https://api.modelarts-maas.com/v1}"
+      MAAS_TEXT_MODEL: "${MAAS_TEXT_MODEL:-DeepSeek-V3}"
+      PERCEPTION_PROVIDER: "${PERCEPTION_PROVIDER:-maas}"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
