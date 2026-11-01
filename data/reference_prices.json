@@ -1,0 +1,855 @@
+{
+ "meta": {
+  "built_at": "2026-11-01 14:43:56",
+  "sources": [
+   "篱笆·卓观（老房半包）",
+   "花溪北岸（新房）",
+   "翡翠台（老房全案）",
+   "124㎡（基础报价）"
+  ],
+  "scope": "家装（工装不参与，避免单价体系混池）",
+  "semantics": "amount_median = 同一概念在各单据中「该行金额」的中位数；不是单价、不是市场行情价，只用于漏项补项的量级参照",
+  "caveat": "n_docs < 2 的条目只有单一来源，噪声大，报告里必须显示 n",
+  "principle": "不判断贵不贵，只估算「补上这项大概要多少」"
+ },
+ "items": {
+  "ceiling": {
+   "concept": "吊顶",
+   "amount_median": 1650.0,
+   "n_docs": 4,
+   "n_rows": 19,
+   "amount_range": [
+    200.0,
+    4492.8
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "curtain_box": {
+   "concept": "窗帘盒",
+   "amount_median": 432.0,
+   "n_docs": 3,
+   "n_rows": 7,
+   "amount_range": [
+    210.0,
+    597.0
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）"
+   ]
+  },
+  "wall_base": {
+   "concept": "墙面基层处理",
+   "amount_median": 784.0,
+   "n_docs": 4,
+   "n_rows": 27,
+   "amount_range": [
+    51.0,
+    3203.2
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "topcoat": {
+   "concept": "刷面漆",
+   "amount_median": 637.5,
+   "n_docs": 4,
+   "n_rows": 32,
+   "amount_range": [
+    92.5,
+    3315.0
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "door_install": {
+   "concept": "木门安装",
+   "amount_median": 1960.0,
+   "n_docs": 3,
+   "n_rows": 9,
+   "amount_range": [
+    30.0,
+    4140.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "door_frame": {
+   "concept": "门套",
+   "amount_median": 250.0,
+   "n_docs": 2,
+   "n_rows": 5,
+   "amount_range": [
+    250.0,
+    948.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）"
+   ]
+  },
+  "tile_floor": {
+   "concept": "贴地砖",
+   "amount_median": 637.5,
+   "n_docs": 4,
+   "n_rows": 33,
+   "amount_range": [
+    130.0,
+    8140.0
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "wire": {
+   "concept": "布线",
+   "amount_median": 431.5,
+   "n_docs": 1,
+   "n_rows": 6,
+   "amount_range": [
+    49.0,
+    2232.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）"
+   ]
+  },
+  "threshold": {
+   "concept": "门槛石",
+   "amount_median": 82.5,
+   "n_docs": 2,
+   "n_rows": 12,
+   "amount_range": [
+    50.0,
+    330.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）"
+   ]
+  },
+  "ceiling_al": {
+   "concept": "铝扣板吊顶",
+   "amount_median": 586.95,
+   "n_docs": 3,
+   "n_rows": 12,
+   "amount_range": [
+    67.5,
+    1859.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "pipe_wrap": {
+   "concept": "包立管",
+   "amount_median": 290.0,
+   "n_docs": 4,
+   "n_rows": 8,
+   "amount_range": [
+    90.0,
+    1600.0
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "tile_wall": {
+   "concept": "贴墙砖",
+   "amount_median": 1869.0,
+   "n_docs": 4,
+   "n_rows": 17,
+   "amount_range": [
+    1088.0,
+    5335.2
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "grout": {
+   "concept": "填缝",
+   "amount_median": 10.0,
+   "n_docs": 1,
+   "n_rows": 2,
+   "amount_range": [
+    10.0,
+    10.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）"
+   ]
+  },
+  "faucet": {
+   "concept": "龙头",
+   "amount_median": 21.0,
+   "n_docs": 1,
+   "n_rows": 4,
+   "amount_range": [
+    13.0,
+    29.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）"
+   ]
+  },
+  "angle_valve": {
+   "concept": "角阀",
+   "amount_median": 5.75,
+   "n_docs": 1,
+   "n_rows": 2,
+   "amount_range": [
+    4.0,
+    7.5
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）"
+   ]
+  },
+  "waterproof": {
+   "concept": "防水涂料",
+   "amount_median": 829.92,
+   "n_docs": 4,
+   "n_rows": 15,
+   "amount_range": [
+    105.3,
+    1710.0
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "tile_corner": {
+   "concept": "瓷砖倒角",
+   "amount_median": 240.0,
+   "n_docs": 3,
+   "n_rows": 5,
+   "amount_range": [
+    150.0,
+    1000.0
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）"
+   ]
+  },
+  "sanitary": {
+   "concept": "洁具安装",
+   "amount_median": 1716.0,
+   "n_docs": 3,
+   "n_rows": 13,
+   "amount_range": [
+    45.0,
+    4899.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "floor_drain": {
+   "concept": "地漏",
+   "amount_median": 208.0,
+   "n_docs": 2,
+   "n_rows": 5,
+   "amount_range": [
+    47.0,
+    208.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "sill": {
+   "concept": "窗台石",
+   "amount_median": 380.0,
+   "n_docs": 4,
+   "n_rows": 7,
+   "amount_range": [
+    72.0,
+    2563.6
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "level_floor": {
+   "concept": "地面找平",
+   "amount_median": 259.0,
+   "n_docs": 2,
+   "n_rows": 6,
+   "amount_range": [
+    84.0,
+    2025.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）"
+   ]
+  },
+  "water_pipe": {
+   "concept": "给水管",
+   "amount_median": 1289.0,
+   "n_docs": 2,
+   "n_rows": 3,
+   "amount_range": [
+    220.0,
+    5616.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "drain_pipe": {
+   "concept": "排水管",
+   "amount_median": 140.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    140.0,
+    140.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）"
+   ]
+  },
+  "elec_box": {
+   "concept": "配电箱移位",
+   "amount_median": 80.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    80.0,
+    80.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）"
+   ]
+  },
+  "weak_box": {
+   "concept": "弱电箱",
+   "amount_median": 80.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    80.0,
+    80.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）"
+   ]
+  },
+  "switch_install": {
+   "concept": "开关插座安装",
+   "amount_median": 210.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    210.0,
+    210.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）"
+   ]
+  },
+  "light_install": {
+   "concept": "灯具安装",
+   "amount_median": 218.4,
+   "n_docs": 2,
+   "n_rows": 23,
+   "amount_range": [
+    101.92,
+    1040.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "chase": {
+   "concept": "开槽",
+   "amount_median": 745.0,
+   "n_docs": 1,
+   "n_rows": 2,
+   "amount_range": [
+    322.0,
+    1168.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）"
+   ]
+  },
+  "actual_settlement": {
+   "concept": "按实结算",
+   "amount_median": 2200.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    2200.0,
+    2200.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）"
+   ]
+  },
+  "demo_wall": {
+   "concept": "拆墙",
+   "amount_median": 1050.0,
+   "n_docs": 3,
+   "n_rows": 5,
+   "amount_range": [
+    240.0,
+    1134.0
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）"
+   ]
+  },
+  "demo_all": {
+   "concept": "拆旧(整体)",
+   "amount_median": 300.0,
+   "n_docs": 3,
+   "n_rows": 3,
+   "amount_range": [
+    300.0,
+    1487.2
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "篱笆·卓观（老房半包）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "wall_repair": {
+   "concept": "墙面修补",
+   "amount_median": 278.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    278.0,
+    278.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）"
+   ]
+  },
+  "level_wall": {
+   "concept": "墙面找平",
+   "amount_median": 390.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    390.0,
+    390.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）"
+   ]
+  },
+  "build_wall": {
+   "concept": "砌墙",
+   "amount_median": 811.2,
+   "n_docs": 2,
+   "n_rows": 5,
+   "amount_range": [
+    200.0,
+    811.2
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "opening_repair": {
+   "concept": "门洞修补",
+   "amount_median": 445.0,
+   "n_docs": 2,
+   "n_rows": 2,
+   "amount_range": [
+    190.0,
+    700.0
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "篱笆·卓观（老房半包）"
+   ]
+  },
+  "carry_fee": {
+   "concept": "材料搬运费",
+   "amount_median": 3036.0,
+   "n_docs": 2,
+   "n_rows": 2,
+   "amount_range": [
+    300.0,
+    5772.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "debris_out": {
+   "concept": "垃圾清运(外运)",
+   "amount_median": 450.0,
+   "n_docs": 2,
+   "n_rows": 2,
+   "amount_range": [
+    140.0,
+    760.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）"
+   ]
+  },
+  "cabinet": {
+   "concept": "柜体定制",
+   "amount_median": 1084.0,
+   "n_docs": 3,
+   "n_rows": 16,
+   "amount_range": [
+    100.0,
+    33580.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "damper_hinge": {
+   "concept": "阻尼铰链",
+   "amount_median": 108.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    108.0,
+    108.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）"
+   ]
+  },
+  "bg_base": {
+   "concept": "背景墙打底",
+   "amount_median": 518.0,
+   "n_docs": 2,
+   "n_rows": 3,
+   "amount_range": [
+    185.0,
+    2280.0
+   ],
+   "from": [
+    "篱笆·卓观（老房半包）",
+    "翡翠台（老房全案）"
+   ]
+  },
+  "gypsum_level": {
+   "concept": "石膏找平",
+   "amount_median": 483.6,
+   "n_docs": 1,
+   "n_rows": 7,
+   "amount_range": [
+    117.0,
+    904.8
+   ],
+   "from": [
+    "花溪北岸（新房）"
+   ]
+  },
+  "skirting": {
+   "concept": "踢脚线",
+   "amount_median": 1086.8,
+   "n_docs": 2,
+   "n_rows": 7,
+   "amount_range": [
+    514.8,
+    2100.0
+   ],
+   "from": [
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "vent_hole": {
+   "concept": "排气孔",
+   "amount_median": 312.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    312.0,
+    312.0
+   ],
+   "from": [
+    "花溪北岸（新房）"
+   ]
+  },
+  "mep": {
+   "concept": "水电改造",
+   "amount_median": 9940.5,
+   "n_docs": 3,
+   "n_rows": 4,
+   "amount_range": [
+    4275.0,
+    13020.0
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "panel": {
+   "concept": "开关面板",
+   "amount_median": 1872.0,
+   "n_docs": 3,
+   "n_rows": 3,
+   "amount_range": [
+    1500.0,
+    2080.0
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "翡翠台（老房全案）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "protect_finish": {
+   "concept": "成品保护",
+   "amount_median": 1826.0,
+   "n_docs": 2,
+   "n_rows": 2,
+   "amount_range": [
+    1000.0,
+    2652.0
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "seaming": {
+   "concept": "美缝",
+   "amount_median": 480.26,
+   "n_docs": 2,
+   "n_rows": 9,
+   "amount_range": [
+    196.24,
+    5324.8
+   ],
+   "from": [
+    "124㎡（基础报价）",
+    "花溪北岸（新房）"
+   ]
+  },
+  "clean": {
+   "concept": "竣工保洁",
+   "amount_median": 884.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    884.0,
+    884.0
+   ],
+   "from": [
+    "花溪北岸（新房）"
+   ]
+  },
+  "lintel": {
+   "concept": "门头过梁",
+   "amount_median": 540.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    540.0,
+    540.0
+   ],
+   "from": [
+    "翡翠台（老房全案）"
+   ]
+  },
+  "demo_putty": {
+   "concept": "铲墙皮",
+   "amount_median": 54.0,
+   "n_docs": 1,
+   "n_rows": 5,
+   "amount_range": [
+    48.0,
+    210.0
+   ],
+   "from": [
+    "翡翠台（老房全案）"
+   ]
+  },
+  "protect_floor": {
+   "concept": "地面保护",
+   "amount_median": 52.5,
+   "n_docs": 1,
+   "n_rows": 6,
+   "amount_range": [
+    18.0,
+    222.0
+   ],
+   "from": [
+    "翡翠台（老房全案）"
+   ]
+  },
+  "wp_beam": {
+   "concept": "防水地梁",
+   "amount_median": 320.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    320.0,
+    320.0
+   ],
+   "from": [
+    "翡翠台（老房全案）"
+   ]
+  },
+  "backfill": {
+   "concept": "陶粒回填",
+   "amount_median": 1400.0,
+   "n_docs": 1,
+   "n_rows": 3,
+   "amount_range": [
+    200.0,
+    1400.0
+   ],
+   "from": [
+    "翡翠台（老房全案）"
+   ]
+  },
+  "demolition_reform": {
+   "concept": "拆改",
+   "amount_median": 950.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    950.0,
+    950.0
+   ],
+   "from": [
+    "翡翠台（老房全案）"
+   ]
+  },
+  "site_clean": {
+   "concept": "施工保洁",
+   "amount_median": 760.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    760.0,
+    760.0
+   ],
+   "from": [
+    "翡翠台（老房全案）"
+   ]
+  },
+  "epoxy_sand": {
+   "concept": "环氧彩砂",
+   "amount_median": 5760.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    5760.0,
+    5760.0
+   ],
+   "from": [
+    "翡翠台（老房全案）"
+   ]
+  },
+  "hardware": {
+   "concept": "五金安装",
+   "amount_median": 350.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    350.0,
+    350.0
+   ],
+   "from": [
+    "翡翠台（老房全案）"
+   ]
+  },
+  "quartz_top": {
+   "concept": "石英石台面",
+   "amount_median": 1225.0,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    1225.0,
+    1225.0
+   ],
+   "from": [
+    "翡翠台（老房全案）"
+   ]
+  },
+  "gypsum_line": {
+   "concept": "石膏线",
+   "amount_median": 566.4,
+   "n_docs": 1,
+   "n_rows": 3,
+   "amount_range": [
+    513.6,
+    595.2
+   ],
+   "from": [
+    "124㎡（基础报价）"
+   ]
+  },
+  "window_seal": {
+   "concept": "封窗",
+   "amount_median": 11014.2,
+   "n_docs": 1,
+   "n_rows": 1,
+   "amount_range": [
+    11014.2,
+    11014.2
+   ],
+   "from": [
+    "124㎡（基础报价）"
+   ]
+  }
+ }
+}

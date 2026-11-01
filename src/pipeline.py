@@ -93,6 +93,77 @@ class Ontology:
         return None, 0.0, "unmatched"
 
 
+# 汇总/派生费用行的名称特征。命中了还不够——必须过「算术门控」（见 _is_summary_row）。
+SUMMARY_KEYWORDS = ("合计", "总计", "总价", "小计", "造价", "管理费", "设计费",
+                    "税金", "税费", "服务费", "措施费", "优惠", "实收", "折扣")
+# 派生费用（按费率算出来的钱，不是工序）：管理费/设计费/税金这类
+FEE_KEYWORDS = ("管理费", "设计费", "税金", "税费", "服务费", "措施费")
+# 印刷总额（对账锚点）：这些字样代表「整单合计」而不是分项小计
+GRAND_KEYWORDS = ("合计", "总计", "总价", "造价")
+PAID_KEYWORDS = ("实收", "优惠", "折扣")
+
+
+def _is_summary_row(row):
+    """判断一行是「汇总/派生费用」而不是「工序」。
+
+    真实反例（必须保护的）：深圳新源诊所 PDF 里有 19 行「批腻子打磨刷乳胶漆小计」
+    ——名称带「小计」，其实是 PDF 把分区小计标签拼进了工序名，数量×单价=合价 精确成立。
+    若只按关键词剔除，会删掉 19 行真实工序。
+
+    所以门控是「算不出来才算汇总」：
+      ① 缺单价或数量 → 是汇总（装修造价 1 项 / 空单价 / 69,864）
+      ② 数量×单价 ≠ 合价 → 是汇总（金额不是这一行自己算出来的）
+      ③ 费率行：名称含费类词 + 数量<1 + 单位「项」（工程管理费 0.05 项 × 69,864）
+    """
+    name = row["name"]
+    if not any(k in name for k in SUMMARY_KEYWORDS):
+        return False
+    if row["price"] <= 0 or row["qty"] <= 0:
+        return True
+    if abs(row["qty"] * row["price"] - row["amount"]) > 0.01:
+        return True
+    if any(k in name for k in FEE_KEYWORDS) and row["qty"] < 1 and row["unit"] == "项":
+        return True
+    return False
+
+
+def reconcile(detail_rows, summary_rows):
+    """文档级对账：工序明细之和 + 派生费用 是否等于印刷合计。
+
+    这不是「多此一举」——真实单据里对不上是常态（本项目 5 份单据里 2 份对不上账：
+    124㎡ 三处小计误差合计 506.6 元；翡翠台主材区疑有未拍到行）。
+    对账差额本身就是一条审计结论：**报价单自己的数都对不上，签之前必须问清楚。**
+    """
+    detail_sum = round(sum(r["amount"] for r in detail_rows), 2)
+    fees = [r for r in summary_rows
+            if any(k in r["name"] for k in FEE_KEYWORDS)
+            and not any(k in r["name"] for k in GRAND_KEYWORDS)]
+    fee_sum = round(sum(r["amount"] for r in fees), 2)
+    grand_rows = [r for r in summary_rows
+                  if any(k in r["name"] for k in GRAND_KEYWORDS)
+                  and not any(k in r["name"] for k in PAID_KEYWORDS)]
+    grand = max(grand_rows, key=lambda r: r["amount"]) if grand_rows else None
+    paid_rows = [r for r in summary_rows if any(k in r["name"] for k in PAID_KEYWORDS)]
+    paid = max(paid_rows, key=lambda r: r["amount"]) if paid_rows else None
+    subtotals = [r for r in summary_rows if "小计" in r["name"]]
+    out = {
+        "detail_sum": detail_sum,
+        "fee_sum": fee_sum,
+        "fees": [{"name": r["name"], "no": r["no"], "amount": r["amount"]} for r in fees],
+        "grand": {"name": grand["name"], "no": grand["no"], "amount": grand["amount"]} if grand else None,
+        "paid": {"name": paid["name"], "no": paid["no"], "amount": paid["amount"]} if paid else None,
+        "subtotals": [{"name": r["name"], "no": r["no"], "amount": r["amount"]} for r in subtotals],
+        "diff": None,
+        "ok": None,
+    }
+    if grand:
+        diff = round(grand["amount"] - detail_sum - fee_sum, 2)
+        tol = max(1.0, abs(grand["amount"]) * 0.005)
+        out["diff"] = diff
+        out["ok"] = abs(diff) <= tol
+    return out
+
+
 def load_quote(path, label):
     rows = []
     with open(path, encoding="utf-8-sig") as f:
@@ -111,8 +182,12 @@ def load_quote(path, label):
                 "qty": num("数量"), "price": num("单价"), "amount": num("合价"),
                 "note": (r.get("备注") or "").strip(),
             })
-    return {"label": label, "file": os.path.basename(path), "rows": rows,
-            "total": round(sum(x["amount"] for x in rows), 2)}
+    summary = [x for x in rows if _is_summary_row(x)]
+    detail = [x for x in rows if not _is_summary_row(x)]
+    return {"label": label, "file": os.path.basename(path), "rows": detail,
+            "summary_rows": summary,
+            "total": round(sum(x["amount"] for x in detail), 2),
+            "recon": reconcile(detail, summary)}
 
 
 def build_line_index(quote, onto):
@@ -151,10 +226,35 @@ def _evidence_hit(words, texts):
     return None
 
 
+_REF_BOOK = {"loaded": False, "items": {}, "meta": {}}
+
+
+def reference_book():
+    """同工序参照价库（本项目 4 份家装单据的金额中位数）。
+
+    用途：单份单据上传时，没有「同批其他报价」可参照，漏项只能说出缺什么、说不出多少钱。
+    退回步骤：同批参照（更可比）→ 参照价库（量级估算）→ 无参照（如实留空，不编数）。
+    边界写在 data/reference_prices.json 的 meta 里：非市场行情价，只做量级参照。
+    """
+    if not _REF_BOOK["loaded"]:
+        p = os.path.join(DATA, "reference_prices.json")
+        if os.path.isfile(p):
+            with open(p, encoding="utf-8") as f:
+                d = json.load(f)
+            _REF_BOOK["items"] = d.get("items") or {}
+            _REF_BOOK["meta"] = d.get("meta") or {}
+        _REF_BOOK["loaded"] = True
+    return _REF_BOOK
+
+
 def find_missing(quote, others, template, onto, rule, coverage=None):
     have = {r["cid"] for r in quote["rows"] if r["cid"]}
     have_cats = {onto.by_id[c].get("c") for c in have if c in onto.by_id}
     texts = [_row_text(r) for r in quote["rows"]]
+    # 汇总行文本单独放：费类概念（管理费/设计费/税金…）本来就按费率在表尾算出来，
+    # 不会作为工序行出现在明细里。把汇总行当工序证据会「顶替」真工序（错的），
+    # 但完全不让它作证会把「有管理费」误判成漏项（也是错的）——所以只对 fee 类开放。
+    summary_texts = [_row_text(r) for r in (quote.get("summary_rows") or [])]
     ev = (coverage or {}).get("evidence") or {}
     absorbed_by = (coverage or {}).get("soft", {}).get("absorbed_by") or {}
     # 父类目吸收：只写「水电改造」这一行时，电/水的子项已含在里面，不应再判漏。
@@ -180,11 +280,24 @@ def find_missing(quote, others, template, onto, rule, coverage=None):
         # 会把后者判成漏项。词表见 data/coverage_v0.json，逐条可人工审阅。
         if _evidence_hit(ev.get(cid, []), texts):
             continue
+        # 费类概念：只认汇总行（管理费 3,493 + 4,761 在表尾，不看这里就会误报漏项）
+        if onto.by_id.get(cid, {}).get("c") == "fee":
+            keys = [onto.by_id[cid]["n"]] + list(onto.by_id[cid].get("a") or [])
+            if _evidence_hit(keys, summary_texts):
+                continue
         refs = []
         for o in others:
             vals = [r["amount"] for r in o["rows"] if r.get("cid") == cid and r["amount"] > 0]
             if vals:
                 refs.append({"quote": o["label"], "amount": round(statistics.median(vals), 2)})
+        # 参照金额三级退回：同批其他报价（最可比）→ 参照价库（量级）→ 无参照（留空）。
+        ref_basis = "batch" if refs else None
+        if not refs:
+            bk = reference_book()["items"].get(cid) or {}
+            if bk.get("amount_median"):
+                refs = [{"quote": "参照价库（%d 份家装中位）" % (bk.get("n_docs") or 0),
+                         "amount": bk["amount_median"]}]
+                ref_basis = "corpus"
         ref_amt = round(statistics.median([x["amount"] for x in refs]), 2) if refs else None
         c = confidence(rule["strength"], 0.95, 0.90, True)
         basis = "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中"
@@ -197,7 +310,8 @@ def find_missing(quote, others, template, onto, rule, coverage=None):
                 onto.by_id[a]["n"] for a in absorbers if a in onto.by_id)
             formula = "T \\ S 未命中，且存在可吸收它的复合工序"
         out.append({"cid": cid, "concept": onto.by_id[cid]["n"], "rule": rule["id"],
-                    "ref_amount": ref_amt, "ref_source": refs, "confidence": c, "tier": tier(c),
+                    "ref_amount": ref_amt, "ref_source": refs, "ref_basis": ref_basis,
+                    "confidence": c, "tier": tier(c),
                     "evidence": {"basis": basis, "formula": formula,
                                  "checked_words": ev.get(cid, [])}})
     return out
@@ -507,6 +621,31 @@ def exposure(quote, others, rule):
     return out
 
 
+def find_doc_recon(quote, rule):
+    """R13 文档级对账：整单加总对不上。
+
+    与 R8 的分工：R8 查「这一行算不算得对」，R13 查「整单加起来对不对」。
+    真实单据里整单对不上比单行错更常见——报价单多为手工加总，改过某行单价
+    却不重算合计是常态。本项目 5 份真实单据里 2 份对不上账。
+    """
+    rec = quote.get("recon") or {}
+    if rec.get("ok") is not False:
+        return []
+    diff = rec["diff"]
+    calc = round(rec["detail_sum"] + rec["fee_sum"], 2)
+    c = confidence(rule["strength"], 0.98, 0.95, True)
+    return [{
+        "cid": None, "concept": "文档合计",
+        "line": (rec.get("grand") or {}).get("no") or "—",
+        "issue": "整单加总对不上：明细 %s + 取费 %s = %s，印刷合计 %s，差 %s 元" % (
+            fmt_money(rec["detail_sum"]), fmt_money(rec["fee_sum"]), fmt_money(calc),
+            fmt_money(rec["grand"]["amount"]), fmt_money(diff)),
+        "amount": abs(diff), "rule": rule["id"], "confidence": c, "tier": tier(c),
+        "evidence": {"basis": rule["then"]["evidence"]["basis"],
+                     "formula": rule["then"]["evidence"]["formula"]},
+    }]
+
+
 def audit(quotes, onto, templates, rules, coverage=None, template_key="old_house"):
     """template_key: old_house（老房翻新，38 项）或 new_house（新房毛坯，25 项）。
     模板选错，漏项结论全错——所以做成显式参数，并在报告里写明用的是哪套。"""
@@ -526,6 +665,7 @@ def audit(quotes, onto, templates, rules, coverage=None, template_key="old_house
         risks += find_spec_missing(q, R["R11_spec_missing"])
         risks += find_wp_height(q, R["R12_wp_height"])
         risks += find_split(q, R["R7_split_billing"], onto, template)
+        risks += find_doc_recon(q, R["R13_doc_recon"])
         miss_cost = sum(m["ref_amount"] for m in missing if m["tier"] == "auto" and m["ref_amount"]) or 0.0
         dup_cut = sum(d["amount"] for d in dups if d["tier"] == "auto") or 0.0
         results[q["label"]] = {
@@ -534,6 +674,7 @@ def audit(quotes, onto, templates, rules, coverage=None, template_key="old_house
             "exposure": exposure(q, others, R["R4_vague_term"]),
             "missing_cost": round(miss_cost, 2), "duplicate_cut": round(dup_cut, 2),
             "dup_excluded": dup_excluded,
+            "recon": q.get("recon"),
             "effective": round(q["total"] + miss_cost - dup_cut, 2),
         }
     results["_cross_unit"] = cross_unit_mix(quotes, onto, R["R5_unit_mix"])
@@ -566,8 +707,11 @@ def build_markdown(quotes, res):
             L.append("| 工序 | 参照金额 | 参照来源 | 置信度 | 档位 | 公式 |")
             L.append("|---|---:|---|---:|---|---|")
             for m in r["missing"]:
-                src = "、".join(x["quote"] for x in m["ref_source"]) or "无参照"
-                L.append(f"| {m['concept']} | {fmt_money(m['ref_amount'])} | {src} | {m['confidence']:.2f} | {m['tier']} | {m['evidence']['formula']} |")
+                src = "、".join(x["quote"] for x in m["ref_source"]) or "—"
+                L.append(f"| {m['concept']} | {fmt_money(m['ref_amount']) if m['ref_amount'] else '—'} | {src} | {m['confidence']:.2f} | {m['tier']} | {m['evidence']['formula']} |")
+            note = _missing_note(r["missing"])
+            if note:
+                L.append("\n" + note.replace("<b>", "**").replace("</b>", "**").replace("<div class=\"note\">", "> ").replace("</div>", "\n> ").replace("<div>", "\n> "))
         else:
             L.append("无。\n")
         L.append("\n### 重复计价\n")
@@ -645,6 +789,14 @@ tr:last-child td{border-bottom:1px solid var(--ink)}
 .evid b{color:var(--ink);font-weight:600}
 .evid code{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:#EFEEE9;padding:1px 5px;border-radius:3px}
 .note{border-left:3px solid var(--ikb);background:#F2F1EC;padding:12px 16px;font-size:13px;color:#3D3B36;margin:14px 0 26px}
+.recon{border-top:2px solid var(--hair);border-bottom:1px solid var(--hair);padding:11px 0;margin:0 0 22px;font-size:12.5px;display:flex;gap:16px;flex-wrap:wrap;align-items:baseline}
+.recon .t{font-weight:700;letter-spacing:.06em;font-size:11px;color:var(--grey);min-width:56px}
+.recon .k{font-variant-numeric:tabular-nums;color:var(--grey)}
+.recon .k b{color:var(--ink);font-weight:600}
+.recon .st{font-weight:700;font-size:11px;letter-spacing:.06em;padding:1px 8px;border:1px solid}
+.recon .st.ok{color:#0F7B4F;border-color:#0F7B4F}
+.recon .st.bad{color:var(--amber);border-color:var(--amber)}
+.recon .hint{flex-basis:100%;color:var(--faint);font-size:11.5px;line-height:1.6}
 .concl{border-top:2px solid var(--ink);margin-top:38px;padding-top:12px}
 .concl ul{margin:8px 0;padding-left:1.2em}
 .concl li{margin:6px 0}
@@ -660,6 +812,7 @@ footer code{font-family:ui-monospace,Menlo,monospace}
 <div class="kpis">{{KPIS}}</div>
 <h2><span class="idx">01</span>总览</h2>
 {{SUMMARY}}
+{{RECON}}
 <div class="note">{{NOTE}}</div>
 {{SECTIONS}}
 <div class="concl">
@@ -679,6 +832,27 @@ def _report_fingerprint(res):
     与 scripts/snapshot_predictions.py 的冻结口径同源（sort_keys + ensure_ascii=False）。"""
     body = json.dumps(res, sort_keys=True, ensure_ascii=False, default=str)
     return hashlib.sha256(body.encode()).hexdigest()[:16]
+
+
+def _missing_note(missing):
+    """漏项表的脚注：区分「可计价项」与「只能定性的工艺项」。
+
+    这个区分是从真实数据里长出来的：4 份单据里闭水试验/打压试验/挂网/打胶
+    从来没被单列计价过——不是数据缺，是行业就不单收这份钱。
+    所以「没金额」不等于「不重要」，必须说清楚，否则会被读成「这条可以忽略」。
+    """
+    corpus = [m for m in missing if m.get("ref_basis") == "corpus"]
+    noamt = [m for m in missing if not m["ref_amount"]]
+    parts = []
+    if corpus:
+        parts.append("其中 <b>%d 条</b>金额取自「参照价库」——本项目 4 份家装单据同工序金额的中位数，"
+                     "<b>不是市场行情价</b>，只用来估算补上这项要多少钱的量级。" % len(corpus))
+    if noamt:
+        parts.append("<b>%d 条没有金额</b>：这类工序在 4 份真实单据里从未单列计价（闭水试验、打压试验、"
+                     "挂网、打胶等多为工艺项），只能要求补做、不能估钱——宁可留空，不可编数。" % len(noamt))
+    if not parts:
+        return ""
+    return '<div class="note">' + "".join("<div>%s</div>" % p for p in parts) + "</div>"
 
 
 def build_html(quotes, res):
@@ -725,11 +899,13 @@ def build_html(quotes, res):
         if r["missing"]:
             h.append("<table><tr><th>漏项工序</th><th class='num'>参照金额</th><th>参照来源</th><th class='num'>置信度</th><th>档位</th></tr>")
             for m in r["missing"]:
-                src = "、".join(x["quote"] for x in m["ref_source"]) or "无参照"
+                src = "、".join(x["quote"] for x in m["ref_source"]) or "—"
+                amt = fmt_money(m["ref_amount"]) if m["ref_amount"] else "—"
                 h.append("<tr><td>%s</td><td class='num'>%s</td><td class='evid'>%s</td><td class='num'>%.2f</td>"
                          "<td><span class='tag %s'>%s</span></td></tr>" %
-                         (m["concept"], fmt_money(m["ref_amount"]), src, m["confidence"], m["tier"], m["tier"]))
+                         (m["concept"], amt, src, m["confidence"], m["tier"], m["tier"]))
             h.append("</table>")
+            h.append(_missing_note(r["missing"]))
         if r["duplicates"]:
             h.append("<table><tr><th>重复工序</th><th>行号</th><th class='num'>金额</th><th>依据</th><th class='num'>置信度</th></tr>")
             for d in r["duplicates"]:
@@ -747,10 +923,43 @@ def build_html(quotes, res):
                          (ln, x["concept"], x["issue"], x["evidence"]["basis"], x["tier"], x["tier"]))
             h.append("</table>")
         secs.append("".join(h))
+
+    # 对账条：整单加起来对不对。差额本身是一条结论，不是噪声——
+    # 报价单自己都对不上账，签约前必须逐项问清楚。
+    rec_lines = []
+    for q in quotes:
+        rec = (res[q["label"]] or {}).get("recon") or {}
+        head = ('<span class="t">对账</span>' if len(quotes) == 1
+                else '<span class="t">%s</span>' % q["label"])
+        if not rec.get("grand"):
+            rec_lines.append('<div class="recon">%s<span class="k">本单未提供印刷合计，跳过对账'
+                             '（明细之和 <b>%s</b>）</span></div>'
+                             % (head, fmt_money(rec.get("detail_sum") or 0)))
+            continue
+        calc = round((rec["detail_sum"] or 0) + (rec["fee_sum"] or 0), 2)
+        ok = rec.get("ok")
+        diff = rec.get("diff") or 0
+        rec_lines.append(
+            '<div class="recon">%s'
+            '<span class="k">工序明细 <b>%s</b></span>'
+            '<span class="k">取费 <b>%s</b></span>'
+            '<span class="k">合计 <b>%s</b></span>'
+            '<span class="k">印刷合计 <b>%s</b></span>'
+            '<span class="k">差 <b>%s</b> 元</span>'
+            '<span class="st %s">%s</span>'
+            '%s</div>' % (
+                head, fmt_money(rec["detail_sum"]), fmt_money(rec["fee_sum"]), fmt_money(calc),
+                fmt_money(rec["grand"]["amount"]), fmt_money(diff),
+                "ok" if ok else "bad", "对平" if ok else "不符",
+                "" if ok else '<span class="hint">差额三个常见来源：①原单手工加总错误 '
+                              '②照片遮挡/转录缺行 ③取费未单列。签约前逐项核对，别默认是自己看错。</span>'))
+    recon_html = "".join(rec_lines)
+
     return (HTML_TPL.replace("{{DOC_NO}}", doc_no).replace("{{TITLE}}", title)
             .replace("{{META}}", meta)
             .replace("{{KPIS}}", "".join(kpis))
-            .replace("{{SUMMARY}}", summary).replace("{{NOTE}}", note)
+            .replace("{{SUMMARY}}", summary).replace("{{RECON}}", recon_html)
+            .replace("{{NOTE}}", note)
             .replace("{{SECTIONS}}", "".join(secs))
             .replace("{{CONCL_IDX}}", "%02d" % (idx + 1))
             .replace("{{FP}}", fp))

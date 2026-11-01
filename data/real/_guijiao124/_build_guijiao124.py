@@ -14,12 +14,9 @@ rows = []
 for page in ["p1", "p2", "p3", "p4"]:
     rows += load(page)
 
-# 汇总行（费用总合计/设计费/总价）不是工序，不进审计明细——否则 total 会翻倍。
-# 它们保留在 p4.py 里作留痕，印刷总价 76,269.16 记在转录说明与报告中。
-SUBTOTAL_ZONES = {"总价"}
-all_rows = rows
-rows = [r for r in all_rows if r[0] not in SUBTOTAL_ZONES]
-dropped = len(all_rows) - len(rows)
+# 2026-11-01 起：汇总行（费用总合计/设计费/总价）**保留在 CSV 里**，
+# 由 pipeline._is_summary_row 分层识别 → 进入对账，不再进工序明细。
+# 之前这里是按「分区=总价」硬过滤（ad-hoc），换成通用层后能顺带校验 506.6 元小计误差。
 
 bad = []
 for i, (zone, name, unit, qty, price, total, note) in enumerate(rows, 1):
@@ -37,7 +34,7 @@ with open(OUT, "w", newline="", encoding="utf-8-sig") as f:
     for i, (zone, name, unit, qty, price, total, note) in enumerate(rows, 1):
         w.writerow([i, name, "分区：" + zone, unit, qty, price, total, note])
 
-print("写出", OUT, "| 明细", len(rows), "行（剔除非工序汇总行 %d）" % dropped)
+print("写出", OUT, "| 全部", len(rows), "行（含汇总行，由引擎分层）")
 print("行级算术不符（原样保留）：", len(bad), "处")
 for b in bad[:8]:
     print("  行%d %s 数量%s×单价%s=合价%s（推算 %s）" % b)

@@ -233,6 +233,22 @@
     }
    },
    "strength": 0.85
+  },
+  {
+   "id": "R13_doc_recon",
+   "name": "文档级对账",
+   "type": "doc_recon",
+   "enabled": true,
+   "tolerance_pct": 0.005,
+   "then": {
+    "conclusion": "整单加总对不上：明细 {detail} + 取费 {fee} = {calc}，印刷合计 {grand}，差 {diff}",
+    "severity": "medium",
+    "evidence": {
+     "basis": "报价单文档级算术一致性（印刷合计 vs 逐行明细之和）",
+     "formula": "|印刷合计 − (工序明细之和 + 派生费用) | ≤ max(1, 0.5%×合计)"
+    }
+   },
+   "strength": 0.94
   }
  ]
 }

@@ -26,6 +26,7 @@ if BASE not in sys.path:
 
 from src import pipeline  # noqa: E402
 from src import perception  # noqa: E402
+fmt_money = pipeline.fmt_money
 
 app = FastAPI(title="装明白 · 可计算审计", version="0.3.0")
 
@@ -302,8 +303,13 @@ async def perceive_run(file: UploadFile = File(default=None),
 
         csv_path = todo.name + ".csv"
         perception.write_csv(rows, csv_path)
-        html, _, _ = _audit([(_label_from_name(file.filename), csv_path)],
-                            template_key=template_key)
+        html, _, quotes = _audit([(_label_from_name(file.filename), csv_path)],
+                                 template_key=template_key)
+        # 横幅口径必须与审计主体一致：用 load_quote 分层后的「工序明细合计」，
+        # 不能用识别层的全行求和——否则汇总行（费用总合计/总价）会被再加一遍。
+        q0 = quotes[0]
+        rec = q0.get("recon") or {}
+        n_sum = len(q0.get("summary_rows") or [])
     finally:
         for f_ in (todo.name, todo.name + ".csv"):
             try:
@@ -311,12 +317,16 @@ async def perceive_run(file: UploadFile = File(default=None),
             except OSError:
                 pass
 
-    banner = ('<div class="banner">识别：<b>%s</b> ｜ 行项 <b>%d</b> ｜ '
-              '算术自校验 <b>%d</b> 行%s ｜ 合价合计 <b>%s</b>%s</div>') % (
-        meta.get("provider"), report.get("rows", len(rows)), report.get("arith_checked") or 0,
+    banner = ('<div class="banner">识别：<b>%s</b> ｜ 工序行 <b>%d</b>%s ｜ '
+              '算术自校验 <b>%d</b> 行%s ｜ 明细合计 <b>%s</b>%s%s</div>') % (
+        meta.get("provider"), len(q0.get("rows") or []),
+        ("（另有 %d 行汇总/取费，已单独对账）" % n_sum) if n_sum else "",
+        report.get("arith_checked") or 0,
         "全部通过" if not report.get("arith_bad") else
         "，<b style='color:#B33A2B'>%d 行不符（须回原图核对）</b>" % len(report["arith_bad"]),
-        ("%.2f" % report["total"]) if report.get("total") is not None else "—",
+        fmt_money(q0.get("total")),
+        ("；印刷合计 %s，差 %s" % (fmt_money(rec["grand"]["amount"]), fmt_money(rec["diff"])))
+        if rec.get("grand") else "",
         "<br><b style='color:#B33A2B'>注意：本次用的是固定样例（mock），不是对这张图的识别结果。</b>"
         if meta.get("fixture") else "")
     if "<body>" in html:
