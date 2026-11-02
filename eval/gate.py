@@ -96,6 +96,7 @@ def main():
     else:
         L.append("全部通过。")
     text = "\n".join(L)
+    os.makedirs(OUT, exist_ok=True)
     open(os.path.join(OUT, "gate.md"), "w", encoding="utf-8").write(text)
     print(text)
     return 1 if failed else 0
