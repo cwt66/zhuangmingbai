@@ -7,7 +7,7 @@
 [![Gitee](https://img.shields.io/badge/Gitee-Cwt66%2Fzhuangmingbai-c71d23)](https://gitee.com/Cwt66/zhuangmingbai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](./requirements.txt)
-[![Tests](https://img.shields.io/badge/tests-90-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-97-brightgreen.svg)](./tests)
 [![Rules](https://img.shields.io/badge/rules-13-002FA7.svg)](./data/rules_v0.json)
 
 签合同之前，上传 2–4 家装修公司的报价单（照片 / PDF / Excel / CSV），输出一份**可核对、可溯源、可复现**的审计报告：
@@ -42,12 +42,14 @@
 | 工序本体 | ✅ **119 概念 / 388 别名** / 8 大类 |
 | 工序模板 | ✅ 老房翻新 39 项 / 新房毛坯 28 项；支持「报价范围声明 → 模板裁剪」 |
 | 规则 DSL | ✅ **13 条**，全部可逐条审阅（`data/rules_v0.json`） |
-| 感知层 | ✅ 四 provider：`file`（CSV/XLSX/PDF 零依赖）/ `maas`（Qwen-VL）/ `ocr_table`（华为云通用表格识别）/ `mock` |
+| 感知层 | ✅ 五 provider：`file`（CSV/XLSX/PDF 零依赖）/ **`vision`（macOS Vision 本地 OCR）** / `maas`（Qwen-VL）/ `ocr_table`（华为云通用表格识别）/ `mock` |
 | **云原生：RDS PostgreSQL** | ✅ 代码层已接入（`src/store.py`；psycopg 可选，失败自动降级 SQLite）；`/history`、`/api/audits` 可查 |
 | **云原生：DCS Redis** | ✅ 代码层已接入（`src/cache.py`：结果缓存 / 限流 / 任务状态；失败自动降级进程内） |
 | **表达层：MaaS** | ✅ `src/llm.py`：只转写规则结果；**输出接地校验**，出现事实外数字即拒收并退回模板 |
-| 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**；两份完整黄金标注；注入实验 197 例 |
-| 单元测试 | ✅ **90 个**（云原生 14 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移） |
+| **本地 OCR + critic** | ✅ `src/vision_ocr.py`：图片不出本机；缺字段/量价不符/低置信 → 标「需核对」，不直接进结论 |
+| **用户反馈闭环** | ✅ 报告页 `/feedback` → RDS；试点访谈有结构化记录 |
+| 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**；两份完整黄金标注；注入实验 242 例 |
+| 单元测试 | ✅ **97 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移） |
 | 可打印报告 | ✅ `/demo`、`/real`（打印级 HTML，判定指纹上封面） |
 | 解析校对台 | ✅ `/review`（低置信度标黄 → 修改 → 导出 CSV） |
 | 问询单 | ✅ 把结论变成可直接发给报价方的逐条问询（`src/inquiry.py`） |
@@ -165,7 +167,15 @@ L2 把备注里写了但没单列的项救回来；L3 把「主材另计」的�
 git clone https://gitee.com/Cwt66/zhuangmingbai.git
 cd zhuangmingbai
 bash run_offline.sh                   # 合成三单 → out/audit_report.html
-bash scripts/check_all.sh             # 90 测试 + 评测 + 注入 + 指纹 + 隐私扫描
+bash scripts/check_all.sh             # 97 测试 + 评测门禁 + 注入 + 指纹 + 隐私扫描
+```
+
+### 5.1.1 本地 OCR（macOS，可选）
+
+```bash
+bash scripts/build_vision_ocr.sh          # 编译 macOS Vision 小工具
+python3 scripts/ocr_vision.py 报价单.jpg --out out/quote_vision.csv
+# 识别草稿会标出「缺字段 / 量价不符 / 低置信」；/perceive 会先让你校对，再审计
 ```
 
 ### 5.2 在线 Demo
@@ -225,6 +235,7 @@ curl -s localhost:8000/api/audits | python3 -m json.tool
   无手机号、身份证、姓名称谓（`python3 scripts/pii_scan.py --strict`）。
 - **不训练**：报告页明确写「数据仅用于本次核对，不用于训练」。
 - **定位**：计费核对与信息整理工具；**非定价鉴定、非法律意见、非施工验收**。
+- **本地优先**：macOS Vision 在本机完成 OCR，图片不出机器；云端 MaaS 是可选项，不是前提。
 - **失败不装懂**：感知层失败明确报错，不返回空表；模型失败退回模板并标注来源；
   数据库/Redis 失败降级但 `/health` 说实话。
 
@@ -236,10 +247,12 @@ curl -s localhost:8000/api/audits | python3 -m json.tool
 main.py                 FastAPI：/ 上传 · /demo · /real · /review · /inquiry · /perceive
                         /history · /report/{id} · /api/audit · /api/audits · /health
 src/pipeline.py         审计引擎（本体对齐 / 13 规则 / 证据链 / 报告）
-src/perception.py       感知层四 provider（file / maas / ocr_table / mock）
+src/perception.py       感知层五 provider（file / vision / maas / ocr_table / mock）
+src/vision_ocr.py       本地 OCR + 表格重建 + 确定性 critic（macOS Vision）
 src/store.py            RDS PostgreSQL / SQLite 持久化（自动降级）
 src/cache.py            Redis 缓存 / 限流 / 任务状态（自动降级）
 src/llm.py              MaaS 表达层（接地校验 + 模板兜底）
+scripts/vision_ocr.m    macOS Vision OCR 小工具（本地编译）
 src/privacy.py          脱敏与提示词注入防护
 src/inquiry.py          问询单
 src/obligations.py      条款 → 义务 → 验收证据
@@ -250,8 +263,8 @@ data/rules_v0.json      13 条审计规则
 data/coverage_v0.json   证据词 + 父类吸收表
 data/real/              5 份真实单据（公开晒单/公开 PDF 的人工转录，无个人信息）
 eval/                   黄金标注评测 / 消融 / 注入 / 对照实验 / 冻结指纹 / 指标库
-tests/                  90 个单元测试
-scripts/                感知层 CLI / 指纹快照 / 离线包 / 隐私扫描 / 一键自检
+tests/                  97 个单元测试
+scripts/                感知层 CLI / 本地 OCR / 指纹快照 / 离线包 / 隐私扫描 / 一键自检
 docs/                   架构 / 评测 / 部署 / 安全 / 判断正确性 / 迁移实验
 deploy/                 Dockerfile · docker-compose · systemd · Nginx · DEPLOY
 ```

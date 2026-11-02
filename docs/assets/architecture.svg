@@ -63,7 +63,7 @@
   <text x="244" y="342" font-size="11" fill="#6B7280" letter-spacing="1.2">质量保障 · 判断凭什么可信</text>
   <text x="244" y="368" font-size="12" fill="#0A0A0A">① 冻结指纹：三份预测 sha256 比对，改一个字即漂移</text>
   <text x="244" y="390" font-size="12" fill="#0A0A0A">② 黄金标注：先标注后跑引擎（防污染），双人模板 + 仲裁字段</text>
-  <text x="244" y="412" font-size="12" fill="#0A0A0A">③ 注入实验：197 个程序已知缺陷，测检出与定位（下限校验，非召回率）</text>
+  <text x="244" y="412" font-size="12" fill="#0A0A0A">③ 注入实验：242 个程序已知缺陷，测检出与定位（下限校验，非召回率）</text>
   <text x="560" y="368" font-size="12" fill="#0A0A0A">④ 文档对账：明细 + 取费 vs 印刷合计</text>
   <text x="560" y="390" font-size="12" fill="#0A0A0A">⑤ 90 个单元测试 · 回归线 400/22,164/3,168</text>
   <text x="560" y="412" font-size="12" fill="#0A0A0A">⑥ 审计包：任何人 30 秒离线复算</text>

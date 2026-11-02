@@ -134,6 +134,8 @@ def clone_rows(q):
 def targets_drop_concept(q, base, env, template_key):
     onto, templates, rules, coverage = env
     ev = (coverage or {}).get("evidence") or {}
+    absorb = (coverage or {}).get("absorb") or {}
+    have = {x["cid"] for x in q["rows"] if x.get("cid")}
     tmpl = templates[template_key]
     have_missing = sig_missing(base)
     out = []
@@ -144,6 +146,10 @@ def targets_drop_concept(q, base, env, template_key):
             continue
         rows = [x for x in q["rows"] if x["cid"] == cid]
         if not rows or cid in have_missing:
+            continue
+        # 若该工序被已在报价中的父类目吸收（如 water_pipe 被 mep 吸收），
+        # 删掉它的行不会、也不应产生漏项 —— 注入真值不成立，排除。
+        if any(p in have for p in absorb.get(cid, [])):
             continue
         others = [P._row_text(x) for x in q["rows"] if x["cid"] != cid]
         # 别的行的备注里若还有该工序的证据词，删了也不算漏项 → 真值不成立，排除

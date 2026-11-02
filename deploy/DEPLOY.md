@@ -106,7 +106,7 @@ sudo systemctl start zhuangmingbai
 curl -f http://127.0.0.1:8000/health
 
 # 期望响应（云上完整版会多出 db / cache / llm 三段）
-# {"status":"ok","service":"zhuangmingbai-audit","version":"0.4.0",
+# {"status":"ok","service":"zhuangmingbai-audit","version":"0.5.0",
 #  "db":{"kind":"postgres"},"cache":{"kind":"redis"},"llm":{"enabled":true}}
 
 # 通过 nginx 探活

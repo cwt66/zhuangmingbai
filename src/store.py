@@ -228,6 +228,12 @@ class Store:
             self.degraded = "写入反馈失败：%s" % e
         return fid
 
+    def feedback_for(self, audit_id):
+        rows = self._execute(
+            "SELECT id, role, useful, note, created_at FROM feedback"
+            " WHERE audit_id = ? ORDER BY created_at DESC", (audit_id,))
+        return [dict(r) for r in rows]
+
     def stats(self):
         try:
             rows = self._execute("SELECT COUNT(*) AS n FROM audits")

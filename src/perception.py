@@ -692,8 +692,16 @@ def perceive(image_path, provider=None, **kw):
         rows, report = rows_to_quote(grid)
         return rows, meta, report
 
-    if provider not in ("maas", "ocr_table", "mock"):
-        raise PerceptionError("未知 provider：%s（可选 file / maas / ocr_table / mock）" % provider)
+    if provider == "vision":
+        from . import vision_ocr
+        rows, report = vision_ocr.perceive(image_path)
+        meta = {"provider": "vision", "engine": "macos-vision",
+                "boxes": report.get("boxes"), "rows": len(rows),
+                "review_ratio": report.get("review_ratio")}
+        return rows, meta, report
+
+    if provider not in ("maas", "ocr_table", "mock", "vision"):
+        raise PerceptionError("未知 provider：%s（可选 file / maas / ocr_table / vision / mock）" % provider)
     if image_path == "__selftest__" or (provider == "mock" and not os.path.exists(image_path)):
         blob = b"__selftest__"          # 自检/单测不读文件
     else:

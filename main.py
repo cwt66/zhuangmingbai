@@ -9,6 +9,7 @@
   解析结果落成与 data/samples/*.csv 相同的结构，因此解析链路可替换、可对照。
 - 不判断贵不贵，只判断漏没漏、重没重；低置信度结论不进核减金额。
 """
+import csv
 import html as html_mod
 import io
 import json
@@ -32,9 +33,10 @@ from src import cache as cache_mod  # noqa: E402
 from src import llm as llm_mod  # noqa: E402
 from src import privacy  # noqa: E402
 from src import store as store_mod  # noqa: E402
+from src import vision_ocr  # noqa: E402
 fmt_money = pipeline.fmt_money
 
-app = FastAPI(title="装明白 · 可计算审计", version="0.4.0")
+app = FastAPI(title="装明白 · 可计算审计", version="0.5.0")
 
 MAX_FILES = 4
 MIN_FILES = 2
@@ -92,6 +94,15 @@ h2{font-size:22px;margin:30px 0 10px}
 .ai-note h2{margin:0 0 8px;font-size:20px}
 .ai-note .badge{display:inline-block;font-size:12px;color:#002FA7;border:1px solid #002FA7;
  border-radius:2px;padding:2px 8px;margin-left:8px;vertical-align:middle}
+@media print{.no-print{display:none!important}body{background:#fff}}
+textarea.csv{width:100%;min-height:420px;font:13px/1.5 "SF Mono",Consolas,monospace;
+ border:1px solid #C9C5BA;padding:14px;background:#fff;border-radius:3px}
+table.draft{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+table.draft th,table.draft td{border-bottom:1px solid var(--line);padding:7px 6px;text-align:left;vertical-align:top}
+table.draft th{background:#0A0A0A;color:#fff;font-weight:600}
+table.draft tr.warn td{background:#FFF7E6}
+.flag{display:inline-block;font-size:11px;color:#B33A2B;border:1px solid #B33A2B;
+ border-radius:2px;padding:1px 5px;margin:1px 2px 1px 0}
 """
 
 
@@ -298,12 +309,128 @@ def _decorate(html, quotes, res, audit_id=None, source="upload"):
         section = ('<div class="ai-note"><h2>解读</h2><p class="note">解读生成失败：%s</p></div>'
                    % e)
     aid = audit_id or "未入库"
+    fb = ""
+    if audit_id:
+        fb = ('<div class="wrap no-print" style="padding-top:0"><div class="card">'
+              '<h2>这份报告有用吗？</h2>'
+              '<p class="note">真实用户的反馈会进入试点记录；不会展示给报价方。'
+              '请勿填写姓名/电话。</p>'
+              '<form method="post" action="/feedback">'
+              '<input type="hidden" name="audit_id" value="%s">'
+              '<label>你是 <select name="role">'
+              '<option value="owner">业主</option><option value="family">业主家属</option>'
+              '<option value="reviewer">监理/从业者</option><option value="other">其他</option>'
+              '</select></label>'
+              '<label><input type="radio" name="useful" value="1" checked> 有用</label>'
+              '<label><input type="radio" name="useful" value="0"> 没用</label>'
+              '<div><textarea name="note" rows="2" style="width:100%%;margin-top:8px" '
+              'placeholder="哪一条最有用？哪一条看不懂？"></textarea></div>'
+              '<button class="btn" type="submit">提交反馈</button>'
+              '</form></div></div>') % aid
     footer = ('<div class="wrap" style="padding-top:0"><p class="note">审计编号 %s ｜ 来源 %s ｜ '
-              '<a href="/history">历史记录</a> ｜ 数据仅用于本次核对，不用于训练</p></div>'
-              % (aid, source))
+              '<a href="/history">历史记录</a> ｜ 数据仅用于本次核对，不用于训练</p>'
+              '<button class="btn no-print" onclick="window.print()" style="margin-top:10px">'
+              '打印 / 另存 PDF</button></div>' % (aid, source))
     if "</body>" in html:
-        html = html.replace("</body>", section + footer + "</body>", 1)
+        html = html.replace("</body>", section + fb + footer + "</body>", 1)
     return html
+
+
+def _rows_csv_text(rows):
+    buf = io.StringIO()
+    w = csv.DictWriter(buf, fieldnames=perception.COLUMNS)
+    w.writeheader()
+    for r in rows:
+        w.writerow({k: ("" if r.get(k) is None else r.get(k)) for k in perception.COLUMNS})
+    return buf.getvalue()
+
+
+def _vision_draft_page(rows, report, csv_text, filename, template_key, scope):
+    tr = []
+    for r in rows:
+        flags = r.get("_flags") or []
+        cls = ' class="warn"' if flags else ""
+        tr.append("<tr%s><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>"
+                  "<td>%s</td><td>%s</td></tr>" % (
+                      cls, html_mod.escape(str(r.get("序号") or "")),
+                      html_mod.escape(str(r.get("项目名称") or "")),
+                      html_mod.escape(str(r.get("单位") or "")),
+                      html_mod.escape(str(r.get("数量") if r.get("数量") is not None else "")),
+                      html_mod.escape(str(r.get("单价") if r.get("单价") is not None else "")),
+                      html_mod.escape(str(r.get("合价") if r.get("合价") is not None else "")),
+                      "".join('<span class="flag">%s</span>' % html_mod.escape(f) for f in flags)))
+    body = """
+<h1>识别草稿：先校对，再审计</h1>
+<p class="lead">本地 OCR 只负责「看见」。以下 <b>%d</b> 行里，critic 通过 <b>%d</b> 行、
+需核对 <b>%d</b> 行（%.0f%%）。<b>直接拿草稿去判漏项会误报</b>，所以这里停下来，
+请你改完下面的 CSV 再点审计。</p>
+<div class="card" style="margin:22px 0">
+  <h2>这一次识别看到了什么</h2>
+  <table class="draft"><tr><th>序号</th><th>项目</th><th>单位</th><th>数量</th>
+  <th>单价</th><th>合价</th><th>critic</th></tr>%s</table>
+</div>
+<form method="post" action="/vision/audit">
+  <input type="hidden" name="template_key" value="%s">
+  <input type="hidden" name="scope" value="%s">
+  <input type="hidden" name="filename" value="%s">
+  <label style="display:block;margin:18px 0 8px">识别 CSV（可直接改；改完再审计）</label>
+  <textarea class="csv" name="csv_text">%s</textarea>
+  <button class="btn" type="submit">我核对完了，开始审计</button>
+  <p class="note">建议至少确认：项目名称有没有错字、单位/数量/单价/合价是否对得上。
+  量价不符的行会在报告里变成算术风险，不会静默通过。</p>
+</form>
+""" % (report.get("rows") or 0, report.get("accepted") or 0, report.get("review") or 0,
+       (report.get("review_ratio") or 0) * 100, "".join(tr),
+       html_mod.escape(template_key), html_mod.escape(scope), html_mod.escape(filename),
+       html_mod.escape(csv_text))
+    return _sub_page(body)
+
+
+@app.post("/vision/audit", response_class=HTMLResponse)
+async def vision_audit(request: Request, csv_text: str = Form(default=""),
+                       template_key: str = Form(default="old_house"),
+                       scope: str = Form(default="full"),
+                       filename: str = Form(default="vision_draft")):
+    ok, _ = _rate_ok(request, "vision")
+    if not ok:
+        return _err("请求过于频繁", "每个来源每分钟最多 60 次审计。", 429)
+    if not (csv_text or "").strip():
+        return _err("没有 CSV", "校对后的 CSV 是空的。", 400)
+    tmp = tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False, encoding="utf-8-sig")
+    try:
+        tmp.write(csv_text)
+        tmp.close()
+        html, res, quotes = _audit([(_label_from_name(filename), tmp.name)],
+                                   template_key=template_key, scope=scope)
+        aid = _persist(quotes, res, source="vision_reviewed", docs=[filename])
+        html = _decorate(html, quotes, res, aid, "本地 OCR + 人工校对")
+    except EmptyRowsError as e:
+        return _err("没有解析到行项", str(e), 400)
+    except Exception as e:  # noqa: BLE001
+        return _err("审计失败", str(e), 500)
+    finally:
+        try:
+            os.unlink(tmp.name)
+        except OSError:
+            pass
+    return HTMLResponse(html)
+
+
+@app.post("/feedback", response_class=HTMLResponse)
+async def feedback(request: Request, audit_id: str = Form(default=""),
+                   role: str = Form(default="owner"), useful: str = Form(default="1"),
+                   note: str = Form(default="")):
+    ok, _ = _rate_ok(request, "feedback")
+    if not ok:
+        return _err("请求过于频繁", "请稍后再试。", 429)
+    if not audit_id:
+        return _err("缺少审计编号", "反馈必须关联一次审计。", 400)
+    store_mod.get_store().save_feedback(audit_id, role=role, useful=(useful == "1"), note=note)
+    return _sub_page("""
+<h1>谢谢，反馈已记录</h1>
+<p class="lead">这条反馈会进入试点记录，用来改报告，不用来训练模型。</p>
+<p><a href="/report/%s">回到这次审计</a>　·　<a href="/history">看历史</a></p>
+""" % html_mod.escape(audit_id))
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -324,6 +451,7 @@ def health():
         "cache": cch.health(),
         "llm": {"enabled": llm_mod.get_client().available(),
                 "model": llm_mod.get_client().model if llm_mod.get_client().available() else None},
+        "vision": (lambda a: {"available": a[0], "detail": a[1]})(vision_ocr.available()),
         "time": __import__("datetime").datetime.now().astimezone().isoformat(timespec="seconds"),
     })
 
@@ -395,13 +523,17 @@ def perceive_page():
     """图片识别入口：一张单据照片 → 结构化行项 → 审计报告。"""
     has_key = bool(os.environ.get("MAAS_API_KEY"))
     has_ak = bool(os.environ.get("HW_ACCESS_KEY") and os.environ.get("HW_SECRET_KEY"))
-    prov = os.environ.get("PERCEPTION_PROVIDER", "maas")
+    prov = os.environ.get("PERCEPTION_PROVIDER", "auto")
+    has_vision, vision_info = vision_ocr.available()
     status = []
-    status.append('<li>provider：<b>%s</b>（改 <code>PERCEPTION_PROVIDER</code> 切换）</li>' % prov)
+    status.append('<li>provider：<b>%s</b>（auto 时按 Key 选择；可设 <code>PERCEPTION_PROVIDER</code> 强制）</li>' % prov)
     status.append('<li>MaaS API Key：%s</li>' % ("已配置" if has_key else
                   '未配置 — <code>export MAAS_API_KEY=...</code>'))
     status.append('<li>华为云 AK/SK（表格识别用）：%s</li>' % ("已配置" if has_ak else
                   '未配置 — 需同时设置 <code>HW_ACCESS_KEY</code> / <code>HW_SECRET_KEY</code>'))
+    status.append('<li>本地 OCR（macOS Vision）：%s</li>' % (
+        "可用 — 图片不出本机，识别结果会过 critic" if has_vision else
+        "不可用 — %s" % vision_info))
     html = _page("""
 <h1>图片识别 → 审计</h1>
 <p class="lead">上传一张报价单照片。识别只负责「看见」，判断仍走规则——两层分开，才能分开定位错误。</p>
@@ -409,7 +541,8 @@ def perceive_page():
   <input type="file" name="file"
          accept=".csv,.tsv,.xlsx,.xlsm,.pdf,image/jpeg,image/png" required>
   <p class="note" style="margin:6px 0 0">优先用装企给的 PDF / Excel（不需要 OCR，也不会认错字）；
-  只有手机照片才走视觉模型。</p>
+  手机照片可走本地 macOS Vision（图片不出本机）或云端视觉模型。识别结果会先过 critic：
+  缺字段、量价不符、低置信的行会标为「需核对」，不会被当成确定结论。</p>
   <label>模板
     <select name="template_key">
       <option value="new_house">新房毛坯（28 项）</option>
@@ -449,7 +582,19 @@ async def perceive_run(request: Request, file: UploadFile = File(default=None),
     ext = os.path.splitext(file.filename)[1].lower()
     # 结构化文件不需要任何云服务；只有图片才要视觉模型
     structured = ext in (".csv", ".tsv", ".xlsx", ".xlsm", ".pdf")
-    provider = "file" if structured else os.environ.get("PERCEPTION_PROVIDER", "maas")
+    if structured:
+        provider = "file"
+    else:
+        provider = os.environ.get("PERCEPTION_PROVIDER", "").strip()
+        if not provider or provider == "auto":
+            if os.environ.get("MAAS_API_KEY"):
+                provider = "maas"
+            elif os.environ.get("HW_ACCESS_KEY") and os.environ.get("HW_SECRET_KEY"):
+                provider = "ocr_table"
+            elif vision_ocr.available()[0]:
+                provider = "vision"
+            else:
+                provider = "maas"
 
     todo = tempfile.NamedTemporaryFile(suffix=ext or ".jpg", delete=False)
     try:
@@ -468,6 +613,9 @@ async def perceive_run(request: Request, file: UploadFile = File(default=None),
                         % (e, hint), 503)
         if not rows:
             return _err("没有识别出行项", "识别成功但行项为空，请检查图片是否清晰、是否是报价表。", 400)
+        if meta.get("provider") == "vision" and (report.get("review_ratio") or 0) > 0.35:
+            return _vision_draft_page(rows, report, _rows_csv_text(rows),
+                                      file.filename or "vision", template_key, scope)
 
         csv_path = todo.name + ".csv"
         perception.write_csv(rows, csv_path)
@@ -497,9 +645,19 @@ async def perceive_run(request: Request, file: UploadFile = File(default=None),
         if rec.get("grand") else "",
         "<br><b style='color:#B33A2B'>注意：本次用的是固定样例（mock），不是对这张图的识别结果。</b>"
         if meta.get("fixture") else "")
+    if meta.get("provider") == "vision":
+        banner += ('<br><b>本地 OCR（macOS Vision）</b>：%d 个文本框 → %d 行；'
+                   'critic 通过 %d 行，需核对 %d 行（%.0f%%）；量价不符 %d 行。'
+                   '<br><b style="color:#F0B429">这是识别草稿：中文可能有错字，'
+                   '审计结论请以校对后的 CSV 为准。</b>') % (
+            report.get("boxes") or 0, report.get("rows") or 0,
+            report.get("accepted") or 0, report.get("review") or 0,
+            (report.get("review_ratio") or 0) * 100,
+            len(report.get("arith_bad") or []))
     if "<body>" in html:
         html = html.replace("<body>", "<body>" + banner, 1)
-    aid = _persist(quotes, res, source="perceive", docs=[file.filename or "photo"])
+    aid = _persist(quotes, res, source=("vision" if meta.get("provider") == "vision" else "perceive"),
+                   docs=[file.filename or "photo"])
     html = _decorate(html, quotes, res, aid, "图片/文件识别")
     return HTMLResponse(html)
 
@@ -640,6 +798,7 @@ def report(audit_id: str):
         return _err("没有这条记录", "审计编号不存在，或数据库已重置。", 404)
     docs = rec.get("docs") or []
     payload = rec.get("payload") or {}
+    fbs = store_mod.get_store().feedback_for(audit_id)
     rows = []
     for d in payload.get("documents") or []:
         ms = d.get("missing") or []
@@ -651,11 +810,18 @@ def report(audit_id: str):
 <p class="lead">%s ｜ 来源 %s ｜ 模板 %s / 范围 %s ｜ 判定指纹 <code>%s</code></p>
 <table class="s"><tr><th>单据</th><th>报价总价</th><th>漏项数</th><th>主要漏项</th></tr>
 %s</table>
+<h2>用户反馈（%d）</h2>
+%s
 <p class="note">完整可交互报告请重新跑一次；历史记录只保留摘要，避免把原始单据长期留在数据库里。</p>
 """ % (html_mod.escape(audit_id), html_mod.escape(str(rec.get("created_at"))),
        html_mod.escape(str(rec.get("source"))), html_mod.escape(str(rec.get("template_key"))),
        html_mod.escape(str(rec.get("scope"))), html_mod.escape(str(rec.get("fingerprint"))),
-       "".join(rows) or "<tr><td colspan=4>无单据明细</td></tr>")
+       "".join(rows) or "<tr><td colspan=4>无单据明细</td></tr>",
+       len(fbs),
+       "".join("<p class=\"note\">%s ｜ %s ｜ %s</p>" % (
+           html_mod.escape(str(f.get("created_at") or "")),
+           html_mod.escape(str(f.get("role") or "")),
+           html_mod.escape(str(f.get("note") or ""))) for f in fbs) or "<p class=\"note\">暂无</p>")
     return _sub_page(body)
 
 

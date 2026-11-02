@@ -79,7 +79,10 @@ def main():
             "src/store.py", "src/cache.py", "src/llm.py", "src/privacy.py",
             "eval/golden_eval.py", "eval/ablation.py", "scripts/check_all.sh",
             "scripts/pii_scan.py", "tests/test_cloud.py", "docs/ARCHITECTURE.md",
-            "docs/BENCHMARK.md", "SECURITY.md", "docker-compose.yml", ".env.example"]
+            "docs/BENCHMARK.md", "SECURITY.md", "docker-compose.yml", ".env.example",
+            # v0.5 本地 OCR / 评测门禁
+            "src/vision_ocr.py", "scripts/ocr_vision.py", "scripts/vision_ocr.m",
+            "scripts/build_vision_ocr.sh", "tests/test_vision.py", "eval/gate.py"]
     miss = [k for k in must if not any(n.endswith(k) for n in names)]
     print("关键文件：", "全在" if not miss else "缺 " + str(miss))
     return 1 if (miss or bad) else 0
