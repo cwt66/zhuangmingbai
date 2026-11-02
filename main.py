@@ -265,10 +265,63 @@ def _fingerprint(res):
         return ""
 
 
+def _quality(quotes, res):
+    """报告自带的质量门：对齐率 / 算术 / 模板 / 对账 / 指纹。"""
+    rows = sum(len(q.get("rows") or []) for q in quotes)
+    aligned = sum(1 for q in quotes for r in (q.get("rows") or []) if r.get("cid"))
+    arith_rows = 0
+    arith_bad = 0
+    for q in quotes:
+        for r in (q.get("rows") or []):
+            if r.get("qty") and r.get("price") and r.get("amount"):
+                arith_rows += 1
+                if abs(r["qty"] * r["price"] - r["amount"]) > 1:
+                    arith_bad += 1
+    recon = []
+    for q in quotes:
+        rec = q.get("recon") or {}
+        if rec.get("grand"):
+            recon.append({"label": q["label"], "grand": rec["grand"]["amount"],
+                          "diff": rec.get("diff"), "ok": rec.get("ok")})
+    rate = round(aligned / rows, 3) if rows else 0.0
+    ok = bool(rows) and rate >= 0.6 and arith_bad == 0
+    return {
+        "rows": rows, "aligned": aligned, "align_rate": rate,
+        "arith_rows": arith_rows, "arith_bad": arith_bad,
+        "missing": sum(len((res.get(q["label"]) or {}).get("missing") or []) for q in quotes),
+        "duplicates": sum(len((res.get(q["label"]) or {}).get("duplicates") or []) for q in quotes),
+        "risks": sum(len((res.get(q["label"]) or {}).get("risks") or []) for q in quotes),
+        "recon": recon, "gate": "pass" if ok else "review",
+        "fingerprint": _fingerprint(res),
+    }
+
+
+def _quality_html(q):
+    if not q:
+        return ""
+    ok = q.get("gate") == "pass"
+    badge = "可复核" if ok else "需复核"
+    color = "#0A7C42" if ok else "#B33A2B"
+    recon = ""
+    if q.get("recon"):
+        d = q["recon"][0]
+        recon = " ｜ 对账 %s，差 %s" % (fmt_money(d.get("grand")), fmt_money(d.get("diff")))
+    return ('<div class="qgate" style="max-width:1040px;margin:22px auto;padding:14px 20px;'
+            'border:1px solid #E4E2DC;border-left:4px solid %s;background:#fff;font-size:13px;'
+            'color:#56606C;line-height:1.8">'
+            '<b style="color:%s">质量门 · %s</b> ｜ 对齐 <b>%d/%d</b>（%.1f%%）'
+            ' ｜ 算术 <b>%d</b> 行，%s'
+            ' ｜ 漏项 <b>%d</b> ・ 重复 <b>%d</b> ・ 风险 <b>%d</b>%s'
+            ' ｜ 指纹 <code>%s</code></div>') % (
+        color, color, badge, q["aligned"], q["rows"], q["align_rate"] * 100,
+        q["arith_rows"], ("0 不符" if q["arith_bad"] == 0 else "<b style='color:#B33A2B'>%d 不符</b>" % q["arith_bad"]),
+        q["missing"], q["duplicates"], q["risks"], recon, q["fingerprint"])
+
+
 def _persist(quotes, res, source="upload", docs=None):
     """把摘要写进 RDS/SQLite。失败不阻断报告——演示不能因为库挂了而白屏。"""
     try:
-        payload = {"documents": [
+        payload = {"quality": _quality(quotes, res), "documents": [
             {"label": q["label"], "total": q.get("total"),
              "missing": [{"cid": m.get("cid"), "name": m.get("name") or m.get("concept"),
                           "amount": m.get("ref_amount"), "tier": m.get("tier")}
@@ -301,10 +354,11 @@ def _persist(quotes, res, source="upload", docs=None):
 
 def _decorate(html, quotes, res, audit_id=None, source="upload"):
     """在报告尾部加「解读」（MaaS 或模板）与审计编号。"""
+    qgate = _quality_html(_quality(quotes, res))
     try:
         facts = llm_mod.build_facts(quotes, res)
         ai = llm_mod.get_client().explain(facts, cache=cache_mod.get_cache())
-        section = llm_mod.render_html(ai)
+        section = qgate + llm_mod.render_html(ai)
     except Exception as e:  # noqa: BLE001
         section = ('<div class="ai-note"><h2>解读</h2><p class="note">解读生成失败：%s</p></div>'
                    % e)
@@ -799,6 +853,7 @@ def report(audit_id: str):
     docs = rec.get("docs") or []
     payload = rec.get("payload") or {}
     fbs = store_mod.get_store().feedback_for(audit_id)
+    qual = (payload or {}).get("quality") or {}
     rows = []
     for d in payload.get("documents") or []:
         ms = d.get("missing") or []
@@ -808,6 +863,9 @@ def report(audit_id: str):
     body = """
 <h1>审计记录 %s</h1>
 <p class="lead">%s ｜ 来源 %s ｜ 模板 %s / 范围 %s ｜ 判定指纹 <code>%s</code></p>
+<div class="qgate" style="border:1px solid #E4E2DC;border-left:4px solid #0A7A42;padding:12px 16px;margin:14px 0;font-size:13px;color:#56606C">
+质量门：对齐 <b>%s/%s</b>（%s）｜ 算术 <b>%s</b> 行，<b>%s</b> 不符 ｜ 指纹 <code>%s</code>
+</div>
 <table class="s"><tr><th>单据</th><th>报价总价</th><th>漏项数</th><th>主要漏项</th></tr>
 %s</table>
 <h2>用户反馈（%d）</h2>
@@ -816,6 +874,10 @@ def report(audit_id: str):
 """ % (html_mod.escape(audit_id), html_mod.escape(str(rec.get("created_at"))),
        html_mod.escape(str(rec.get("source"))), html_mod.escape(str(rec.get("template_key"))),
        html_mod.escape(str(rec.get("scope"))), html_mod.escape(str(rec.get("fingerprint"))),
+       qual.get("aligned", "—"), qual.get("rows", "—"),
+       ("%.1f%%" % (qual.get("align_rate", 0) * 100)) if qual else "—",
+       qual.get("arith_rows", "—"), qual.get("arith_bad", "—"),
+       html_mod.escape(str(qual.get("fingerprint", rec.get("fingerprint") or ""))),
        "".join(rows) or "<tr><td colspan=4>无单据明细</td></tr>",
        len(fbs),
        "".join("<p class=\"note\">%s ｜ %s ｜ %s</p>" % (
