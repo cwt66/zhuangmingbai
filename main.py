@@ -35,6 +35,7 @@ from src import privacy  # noqa: E402
 from src import store as store_mod  # noqa: E402
 from src import vision_ocr  # noqa: E402
 from src import xlsx as xlsx_mod  # noqa: E402
+from src import money  # noqa: E402
 fmt_money = pipeline.fmt_money
 
 app = FastAPI(title="装明白 · 可计算审计", version="0.5.0")
@@ -301,11 +302,17 @@ def _quality(quotes, res):
                 if abs(r["qty"] * r["price"] - r["amount"]) > 1:
                     arith_bad += 1
     recon = []
+    recon_exact = []
     for q in quotes:
         rec = q.get("recon") or {}
         if rec.get("grand"):
             recon.append({"label": q["label"], "grand": rec["grand"]["amount"],
                           "diff": rec.get("diff"), "ok": rec.get("ok")})
+            detail = money.sum2([r["amount"] for r in (q.get("rows") or [])])
+            fees = money.sum2([f["amount"] for f in (rec.get("fees") or [])])
+            diff = money.diff2(rec["grand"]["amount"], money.q2(detail + fees))
+            recon_exact.append({"label": q["label"], "diff": str(diff),
+                                "ok": diff == money.d("0")})
     rate = round(aligned / rows, 3) if rows else 0.0
     ok = bool(rows) and rate >= 0.6 and arith_bad == 0
     return {
@@ -314,7 +321,8 @@ def _quality(quotes, res):
         "missing": sum(len((res.get(q["label"]) or {}).get("missing") or []) for q in quotes),
         "duplicates": sum(len((res.get(q["label"]) or {}).get("duplicates") or []) for q in quotes),
         "risks": sum(len((res.get(q["label"]) or {}).get("risks") or []) for q in quotes),
-        "recon": recon, "gate": "pass" if ok else "review",
+        "recon": recon, "recon_exact": recon_exact,
+        "gate": "pass" if ok else "review",
         "fingerprint": _fingerprint(res),
     }
 
@@ -329,16 +337,22 @@ def _quality_html(q):
     if q.get("recon"):
         d = q["recon"][0]
         recon = " ｜ 对账 %s，差 %s" % (fmt_money(d.get("grand")), fmt_money(d.get("diff")))
+    exact = ""
+    if q.get("recon_exact"):
+        parts = []
+        for x in q["recon_exact"][:3]:
+            parts.append("%s %s" % (x.get("label"), "对平" if x.get("ok") else "差 " + str(x.get("diff"))))
+        exact = " ｜ 分位对账 " + "；".join(parts)
     return ('<div class="qgate" style="max-width:1040px;margin:22px auto;padding:14px 20px;'
             'border:1px solid #E4E2DC;border-left:4px solid %s;background:#fff;font-size:13px;'
             'color:#56606C;line-height:1.8">'
             '<b style="color:%s">质量门 · %s</b> ｜ 对齐 <b>%d/%d</b>（%.1f%%）'
             ' ｜ 算术 <b>%d</b> 行，%s'
-            ' ｜ 漏项 <b>%d</b> ・ 重复 <b>%d</b> ・ 风险 <b>%d</b>%s'
+            ' ｜ 漏项 <b>%d</b> ・ 重复 <b>%d</b> ・ 风险 <b>%d</b>%s%s'
             ' ｜ 指纹 <code>%s</code></div>') % (
         color, color, badge, q["aligned"], q["rows"], q["align_rate"] * 100,
         q["arith_rows"], ("0 不符" if q["arith_bad"] == 0 else "<b style='color:#B33A2B'>%d 不符</b>" % q["arith_bad"]),
-        q["missing"], q["duplicates"], q["risks"], recon, q["fingerprint"])
+        q["missing"], q["duplicates"], q["risks"], recon, exact, q["fingerprint"])
 
 
 def _persist(quotes, res, source="upload", docs=None):
