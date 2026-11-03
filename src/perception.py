@@ -198,17 +198,10 @@ def _ocr_table_parse(image_bytes, ak, sk, region):
     return rows, {"provider": "ocr_table", "via": "tables"}
 
 
-def _xlsx_to_rows(blob):
-    """标准库解析 xlsx（sharedStrings + sheet1），不引入 openpyxl。"""
-    z = zipfile.ZipFile(io.BytesIO(blob))
-    shared = []
-    if "xl/sharedStrings.xml" in z.namelist():
-        xml = z.read("xl/sharedStrings.xml").decode("utf-8", "ignore")
-        for si in re.findall(r"<si>(.*?)</si>", xml, re.S):
-            shared.append("".join(re.findall(r"<t[^>]*>(.*?)</t>", si, re.S)))
-    sheet = z.read("xl/worksheets/sheet1.xml").decode("utf-8", "ignore")
+def _xlsx_sheet_xml(z, path, shared):
+    xml = z.read(path).decode("utf-8", "ignore")
     out = []
-    for row in re.findall(r"<row[^>]*>(.*?)</row>", sheet, re.S):
+    for row in re.findall(r"<row[^>]*>(.*?)</row>", xml, re.S):
         cells = {}
         for c in re.findall(r"<c([^>]*)>(.*?)</c>", row, re.S):
             attrs, inner = c
@@ -224,6 +217,31 @@ def _xlsx_to_rows(blob):
         if cells:
             out.append(cells)
     return out
+
+
+def _xlsx_to_rows(blob):
+    """标准库解析 xlsx（sharedStrings + 多 sheet），不引入 openpyxl。
+
+    真实报价单经常是「主表 + 主材表 + 说明」多 sheet。旧实现只读 sheet1，
+    主表在第二个 sheet 时会直接报「没有行项」。这里解析所有 worksheet，
+    选**非空行最多**的那张——不合并，避免把说明/汇总混进工序。
+    """
+    z = zipfile.ZipFile(io.BytesIO(blob))
+    shared = []
+    if "xl/sharedStrings.xml" in z.namelist():
+        xml = z.read("xl/sharedStrings.xml").decode("utf-8", "ignore")
+        for si in re.findall(r"<si>(.*?)</si>", xml, re.S):
+            shared.append("".join(re.findall(r"<t[^>]*>(.*?)</t>", si, re.S)))
+    paths = []
+    for n in z.namelist():
+        m = re.match(r"xl/worksheets/sheet(\d+)\.xml$", n)
+        if m:
+            paths.append((int(m.group(1)), n))
+    paths.sort()
+    if not paths:
+        raise PerceptionError("xlsx 里没有 worksheet，文件可能损坏或不是标准 Excel。")
+    candidates = [_xlsx_sheet_xml(z, p, shared) for _, p in paths]
+    return max(candidates, key=lambda rows: sum(1 for r in rows if any(v != "" for v in r.values())))
 
 
 def _ocr_tables_to_rows(tables):
