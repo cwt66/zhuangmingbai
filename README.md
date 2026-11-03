@@ -7,7 +7,7 @@
 [![Gitee](https://img.shields.io/badge/Gitee-Cwt66%2Fzhuangmingbai-c71d23)](https://gitee.com/Cwt66/zhuangmingbai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](./requirements.txt)
-[![Tests](https://img.shields.io/badge/tests-97-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-99-brightgreen.svg)](./tests)
 [![Rules](https://img.shields.io/badge/rules-13-002FA7.svg)](./data/rules_v0.json)
 
 签合同之前，上传 2–4 家装修公司的报价单（照片 / PDF / Excel / CSV），输出一份**可核对、可溯源、可复现**的审计报告：
@@ -49,8 +49,9 @@
 | **本地 OCR + critic** | ✅ `src/vision_ocr.py`：图片不出本机；缺字段/量价不符/低置信 → 标「需核对」，不直接进结论 |
 | **用户反馈闭环** | ✅ 报告页 `/feedback` → RDS；试点访谈有结构化记录 |
 | **报告质量门** | ✅ 每份报告顶部：对齐 / 算术 / 漏项 / 对账 / 指纹；`/report` 历史同步 |
+| **可审计 Excel** | ✅ `/demo.xlsx`、`/audit.xlsx`：总览/漏项/重复/风险/对账/说明 6 个 sheet，金额是数值 |
 | 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**；两份完整黄金标注；注入实验 242 例 |
-| 单元测试 | ✅ **97 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移） |
+| 单元测试 | ✅ **99 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移） |
 | 可打印报告 | ✅ `/demo`、`/real`（打印级 HTML，判定指纹上封面） |
 | 解析校对台 | ✅ `/review`（低置信度标黄 → 修改 → 导出 CSV） |
 | 问询单 | ✅ 把结论变成可直接发给报价方的逐条问询（`src/inquiry.py`） |
@@ -168,7 +169,7 @@ L2 把备注里写了但没单列的项救回来；L3 把「主材另计」的�
 git clone https://gitee.com/Cwt66/zhuangmingbai.git
 cd zhuangmingbai
 bash run_offline.sh                   # 合成三单 → out/audit_report.html
-bash scripts/check_all.sh             # 97 测试 + 评测门禁 + 注入 + 指纹 + 隐私扫描
+bash scripts/check_all.sh             # 99 测试 + 评测门禁 + 注入 + 指纹 + 隐私扫描
 ```
 
 ### 5.1.1 本地 OCR（macOS，可选）
@@ -186,6 +187,7 @@ python3 -m pip install -r requirements.txt
 python3 -m uvicorn main:app --host 0.0.0.0 --port 8000
 # http://127.0.0.1:8000  → 上传 2-4 份 CSV/XLSX → 审计
 # /demo 合成样例 · /real 真实单据 · /review 校对台 · /inquiry 问询单 · /history 历史
+# /demo.xlsx 审计工作簿（6 sheet，可直接给业主/监理）
 ```
 
 ### 5.3 本地验证「RDS + Redis 真的被用到」
@@ -253,6 +255,7 @@ src/vision_ocr.py       本地 OCR + 表格重建 + 确定性 critic（macOS Vis
 src/store.py            RDS PostgreSQL / SQLite 持久化（自动降级）
 src/cache.py            Redis 缓存 / 限流 / 任务状态（自动降级）
 src/llm.py              MaaS 表达层（接地校验 + 模板兜底）
+src/xlsx.py             零依赖 XLSX 导出（6 sheet，金额为数值）
 scripts/vision_ocr.m    macOS Vision OCR 小工具（本地编译）
 src/privacy.py          脱敏与提示词注入防护
 src/inquiry.py          问询单
@@ -264,7 +267,7 @@ data/rules_v0.json      13 条审计规则
 data/coverage_v0.json   证据词 + 父类吸收表
 data/real/              5 份真实单据（公开晒单/公开 PDF 的人工转录，无个人信息）
 eval/                   黄金标注评测 / 消融 / 注入 / 对照实验 / 冻结指纹 / 指标库
-tests/                  97 个单元测试
+tests/                  99 个单元测试
 scripts/                感知层 CLI / 本地 OCR / 指纹快照 / 离线包 / 隐私扫描 / 一键自检
 docs/                   架构 / 评测 / 部署 / 安全 / 判断正确性 / 迁移实验
 deploy/                 Dockerfile · docker-compose · systemd · Nginx · DEPLOY

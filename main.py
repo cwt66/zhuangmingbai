@@ -20,7 +20,7 @@ import zipfile
 from typing import List
 
 from fastapi import FastAPI, File, Form, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 if BASE not in sys.path:
@@ -34,6 +34,7 @@ from src import llm as llm_mod  # noqa: E402
 from src import privacy  # noqa: E402
 from src import store as store_mod  # noqa: E402
 from src import vision_ocr  # noqa: E402
+from src import xlsx as xlsx_mod  # noqa: E402
 fmt_money = pipeline.fmt_money
 
 app = FastAPI(title="装明白 · 可计算审计", version="0.5.0")
@@ -147,6 +148,7 @@ PAGE = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
         <div class="meta">范围选「基础施工」时，门槛石/踢脚线/木门/洁具/灯具等主材项不再判漏——
         你的单据只报基础工程，就不该按全包口径要求它。</div>
         <button class="btn" type="submit">开始审计</button>
+        <button class="btn ghost" type="submit" formaction="/audit.xlsx">下载 Excel（可审计工作簿）</button>
         <div class="meta">2–4 份，单份 ≤ 4MB，UTF-8 编码（可带 BOM）</div>
       </form>
       <p style="margin-top:26px">没有单据？<a href="/demo">用三家样例跑一次</a>　·　<a href="/review">看解析校对台</a></p>
@@ -232,6 +234,27 @@ def _audit(paths, template_key="old_house", scope="full"):
     if "<body>" in html:
         html = html.replace("<body>", "<body>" + NAV, 1)
     return html, res, quotes
+
+
+def _xlsx_response(paths, template_key, scope, name="zhuangmingbai_audit.xlsx"):
+    _, res, quotes = _audit(paths, template_key=template_key, scope=scope)
+    fd, tmp = tempfile.mkstemp(suffix=".xlsx")
+    os.close(fd)
+    try:
+        from datetime import datetime
+        xlsx_mod.export_audit(tmp, quotes, res, meta={
+            "time": datetime.now().astimezone().isoformat(timespec="seconds"),
+            "fingerprint": _fingerprint(res),
+        })
+        data = open(tmp, "rb").read()
+    finally:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+    return Response(content=data,
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": 'attachment; filename="%s"' % name})
 
 
 def _label_from_name(name: str) -> str:
@@ -352,7 +375,7 @@ def _persist(quotes, res, source="upload", docs=None):
         return None
 
 
-def _decorate(html, quotes, res, audit_id=None, source="upload"):
+def _decorate(html, quotes, res, audit_id=None, source="upload", xlsx_url=None):
     """在报告尾部加「解读」（MaaS 或模板）与审计编号。"""
     qgate = _quality_html(_quality(quotes, res))
     try:
@@ -381,10 +404,13 @@ def _decorate(html, quotes, res, audit_id=None, source="upload"):
               'placeholder="哪一条最有用？哪一条看不懂？"></textarea></div>'
               '<button class="btn" type="submit">提交反馈</button>'
               '</form></div></div>') % aid
+    xl = ('' if not xlsx_url else
+          '<a class="btn ghost no-print" href="%s" style="margin-top:10px">下载 Excel</a>'
+          % html_mod.escape(xlsx_url))
     footer = ('<div class="wrap" style="padding-top:0"><p class="note">审计编号 %s ｜ 来源 %s ｜ '
               '<a href="/history">历史记录</a> ｜ 数据仅用于本次核对，不用于训练</p>'
-              '<button class="btn no-print" onclick="window.print()" style="margin-top:10px">'
-              '打印 / 另存 PDF</button></div>' % (aid, source))
+              '%s<button class="btn no-print" onclick="window.print()" style="margin-top:10px">'
+              '打印 / 另存 PDF</button></div>' % (aid, source, xl))
     if "</body>" in html:
         html = html.replace("</body>", section + fb + footer + "</body>", 1)
     return html
@@ -526,7 +552,7 @@ def demo():
     try:
         html, res, quotes = _audit(paths)
         aid = _persist(quotes, res, source="demo")
-        html = _decorate(html, quotes, res, aid, "合成样例")
+        html = _decorate(html, quotes, res, aid, "合成样例", xlsx_url="/demo.xlsx")
     except EmptyRowsError as e:
         return _err("样例数据异常", str(e), 400)
     except Exception as e:  # noqa: BLE001
@@ -543,12 +569,68 @@ def real():
     try:
         html, res, quotes = _audit([("上海卓观 · 两房半包（真实单据）", path)])
         aid = _persist(quotes, res, source="real")
-        html = _decorate(html, quotes, res, aid, "真实单据")
+        html = _decorate(html, quotes, res, aid, "真实单据", xlsx_url="/real.xlsx")
     except Exception as e:  # noqa: BLE001
         return _err("真实单据跑失败", str(e), 500)
     return HTMLResponse(html)
 
 
+
+
+@app.get("/demo.xlsx")
+def demo_xlsx():
+    paths = [(lb, os.path.join(pipeline.DATA, "samples", fn)) for lb, fn in SAMPLES]
+    return _xlsx_response(paths, "old_house", "full", "zhuangmingbai_demo.xlsx")
+
+
+@app.get("/real.xlsx")
+def real_xlsx():
+    path = os.path.join(pipeline.DATA, "real", "sh_zhuoguan_halfpack.csv")
+    if not os.path.isfile(path):
+        return _err("真实单据缺失", "仓库内未找到真实单据。", 404)
+    return _xlsx_response([("上海卓观 · 两房半包（真实单据）", path)],
+                          "old_house", "full", "zhuangmingbai_real.xlsx")
+
+
+@app.post("/audit.xlsx")
+async def audit_xlsx(request: Request, files: List[UploadFile] = File(default=None),
+                     template_key: str = Form(default="old_house"),
+                     scope: str = Form(default="full")):
+    ok, _ = _rate_ok(request, "xlsx")
+    if not ok:
+        return _err("请求过于频繁", "每个来源每分钟最多 60 次导出。", 429)
+    if not files or len(files) < 2:
+        return _err("至少需要 2 份报价单", "单份单据无法做跨单对齐。")
+    if len(files) > MAX_FILES:
+        return _err("最多 4 份", "一次最多比较 4 家。")
+    tmpdir = tempfile.mkdtemp(prefix="zmb_xlsx_")
+    paths = []
+    try:
+        for i, f in enumerate(files, start=1):
+            raw = await f.read()
+            if not raw.strip():
+                return _err("空文件", "《%s》是空文件。" % (f.filename or i))
+            if len(raw) > MAX_BYTES:
+                return _err("文件过大", "《%s》超过 4MB。" % (f.filename or i))
+            dst = os.path.join(tmpdir, "quote_%d.csv" % i)
+            with open(dst, "wb") as w:
+                w.write(raw)
+            paths.append((_label_from_name(f.filename or "报价%d" % i), dst))
+        return _xlsx_response(paths, template_key, scope)
+    except EmptyRowsError as e:
+        return _err("没有解析到行项", str(e), 400)
+    except Exception as e:  # noqa: BLE001
+        return _err("导出失败", str(e), 500)
+    finally:
+        for _, p in paths:
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+        try:
+            os.rmdir(tmpdir)
+        except OSError:
+            pass
 
 
 @app.get("/inquiry", response_class=HTMLResponse)
