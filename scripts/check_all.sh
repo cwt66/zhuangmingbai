@@ -5,34 +5,39 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 PY="${PYTHON:-python3}"
-echo "== 1/8 语法编译"
+echo "== 1/9 语法编译"
 "$PY" -m compileall -q main.py src eval scripts tests
 
-echo "== 2/8 单元测试"
+echo "== 2/9 单元测试"
 "$PY" -m unittest discover -s tests
 
-echo "== 3/8 本体对齐覆盖率"
+echo "== 3/9 本体对齐覆盖率"
 "$PY" eval/eval_alignment.py >/dev/null
 echo "   ok（out/alignment_report.md）"
 
-echo "== 4/8 黄金标注评测（精确率/召回率 + Wilson CI）"
+echo "== 4/9 黄金标注评测（精确率/召回率 + Wilson CI）"
 "$PY" eval/golden_eval.py >/dev/null
 echo "   ok（out/golden_eval.md）"
 
-echo "== 5/8 消融实验（L0→L3）"
+echo "== 5/9 消融实验（L0→L3）"
 "$PY" eval/ablation.py >/dev/null
 echo "   ok（out/ablation.md）"
 
-echo "== 6/8 注入实验（242 例已知缺陷形态）"
+echo "== 6/9 注入实验（242 例已知缺陷形态）"
 "$PY" eval/injection_test.py >/dev/null
 echo "   ok（eval/injection_runs/）"
 
-echo "== 7/8 评测门禁（低于阈值即失败）"
+echo "== 7/9 评测门禁（低于阈值即失败）"
 "$PY" eval/gate.py
 
-echo "== 8/8 冻结指纹 + 隐私扫描"
+echo "== 8/9 冻结指纹 + 隐私扫描"
 "$PY" scripts/snapshot_predictions.py --check
 "$PY" scripts/pii_scan.py --strict
+
+# 盲标页是从 templates/ontology/CSV 生成的产物；它一旦过期，第二标注者
+# 就会照着一份旧清单标——所以每次自检都重建，不提交「可能过期」的 HTML。
+echo "== 9/9 盲标工具重建（第二标注者用）"
+"$PY" eval/make_annotator.py
 
 echo
 echo "[ALL GREEN] 全部检查通过。"

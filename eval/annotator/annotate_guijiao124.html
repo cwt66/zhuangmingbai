@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>装明白 · 盲标工具 · 124㎡ · 基础报价单（65 行工序 + 3 行汇总）</title>
+<style>
+:root{--ikb:#002FA7;--paper:#FAFAF8;--ink:#0A0A0A;--muted:#6B6B66;--line:#DCDCD6;
+      --yes:#0F7B4F;--no:#B33A2B;--na:#6B6B66}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+     font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+     -webkit-font-smoothing:antialiased}
+header{border-bottom:2px solid var(--ink);padding:16px 24px;display:flex;
+       align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.01em}
+.sub{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.6}
+.wrap{display:grid;grid-template-columns:280px 1fr;gap:0;height:calc(100vh - 78px)}
+aside{border-right:1px solid var(--line);overflow-y:auto;padding:12px 0}
+.item{padding:9px 18px;font-size:13px;cursor:pointer;display:flex;gap:8px;
+      align-items:baseline;border-left:3px solid transparent}
+.item:hover{background:#F1F1EC}
+.item.on{background:#EDF0FB;border-left-color:var(--ikb);font-weight:600}
+.item .mark{font-size:11px;width:14px;flex:none;color:var(--muted)}
+.item .mark.y{color:var(--yes)} .item .mark.n{color:var(--no)}
+main{overflow-y:auto;padding:22px 28px 80px}
+.card{border:1px solid var(--line);background:#fff;padding:20px 22px}
+.q{font-size:22px;font-weight:700;margin:0 0 6px}
+.cid{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--muted)}
+.aliases{font-size:12.5px;color:var(--muted);margin:10px 0 0;line-height:1.8}
+.aliases b{color:var(--ink);font-weight:600}
+.ask{font-size:13px;margin:14px 0 0;padding:10px 12px;background:#F4F4EF;
+     border-left:3px solid var(--ikb);line-height:1.7}
+.btns{display:flex;gap:10px;margin:20px 0 0;flex-wrap:wrap}
+button{font:inherit;font-size:14px;padding:11px 20px;border:1px solid var(--line);
+       background:#fff;cursor:pointer;border-radius:2px}
+button:hover{border-color:var(--ink)}
+button.sel-y{background:var(--yes);color:#fff;border-color:var(--yes)}
+button.sel-n{background:var(--no);color:#fff;border-color:var(--no)}
+button.sel-a{background:var(--na);color:#fff;border-color:var(--na)}
+.note{width:100%;margin-top:14px;font:inherit;font-size:13px;padding:9px 11px;
+      border:1px solid var(--line);border-radius:2px;resize:vertical;min-height:52px}
+.search{margin:26px 0 8px;display:flex;gap:8px;align-items:center}
+.search input{flex:1;font:inherit;font-size:13px;padding:8px 10px;
+              border:1px solid var(--line);border-radius:2px;background:#fff}
+.count{font-size:12px;color:var(--muted);white-space:nowrap}
+table{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:6px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-weight:600;background:#F6F6F1;position:sticky;top:0}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.hit{background:#FFF9E6}
+.bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid var(--ink);
+     padding:10px 24px;display:flex;align-items:center;gap:14px;font-size:13px}
+.bar .prog{flex:1;height:6px;background:#EDEDE7;position:relative}
+.bar .prog i{position:absolute;left:0;top:0;bottom:0;background:var(--ikb)}
+.bar b{font-variant-numeric:tabular-nums}
+.export{background:var(--ikb);color:#fff;border-color:var(--ikb);padding:9px 18px}
+.warn{font-size:12px;color:var(--no);margin-top:12px;display:none}
+@media print{aside,.btns,.bar,.search{display:none}.wrap{display:block;height:auto}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>装明白 · 模板逐项核对（盲标）</h1>
+    <div class="sub">124㎡ · 基础报价单（65 行工序 + 3 行汇总）<br>这是一份新房基础施工报价，主材另计（不含门/洁具/灯具等）。 请逐项判断：这份报价单里<b>有没有</b>这一项。</div>
+  </div>
+  <div class="sub">标注人：<input id="who" placeholder="填你的名字/代号"
+       style="font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);width:130px"></div>
+</header>
+
+<div class="wrap">
+  <aside id="list"></aside>
+  <main>
+    <div class="card">
+      <div class="q" id="q">—</div>
+      <div class="cid" id="cid"></div>
+      <div class="aliases" id="aliases"></div>
+      <div class="ask" id="ask"></div>
+      <div class="btns">
+        <button id="b-y" onclick="setState('present')">有（1）</button>
+        <button id="b-n" onclick="setState('missing')">没有（2）</button>
+        <button id="b-a" onclick="setState('not_applicable')">本单不适用（3）</button>
+      </div>
+      <textarea class="note" id="note" placeholder="依据（选填，但建议写）：在哪一行看到的？或为什么判没有？"></textarea>
+      <div class="warn" id="warn">⚠ 还有项目没判，导出会被拦下。</div>
+    </div>
+
+    <div class="search">
+      <input id="find" placeholder="搜单据原文（项目名/工艺/备注），例如：防水、找平、门槛石">
+      <span class="count" id="count"></span>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>项目名称</th><th>工艺说明</th><th>单位</th><th class="num">数量</th>
+      <th class="num">单价</th><th class="num">合价</th><th>备注</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </main>
+</div>
+
+<div class="bar">
+  <span>进度 <b id="done">0</b>/<b id="total">0</b></span>
+  <span class="prog"><i id="pbar" style="width:0"></i></span>
+  <button class="export" onclick="exportCSV()">导出标注 CSV</button>
+</div>
+
+<script>
+const CONCEPTS = [{"cid": "mep", "name": "水电改造", "category": "mep", "aliases": ["水电", "水电工程", "水电安装"]}, {"cid": "waterproof", "name": "防水涂料", "category": "wp", "aliases": ["防水", "防水施工", "刷防水", "防水处理", "地坪防水处理", "墙面防水处理", "墙地面做防水", "地面防水", "墙面防水", "做防水", "防水层", "涂膜防水", "墙地面防水"]}, {"cid": "water_test", "name": "闭水试验", "category": "wp", "aliases": ["闭水", "蓄水试验"]}, {"cid": "pressure_test", "name": "打压试验", "category": "mep", "aliases": ["水管打压", "打压"]}, {"cid": "tile_wall", "name": "贴墙砖", "category": "mason", "aliases": ["墙砖铺贴", "墙面贴砖", "墙砖", "铺墙砖", "贴瓷砖", "干挂", "干挂瓷砖", "岩板"]}, {"cid": "tile_floor", "name": "贴地砖", "category": "mason", "aliases": ["地砖铺贴", "地面贴砖", "地砖", "铺地砖", "铺地砖(湿铺)"]}, {"cid": "level_floor", "name": "地面找平", "category": "mason", "aliases": ["找平", "地面找平层", "水泥砂浆找平"]}, {"cid": "grout", "name": "填缝", "category": "mason", "aliases": ["勾缝", "填缝剂", "砖缝处理", "美缝", "瓷缝"]}, {"cid": "threshold", "name": "门槛石", "category": "mason", "aliases": ["过门石", "门槛"]}, {"cid": "sill", "name": "窗台石", "category": "mason", "aliases": ["窗台板", "窗台石铺贴", "窗台", "大理石台面"]}, {"cid": "skirting", "name": "踢脚线", "category": "mason", "aliases": ["踢脚", "地脚线"]}, {"cid": "pipe_wrap", "name": "包立管", "category": "mason", "aliases": ["包管", "立管包封", "封管道", "封管", "包下水管", "下水管", "包管道"]}, {"cid": "ceiling", "name": "吊顶", "category": "carp", "aliases": ["石膏板吊顶", "客厅吊顶"]}, {"cid": "door_install", "name": "木门安装", "category": "carp", "aliases": ["门安装", "室内门安装", "门锁", "灌浆", "套装门", "木门", "套装门不锈钢门套", "门套", "卧室门", "卫生间门"]}, {"cid": "door_frame", "name": "门套", "category": "carp", "aliases": ["门套线", "门框", "门套基层"]}, {"cid": "wall_base", "name": "墙面基层处理", "category": "paint", "aliases": ["基层处理", "墙面处理", "墙基层", "墙面基础处理", "顶面基础处理", "批嵌砂光", "基础处理", "砂光"]}, {"cid": "putty", "name": "批刮腻子", "category": "paint", "aliases": ["腻子", "刮腻子", "批腻子"]}, {"cid": "primer", "name": "刷底漆", "category": "paint", "aliases": ["底漆"]}, {"cid": "topcoat", "name": "刷面漆", "category": "paint", "aliases": ["面漆", "乳胶漆", "刷漆", "墙面涂料", "顶面涂料", "涂料"]}, {"cid": "interface_agent", "name": "界面剂", "category": "paint", "aliases": ["界面剂", "界面处理剂"]}, {"cid": "sanitary", "name": "洁具安装", "category": "inst", "aliases": ["洁具", "卫浴安装", "座便器", "马桶", "台盆", "立盆", "坐便器", "蹲便器", "洗脸盆", "浴缸", "淋浴房"]}, {"cid": "switch_install", "name": "开关插座安装", "category": "mep", "aliases": ["开关面板安装", "插座安装"]}, {"cid": "light_install", "name": "灯具安装", "category": "mep", "aliases": ["灯具", "灯安装", "筒灯", "灯带", "线性灯", "长条灯", "集成灯", "射灯", "灯盘", "高压灯带", "灯带变压器"]}, {"cid": "clean", "name": "竣工保洁", "category": "inst", "aliases": ["开荒保洁", "保洁"]}, {"cid": "mgmt_fee", "name": "管理费", "category": "fee", "aliases": ["管理费", "项目管理"]}, {"cid": "water_pipe", "name": "给水管", "category": "mep", "aliases": ["给水", "上水管", "热水管", "水管", "PP-R", "水路", "水路改造", "水路预收"]}, {"cid": "wire", "name": "布线", "category": "mep", "aliases": ["穿线", "电线敷设", "电线管", "电线", "线路排放", "穿线管"]}, {"cid": "floor_drain", "name": "地漏", "category": "inst", "aliases": ["地漏安装", "防臭地漏"]}];
+const ROWS = [{"no": "1", "name": "首席设计师", "spec": "分区：设计费", "unit": "m2", "qty": "110", "price": "0", "amount": "0", "note": "1、全系列风格优化设计 2、全套A3施工图纸 3、3D全屋效果图"}, {"no": "2", "name": "全房水电工艺", "spec": "分区：基础水电工程", "unit": "m2", "qty": "124", "price": "105", "amount": "13020", "note": "电路：PVC硬质阻燃管及配件，主线2.5㎡三卷塑铜线，支线1.5㎡塑铜线；厨房空调4㎡塑铜线单放，空调插座4㎡塑铜线单放；视频线、音频线等有要求另收费。弱电：电话、电视、音响、网络单独穿管。水路：PPR管，热熔工艺；卫生间、厨房、阳台水路改造。主管25/20环保管，分管20环保管"}, {"no": "3", "name": "拆墙（120mm）", "spec": "分区：基础拆改", "unit": "m2", "qty": "8.1", "price": "140", "amount": "1134", "note": "拆除、装袋、运到楼下物业指定地点"}, {"no": "4", "name": "建墙（120mm）", "spec": "分区：基础拆改", "unit": "项", "qty": "2.81", "price": "160", "amount": "449.6", "note": "采用灰砂砖或轻质砖，32.5#水泥、粗砂1:2水泥砂浆砌墙体，新旧墙交接处每10公分挂钢丝网搭接，新旧墙连接处加膨胀固筋；工程量按展开面积计算"}, {"no": "5", "name": "飘窗拆除", "spec": "分区：基础拆改", "unit": "项", "qty": "1", "price": "300", "amount": "300", "note": "拆除、装袋、运到楼下物业指定地点"}, {"no": "6", "name": "门洞修复", "spec": "分区：基础拆改", "unit": "项", "qty": "1", "price": "700", "amount": "700", "note": "门洞修复，垂直度、宽度统一"}, {"no": "7", "name": "壁龛制作", "spec": "分区：基础拆改", "unit": "项", "qty": "1", "price": "750", "amount": "750", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "8", "name": "包水管", "spec": "分区：基础拆改", "unit": "根", "qty": "5", "price": "320", "amount": "1600", "note": "工程量按根（管道根数）计算，高度3m以内"}, {"no": "9", "name": "客餐厅造型吊顶", "spec": "分区：客餐厅", "unit": "m2", "qty": "21.4", "price": "115", "amount": "2461", "note": "国标轻钢龙骨，石膏板基层，自攻钉固定，300*300井字龙骨；单面9.5mm石膏板罩面"}, {"no": "10", "name": "墙面乳胶漆（手刷）", "spec": "分区：客餐厅", "unit": "m2", "qty": "110.5", "price": "30", "amount": "3315", "note": "批刮环保腻子，批刮两遍、打磨平整；二、三棵树面漆两遍"}, {"no": "11", "name": "顶面乳胶漆（手刷）", "spec": "分区：客餐厅", "unit": "m2", "qty": "64.8", "price": "30", "amount": "1944", "note": "批刮环保腻子，批刮两遍、打磨平整；二、三棵树面漆两遍"}, {"no": "12", "name": "地面贴砖平铺800*800", "spec": "分区：客餐厅", "unit": "m2", "qty": "43.2", "price": "90", "amount": "3888", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "13", "name": "窗帘盒制作", "spec": "分区：客餐厅", "unit": "m", "qty": "3.98", "price": "150", "amount": "597", "note": "国标轻钢龙骨，石膏板基层，自攻钉固定，300*300井字龙骨；单面9.5mm石膏板罩面"}, {"no": "14", "name": "美缝", "spec": "分区：客餐厅", "unit": "m2", "qty": "43.2", "price": "22", "amount": "950.4", "note": "三棵树美缝人工加材料"}, {"no": "15", "name": "地面贴砖平铺800*800", "spec": "分区：厨房", "unit": "m2", "qty": "5.5", "price": "90", "amount": "495", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "16", "name": "墙面贴砖平铺400*800", "spec": "分区：厨房", "unit": "m2", "qty": "17.12", "price": "90", "amount": "1540.8", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "17", "name": "墙地面防水基层处理", "spec": "分区：厨房", "unit": "m2", "qty": "10.25", "price": "15", "amount": "153.75", "note": "垃圾清理；清理上下水管、地漏周围高于地面的混凝土对防水层空鼓的地方去除，对圆弧的墙角用电锤打成正角；地面除尘、清理干净；防水砂浆对裸露水管进行固定，地面破损部位用砂浆找平；防水涂刷部位与地面在一个平行线时，要做三公分阻水管、止水带，确保干湿分离"}, {"no": "18", "name": "墙地面防水处理", "spec": "分区：厨房", "unit": "m2", "qty": "10.25", "price": "50", "amount": "512.5", "note": "墙面涂刷两遍，成膜厚度1.0mm；地面涂刷三遍，成膜厚度1.5mm；淋浴墙高度1.8m，洗手阳台高度1.2m，其余部位30-50cm；厨房完成后于24小时之后进行闭水实验，闭水时间24-48小时"}, {"no": "19", "name": "美缝", "spec": "分区：厨房", "unit": "m2", "qty": "22.62", "price": "22", "amount": "497.64", "note": "三棵树美缝人工加材料"}, {"no": "20", "name": "阳台吊顶包管", "spec": "分区：阳台", "unit": "项", "qty": "1", "price": "200", "amount": "200", "note": "国标轻钢龙骨，自攻钉固定，300*300井字龙骨；木工板基层"}, {"no": "21", "name": "顶面乳胶漆（手刷）", "spec": "分区：阳台", "unit": "m2", "qty": "9.15", "price": "30", "amount": "274.5", "note": "批刮环保腻子，批刮两遍、打磨平整；二、三棵树面漆两遍"}, {"no": "22", "name": "地面贴砖平铺800*800", "spec": "分区：阳台", "unit": "m2", "qty": "6.1", "price": "90", "amount": "549", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "23", "name": "墙面贴砖平铺400*800", "spec": "分区：阳台", "unit": "m2", "qty": "14.96", "price": "90", "amount": "1346.4", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "24", "name": "墙地面防水基层处理", "spec": "分区：阳台", "unit": "m2", "qty": "11.6", "price": "15", "amount": "174", "note": "垃圾清理；清理上下水管、地漏周围；地面除尘清理；防水砂浆固定裸露水管、破损部位找平；做三公分阻水管、止水带"}, {"no": "25", "name": "墙地面防水处理", "spec": "分区：阳台", "unit": "m2", "qty": "11.6", "price": "50", "amount": "580", "note": "墙面涂刷两遍成膜1.0mm；地面三遍1.5mm；淋浴墙1.8m，洗手阳台1.2m，其余30-50cm；闭水实验24-48小时"}, {"no": "26", "name": "美缝", "spec": "分区：阳台", "unit": "m2", "qty": "21.06", "price": "22", "amount": "463.32", "note": "三棵树美缝人工加材料"}, {"no": "27", "name": "地面贴砖平铺400*400", "spec": "分区：客卫", "unit": "m2", "qty": "6.25", "price": "90", "amount": "562.5", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "28", "name": "墙面贴砖平铺400*800", "spec": "分区：客卫", "unit": "m2", "qty": "23", "price": "90", "amount": "2070", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "29", "name": "墙地面防水基层处理", "spec": "分区：客卫", "unit": "m2", "qty": "25.33", "price": "15", "amount": "379.95", "note": "垃圾清理；清理上下水管、地漏周围；地面除尘清理；防水砂浆固定裸露水管、破损部位找平；做三公分阻水管、止水带"}, {"no": "30", "name": "客卫生间墙地面防水", "spec": "分区：客卫", "unit": "m2", "qty": "25.33", "price": "50", "amount": "1266.5", "note": "墙面涂刷两遍成膜1.0mm；地面三遍1.5mm；淋浴墙1.8m，洗手阳台1.2m，其余30-50cm；闭水实验24-48小时；工程完工后签5年底质保协议"}, {"no": "31", "name": "美缝", "spec": "分区：客卫", "unit": "m2", "qty": "29.25", "price": "22", "amount": "643.5", "note": "三棵树美缝人工加材料"}, {"no": "32", "name": "地面贴砖平铺400*400", "spec": "分区：主卫", "unit": "m2", "qty": "4.23", "price": "90", "amount": "380.7", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "33", "name": "墙面贴砖平铺400*800", "spec": "分区：主卫", "unit": "m2", "qty": "17.5", "price": "90", "amount": "1575", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "34", "name": "墙地面防水基层处理", "spec": "分区：主卫", "unit": "m2", "qty": "19.3", "price": "15", "amount": "289.5", "note": "垃圾清理；清理上下水管、地漏周围；地面除尘清理；防水砂浆固定裸露水管、破损部位找平；做三公分阻水管、止水带"}, {"no": "35", "name": "客卫生间墙地面防水", "spec": "分区：主卫", "unit": "m2", "qty": "19.3", "price": "50", "amount": "965", "note": "墙面涂刷两遍成膜1.0mm；地面三遍1.5mm；淋浴墙1.8m，洗手阳台1.2m，其余30-50cm；闭水24-48小时；完工签5年质保"}, {"no": "36", "name": "美缝", "spec": "分区：主卫", "unit": "m2", "qty": "21.83", "price": "22", "amount": "480.26", "note": "三棵树美缝人工加材料"}, {"no": "37", "name": "封柜头吊顶", "spec": "分区：主卧", "unit": "m2", "qty": "4.65", "price": "115", "amount": "534.75", "note": "国标轻钢龙骨，石膏板基层，自攻钉固定，300*300井字龙骨；单面9.5mm石膏板罩面"}, {"no": "38", "name": "双层叠级石膏线", "spec": "分区：主卧", "unit": "m", "qty": "12.4", "price": "48", "amount": "595.2", "note": "木工制作叠级石膏线"}, {"no": "39", "name": "墙面乳胶漆（手刷）", "spec": "分区：主卧", "unit": "m2", "qty": "48.9", "price": "30", "amount": "1467", "note": "批刮环保腻子，批刮两遍、打磨平整；三棵树面漆两遍"}, {"no": "40", "name": "顶面乳胶漆（手刷）", "spec": "分区：主卧", "unit": "m2", "qty": "21.5", "price": "30", "amount": "645", "note": "批刮环保腻子，批刮两遍、打磨平整；三棵树面漆两遍"}, {"no": "41", "name": "地面贴砖平铺800*800", "spec": "分区：主卧", "unit": "m2", "qty": "14.35", "price": "90", "amount": "1291.5", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "42", "name": "窗台石铺设", "spec": "分区：主卧", "unit": "项", "qty": "1", "price": "380", "amount": "380", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "43", "name": "窗帘盒制作", "spec": "分区：主卧", "unit": "m", "qty": "3.06", "price": "150", "amount": "459", "note": "国标轻钢龙骨，石膏板基层，300*300井字龙骨；单面9.5mm石膏板罩面"}, {"no": "44", "name": "美缝", "spec": "分区：主卧", "unit": "m2", "qty": "14.35", "price": "22", "amount": "315.7", "note": "三棵树美缝人工加材料"}, {"no": "45", "name": "封柜头吊顶", "spec": "分区：次卧", "unit": "m2", "qty": "1.85", "price": "115", "amount": "212.75", "note": "国标轻钢龙骨，石膏板基层，300*300井字龙骨；单面9.5mm石膏板罩面"}, {"no": "46", "name": "双层叠级石膏线", "spec": "分区：次卧", "unit": "m", "qty": "10.7", "price": "48", "amount": "513.6", "note": "木工制作叠级石膏线"}, {"no": "47", "name": "墙面乳胶漆（手刷）", "spec": "分区：次卧", "unit": "m2", "qty": "32.2", "price": "30", "amount": "966", "note": "批刮环保腻子两遍、打磨平整；三棵树面漆两遍"}, {"no": "48", "name": "顶面乳胶漆（手刷）", "spec": "分区：次卧", "unit": "m2", "qty": "13.35", "price": "30", "amount": "400.5", "note": "批刮环保腻子两遍、打磨平整；三棵树面漆两遍"}, {"no": "49", "name": "地面贴砖平铺800*800", "spec": "分区：次卧", "unit": "m2", "qty": "8.92", "price": "90", "amount": "802.8", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "50", "name": "窗帘盒制作", "spec": "分区：次卧", "unit": "m", "qty": "2.89", "price": "150", "amount": "433.5", "note": "国标轻钢龙骨，石膏板基层，300*300井字龙骨；单面9.5mm石膏板罩面"}, {"no": "51", "name": "窗台石铺设", "spec": "分区：次卧", "unit": "项", "qty": "1", "price": "380", "amount": "380", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "52", "name": "美缝", "spec": "分区：次卧", "unit": "m2", "qty": "8.92", "price": "22", "amount": "196.24", "note": "三棵树美缝人工加材料"}, {"no": "53", "name": "封柜头吊顶", "spec": "分区：南次卧", "unit": "m2", "qty": "2.51", "price": "115", "amount": "288.65", "note": "国标轻钢龙骨，石膏板基层，300*300井字龙骨；单面9.5mm石膏板罩面"}, {"no": "54", "name": "双层叠级石膏线", "spec": "分区：南次卧", "unit": "m", "qty": "11.8", "price": "48", "amount": "566.4", "note": "木工制作叠级石膏线"}, {"no": "55", "name": "墙面乳胶漆（手刷）", "spec": "分区：南次卧", "unit": "m2", "qty": "39.9", "price": "30", "amount": "1197", "note": "批刮环保腻子两遍、打磨平整；三棵树面漆两遍"}, {"no": "56", "name": "顶面乳胶漆（手刷）", "spec": "分区：南次卧", "unit": "m2", "qty": "17", "price": "30", "amount": "510.75", "note": "批刮环保腻子，批刮两遍、打磨平整；三棵树面漆两遍"}, {"no": "57", "name": "地面贴砖平铺800*800", "spec": "分区：南次卧", "unit": "m2", "qty": "11.35", "price": "90", "amount": "1021.5", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "58", "name": "窗台石铺设", "spec": "分区：南次卧", "unit": "项", "qty": "1", "price": "380", "amount": "380", "note": "32.5#水泥和中粗砂及人工，不含主材费用"}, {"no": "59", "name": "窗帘盒制作", "spec": "分区：南次卧", "unit": "m", "qty": "2.88", "price": "150", "amount": "432", "note": "国标轻钢龙骨，石膏板基层，300*300井字龙骨；单面9.5mm石膏板罩面"}, {"no": "60", "name": "美缝", "spec": "分区：南次卧", "unit": "m2", "qty": "11.35", "price": "22", "amount": "249.7", "note": "三棵树美缝人工加材料"}, {"no": "61", "name": "成品保护、保洁", "spec": "分区：其他", "unit": "项", "qty": "1", "price": "1000", "amount": "1000", "note": "室内成品项目、设备保护、保洁"}, {"no": "62", "name": "瓷砖倒角处理", "spec": "分区：其他", "unit": "项", "qty": "1", "price": "1000", "amount": "1000", "note": "全房瓷砖倒角处理"}, {"no": "63", "name": "正泰开关面板", "spec": "分区：其他", "unit": "项", "qty": "1", "price": "1500", "amount": "1500", "note": "正泰开关面板"}, {"no": "64", "name": "南北阳台封窗", "spec": "分区：其他", "unit": "m2", "qty": "18.99", "price": "580", "amount": "11014.2", "note": "110断桥窗，6+6钢化中空玻璃"}, {"no": "65", "name": "阳台防盗格", "spec": "分区：其他", "unit": "个", "qty": "5", "price": "100", "amount": "500", "note": "铝合金防盗格"}, {"no": "66", "name": "费用总合计", "spec": "分区：总价", "unit": "项", "qty": "1", "price": "", "amount": "76269.16", "note": "基础工程总价"}, {"no": "67", "name": "设计费总合计", "spec": "分区：总价", "unit": "项", "qty": "1", "price": "", "amount": "0", "note": "特殊设计及施工图纸制作费用"}, {"no": "68", "name": "总价", "spec": "分区：总价", "unit": "项", "qty": "1", "price": "", "amount": "76269.16", "note": "费用总合计+设计费"}];
+const DOC = "guijiao124";
+const state = {};      // cid -> {state, note}
+let cur = 0;
+
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function renderList(){
+  document.getElementById('list').innerHTML = CONCEPTS.map((c,i)=>{
+    const st = state[c.cid] ? state[c.cid].state : '';
+    const mk = st==='present'?'y':(st==='missing'?'n':'');
+    const sym = st==='present'?'✓':(st==='missing'?'✕':(st==='not_applicable'?'–':'·'));
+    return `<div class="item ${i===cur?'on':''}" onclick="goto(${i})">
+      <span class="mark ${mk}">${sym}</span><span>${esc(c.name)}</span></div>`;
+  }).join('');
+  const done = CONCEPTS.filter(c=>state[c.cid]).length;
+  document.getElementById('done').textContent = done;
+  document.getElementById('total').textContent = CONCEPTS.length;
+  document.getElementById('pbar').style.width = (done/CONCEPTS.length*100)+'%';
+}
+
+function renderCard(){
+  const c = CONCEPTS[cur];
+  document.getElementById('q').textContent = c.name;
+  document.getElementById('cid').textContent = c.cid + (c.category? '　·　'+c.category : '');
+  document.getElementById('aliases').innerHTML = c.aliases.length
+    ? '<b>常见叫法：</b>' + c.aliases.map(esc).join('、')
+    : '<b>常见叫法：</b>（无别名，按标准名称判断）';
+  document.getElementById('ask').innerHTML =
+    '判断标准：这份单据里<b>有没有做到这一项</b>（写成别的叫法也算有）。<br>'+
+    '「本单不适用」只在<b>报价范围根本不包含</b>时用（例：只报基础施工，主材另计 → 门/洁具/灯具不适用）。';
+  const st = state[c.cid] ? state[c.cid].state : '';
+  document.getElementById('b-y').className = st==='present'?'sel-y':'';
+  document.getElementById('b-n').className = st==='missing'?'sel-n':'';
+  document.getElementById('b-a').className = st==='not_applicable'?'sel-a':'';
+  document.getElementById('note').value = state[c.cid] ? (state[c.cid].note||'') : '';
+  // 自动用标准名+别名高亮
+  const kw = c.aliases.concat([c.name]);
+  document.getElementById('find').value = '';
+  renderRows(kw);
+}
+
+function renderRows(kw){
+  const find = document.getElementById('find').value.trim();
+  const needles = (find ? [find] : kw).filter(Boolean);
+  let hit = 0;
+  const body = ROWS.map(r=>{
+    const hay = (r.name+' '+r.spec+' '+r.note).toLowerCase();
+    const isHit = needles.some(k=>k && hay.includes(String(k).toLowerCase()));
+    if (isHit) hit++;
+    return `<tr class="${isHit?'hit':''}"><td class="num">${esc(r.no)}</td><td>${esc(r.name)}</td>
+      <td>${esc(r.spec)}</td><td>${esc(r.unit)}</td><td class="num">${esc(r.qty)}</td>
+      <td class="num">${esc(r.price)}</td><td class="num">${esc(r.amount)}</td><td>${esc(r.note)}</td></tr>`;
+  }).join('');
+  document.getElementById('rows').innerHTML = body;
+  document.getElementById('count').textContent = `单据共 ${ROWS.length} 行｜命中 ${hit} 行（黄底）`;
+}
+
+function goto(i){ cur = Math.max(0, Math.min(CONCEPTS.length-1, i)); renderList(); renderCard(); }
+
+function setState(s){
+  const c = CONCEPTS[cur];
+  const note = document.getElementById('note').value;
+  state[c.cid] = {state:s, note:note};
+  renderList();
+  // 自动跳到下一个未判项
+  const next = CONCEPTS.findIndex((x,i)=> i>cur && !state[x.cid]);
+  goto(next >= 0 ? next : Math.min(CONCEPTS.length-1, cur+1));
+}
+
+function exportCSV(){
+  const who = (document.getElementById('who').value || 'A2').trim();
+  const miss = CONCEPTS.filter(c=>!state[c.cid]);
+  if (miss.length){
+    document.getElementById('warn').style.display='block';
+    alert('还有 '+miss.length+' 项没判，先判完再导出（已跳到第一项未判的）。');
+    goto(CONCEPTS.findIndex(c=>!state[c.cid]));
+    return;
+  }
+  const head = 'cid,quote_doc,golden_state,annotator,note';
+  const lines = CONCEPTS.map(c=>{
+    const s = state[c.cid];
+    const note = (s.note||'').replace(/"/g,'""').replace(/\n/g,' ');
+    return `${c.cid},${DOC},${s.state},${who},"${note}"`;
+  });
+  const blob = new Blob(['\ufeff'+head+'\n'+lines.join('\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${DOC}.${who}.labels.csv`;
+  a.click();
+}
+
+document.getElementById('note').addEventListener('input', e=>{
+  const c = CONCEPTS[cur];
+  if (state[c.cid]) state[c.cid].note = e.target.value;
+});
+document.getElementById('find').addEventListener('input', ()=>{
+  const c = CONCEPTS[cur];
+  renderRows(c.aliases.concat([c.name]));
+});
+document.addEventListener('keydown', e=>{
+  if (e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA') return;
+  if (e.key==='1') setState('present');
+  else if (e.key==='2') setState('missing');
+  else if (e.key==='3') setState('not_applicable');
+  else if (e.key==='ArrowRight') goto(cur+1);
+  else if (e.key==='ArrowLeft') goto(cur-1);
+});
+
+goto(0);
+</script>
+</body></html>
