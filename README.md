@@ -7,7 +7,7 @@
 [![Gitee](https://img.shields.io/badge/Gitee-Cwt66%2Fzhuangmingbai-c71d23)](https://gitee.com/Cwt66/zhuangmingbai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](./requirements.txt)
-[![Tests](https://img.shields.io/badge/tests-99-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-114-brightgreen.svg)](./tests)
 [![Rules](https://img.shields.io/badge/rules-13-002FA7.svg)](./data/rules_v0.json)
 
 签合同之前，上传 2–4 家装修公司的报价单（照片 / PDF / Excel / CSV），输出一份**可核对、可溯源、可复现**的审计报告：
@@ -53,7 +53,7 @@
 | **分位金额** | ✅ `src/money.py`：Decimal 求和/求差；R8 仍保留 1 元容差，质量门额外报「精确到分」差额 |
 | **多 sheet Excel** | ✅ `.xlsx` 解析所有 worksheet，选非空行最多的一张，避免「主表在第二个 sheet」直接报空 |
 | 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**；两份完整黄金标注；注入实验 242 例 |
-| 单元测试 | ✅ **99 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移） |
+| 单元测试 | ✅ **114 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9） |
 | 可打印报告 | ✅ `/demo`、`/real`（打印级 HTML，判定指纹上封面） |
 | 解析校对台 | ✅ `/review`（低置信度标黄 → 修改 → 导出 CSV） |
 | 问询单 | ✅ 把结论变成可直接发给报价方的逐条问询（`src/inquiry.py`） |
@@ -131,6 +131,22 @@ L2 把备注里写了但没单列的项救回来；L3 把「主材另计」的�
 
 ---
 
+### 3.4 标注凭什么可信（当前只有一个人标，这是已知短板）
+
+黄金标注目前是**单一标注者 A1** 做的两份，n=2。它只能证明「存在性」，不能证明「标注本身可靠」。
+要补的是**第二个人独立标一遍、算一致性**——工具已做好，不需要装任何环境：
+
+```bash
+python3 eval/make_annotator.py     # 生成两个自包含 HTML（离线、不联网、不含 A1 答案）
+# 双击打开 → 逐项点「有 / 没有 / 本单不适用」→ 导出 CSV
+python3 eval/cohen_kappa.py --dir eval/annotator/回传
+# 输出：观察一致率 + Cohen's κ + 分歧清单；入库门槛 0.80 / 0.60
+```
+
+- 盲标页只由模板/本体/单据生成，**不读 `golden_labels`**（有测试锁死这一点）；
+- 未判完不允许导出；同一份单据出现多个回传文件直接报错（防止拿错版本对比）；
+- **在第二标注完成前，仓库与材料只写「单一标注者、结果可复算」，不写「标注可靠」。**
+
 ## 4. 架构：大模型只做理解与表达，判断交给规则
 
 ```
@@ -171,7 +187,7 @@ L2 把备注里写了但没单列的项救回来；L3 把「主材另计」的�
 git clone https://gitee.com/Cwt66/zhuangmingbai.git
 cd zhuangmingbai
 bash run_offline.sh                   # 合成三单 → out/audit_report.html
-bash scripts/check_all.sh             # 99 测试 + 评测门禁 + 注入 + 指纹 + 隐私扫描
+bash scripts/check_all.sh             # 114 测试 + 评测门禁 + 注入 + 指纹 + 隐私 + 盲标页重建（9 步）
 ```
 
 ### 5.1.1 本地 OCR（macOS，可选）
@@ -269,7 +285,7 @@ data/rules_v0.json      13 条审计规则
 data/coverage_v0.json   证据词 + 父类吸收表
 data/real/              5 份真实单据（公开晒单/公开 PDF 的人工转录，无个人信息）
 eval/                   黄金标注评测 / 消融 / 注入 / 对照实验 / 冻结指纹 / 指标库
-tests/                  99 个单元测试
+tests/                  114 个单元测试
 scripts/                感知层 CLI / 本地 OCR / 指纹快照 / 离线包 / 隐私扫描 / 一键自检
 docs/                   架构 / 评测 / 部署 / 安全 / 判断正确性 / 迁移实验
 deploy/                 Dockerfile · docker-compose · systemd · Nginx · DEPLOY
