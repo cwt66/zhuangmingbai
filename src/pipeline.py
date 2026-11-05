@@ -28,9 +28,13 @@ from datetime import datetime
 try:                      # 作为包引用（main.py: from src import pipeline）
     from . import obligations as oblig
     from . import pricing_system as pricing
+    from . import addon_forecast as addon
+    from . import doc_gate
 except ImportError:       # 作为脚本/顶层模块引用（scripts 里 sys.path 指向 src）
     import obligations as oblig
     import pricing_system as pricing
+    import addon_forecast as addon
+    import doc_gate
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(BASE, "data")
@@ -797,7 +801,7 @@ def audit(quotes, onto, templates, rules, coverage=None, template_key="old_house
         risks += find_doc_recon(q, R["R13_doc_recon"])
         miss_cost = sum(m["ref_amount"] for m in missing if m["tier"] == "auto" and m["ref_amount"]) or 0.0
         dup_cut = sum(d["amount"] for d in dups if d["tier"] == "auto") or 0.0
-        results[q["label"]] = {
+        row = {
             "quote": q, "missing": missing, "duplicates": dups, "risks": risks,
             "template_key": template_key, "template_size": len(template),
             "template_full_size": len(templates[template_key]), "scope": scope,
@@ -809,6 +813,13 @@ def audit(quotes, onto, templates, rules, coverage=None, template_key="old_house
             "recon": q.get("recon"),
             "effective": round(q["total"] + miss_cost - dup_cut, 2),
         }
+        # 上游守门结论带进结果，报告里可复核「这份确实是报价单」
+        if q.get("doc_gate"):
+            row["doc_gate"] = q["doc_gate"]
+        # 确定性增项预测：区间来自参照价库，不给概率
+        row["addon_forecast"] = addon.forecast(
+            row, reference_prices_path=os.path.join(DATA, "reference_prices.json"))
+        results[q["label"]] = row
     results["_cross_unit"] = cross_unit_mix(quotes, onto, R["R5_unit_mix"])
     return results
 
@@ -1083,6 +1094,32 @@ def build_html(quotes, res):
                              o["confirm"], o["evidence"]))
             h.append("</table>")
             h.append("<div class='note'>%s</div>" % oblig.summary(obs))
+        af = r.get("addon_forecast") or {}
+        if af.get("items"):
+            sm = af["summary"]
+            h.append("<h3 class='sub-h'>签约前增项风险预测（%d 项，确定性）</h3>" % sm["total"])
+            h.append("<div class='note'><b>可计价补项 %d 项，参照价库区间合计 %s – %s 元</b>；"
+                     "开口条款 %d 类（已列金额 %s 元，<b>不重复计入</b>）；"
+                     "只能定性的工艺项 %d 项。<br><span class='evid'>不输出发生概率：没有校准过的概率模型，给百分比等于编数。"
+                     "这是需要书面确认的风险清单，不是对最终结算价的预测。</span></div>" % (
+                         sm["priced"], fmt_money(sm["amount_low"]), fmt_money(sm["amount_high"]),
+                         sm["open_clause"], fmt_money(sm["exposure_listed"]), sm["process_only"]))
+            h.append("<table><tr><th>风险项</th><th>触发阶段</th><th class='num'>金额区间</th>"
+                     "<th>金额依据</th><th>签约前怎么防</th></tr>")
+            for x in af["items"]:
+                rg = x.get("amount_range")
+                amt = ("%s – %s" % (fmt_money(rg[0]), fmt_money(rg[1]))) if rg else "不可估计"
+                h.append("<tr><td><b>%s</b><br><span class='evid'>%s</span></td><td>%s</td>"
+                         "<td class='num'>%s</td><td class='evid'>%s</td><td>%s</td></tr>" % (
+                             x["title"], x["kind"], x["trigger_stage"], amt,
+                             x["amount_basis"], x["prevention"]))
+            h.append("</table>")
+        dg = r.get("doc_gate")
+        if dg:
+            h.append("<div class='note'><b>上传守门</b>：判定为「%s」（证据充分度 %.2f）｜%s"
+                     "<br><span class='evid'>%s</span></div>" % (
+                         dg.get("label"), dg.get("confidence", 0),
+                         "；".join(dg.get("reasons") or [])[:180], dg.get("note", "")))
         secs.append("".join(h))
 
     # 对账条：整单加起来对不对。差额本身是一条结论，不是噪声——

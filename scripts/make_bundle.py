@@ -41,7 +41,10 @@ import pipeline as P  # noqa: E402
 DATA = os.path.join(ROOT, "data")
 STANDARDS = ["templates_v0.json", "ontology_v0.json", "rules_v0.json",
              "coverage_v0.json", "reference_prices.json", "template_scopes.json"]
-CODE = ["pipeline.py", "obligations.py", "pricing_system.py"]
+# 新增模块必须同步进包，否则 verify.py 会 ModuleNotFoundError：
+# 2026-11-05 接 addon_forecast / doc_gate 时踩过一次，用单测锁死。
+CODE = ["pipeline.py", "obligations.py", "pricing_system.py",
+        "addon_forecast.py", "doc_gate.py"]
 
 VERIFY_TMPL = '''# -*- coding: utf-8 -*-
 """离线校验器：复算本审计包的结论，与包内记录比对。

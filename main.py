@@ -36,6 +36,8 @@ from src import store as store_mod  # noqa: E402
 from src import vision_ocr  # noqa: E402
 from src import xlsx as xlsx_mod  # noqa: E402
 from src import money  # noqa: E402
+from src import doc_gate  # noqa: E402
+from src import report_pdf  # noqa: E402
 fmt_money = pipeline.fmt_money
 
 app = FastAPI(title="装明白 · 可计算审计", version="0.5.0")
@@ -110,6 +112,10 @@ table.draft tr.warn td{background:#FFF7E6}
 
 class EmptyRowsError(ValueError):
     """CSV 解析后没有行项（只有表头或空数据）"""
+
+
+class WrongDocTypeError(ValueError):
+    """上传的不是报价单（合同 / 无关文档 / 证据不足），按报价单审会误导用户。"""
     pass
 
 PAGE = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
@@ -229,6 +235,13 @@ def _audit(paths, template_key="old_house", scope="full"):
         if not q["rows"]:
             raise EmptyRowsError("《%s》没有解析到任何行项，请检查表头是否为 "
                                  "项目名称/规格工艺/单位/数量/单价/合价。" % q["label"])
+        # 上传守门：先确认这是报价单，再允许审计（对标 RenoPit 的 classify_document，
+        # 但我们给命中词/列结构证据，且判定为合同或无关文档时直接拒绝）。
+        # 用原始文件名做提示，别把临时文件路径暴露给用户
+        ok, info = doc_gate.gate(q["rows"], q.get("label") or q.get("file") or "")
+        if not ok:
+            raise WrongDocTypeError(info["message"])
+        q["doc_gate"] = info
     res = pipeline.audit(quotes, onto, templates, rules, coverage,
                          template_key=template_key, scope=scope)
     html = pipeline.build_html(quotes, res)
@@ -255,6 +268,27 @@ def _xlsx_response(paths, template_key, scope, name="zhuangmingbai_audit.xlsx"):
             pass
     return Response(content=data,
                     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": 'attachment; filename="%s"' % name})
+
+
+def _pdf_response(paths, template_key, scope, source, name="zhuangmingbai_report.pdf"):
+    """服务端生成可分享 PDF；reportlab 缺失时明确报错，不静默降级。"""
+    if not report_pdf.available():
+        return _err("PDF 导出不可用", "需要安装 reportlab（pip install reportlab）；"
+                    "也可使用报告页的「打印 / 另存 PDF」。", 503)
+    _, res, quotes = _audit(paths, template_key=template_key, scope=scope)
+    fd, tmp = tempfile.mkstemp(suffix=".pdf")
+    os.close(fd)
+    try:
+        report_pdf.export_pdf(tmp, quotes, res, source=source,
+                              fingerprint=_fingerprint(res))
+        data = open(tmp, "rb").read()
+    finally:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+    return Response(content=data, media_type="application/pdf",
                     headers={"Content-Disposition": 'attachment; filename="%s"' % name})
 
 
@@ -389,7 +423,8 @@ def _persist(quotes, res, source="upload", docs=None):
         return None
 
 
-def _decorate(html, quotes, res, audit_id=None, source="upload", xlsx_url=None):
+def _decorate(html, quotes, res, audit_id=None, source="upload",
+              xlsx_url=None, pdf_url=None):
     """在报告尾部加「解读」（MaaS 或模板）与审计编号。"""
     qgate = _quality_html(_quality(quotes, res))
     try:
@@ -419,8 +454,11 @@ def _decorate(html, quotes, res, audit_id=None, source="upload", xlsx_url=None):
               '<button class="btn" type="submit">提交反馈</button>'
               '</form></div></div>') % aid
     xl = ('' if not xlsx_url else
-          '<a class="btn ghost no-print" href="%s" style="margin-top:10px">下载 Excel</a>'
+          '<a class="btn ghost no-print" href="%s" style="margin-top:10px">下载 Excel</a> '
           % html_mod.escape(xlsx_url))
+    xl += ('' if not pdf_url else
+           '<a class="btn ghost no-print" href="%s" style="margin-top:10px">下载 PDF</a>'
+           % html_mod.escape(pdf_url))
     footer = ('<div class="wrap" style="padding-top:0"><p class="note">审计编号 %s ｜ 来源 %s ｜ '
               '<a href="/history">历史记录</a> ｜ 数据仅用于本次核对，不用于训练</p>'
               '%s<button class="btn no-print" onclick="window.print()" style="margin-top:10px">'
@@ -498,6 +536,8 @@ async def vision_audit(request: Request, csv_text: str = Form(default=""),
                                    template_key=template_key, scope=scope)
         aid = _persist(quotes, res, source="vision_reviewed", docs=[filename])
         html = _decorate(html, quotes, res, aid, "本地 OCR + 人工校对")
+    except WrongDocTypeError as e:
+        return _err("文档类型不符", str(e), 400)
     except EmptyRowsError as e:
         return _err("没有解析到行项", str(e), 400)
     except Exception as e:  # noqa: BLE001
@@ -566,7 +606,9 @@ def demo():
     try:
         html, res, quotes = _audit(paths)
         aid = _persist(quotes, res, source="demo")
-        html = _decorate(html, quotes, res, aid, "合成样例", xlsx_url="/demo.xlsx")
+        html = _decorate(html, quotes, res, aid, "合成样例", xlsx_url="/demo.xlsx", pdf_url="/demo.pdf")
+    except WrongDocTypeError as e:
+        return _err("文档类型不符", str(e), 400)
     except EmptyRowsError as e:
         return _err("样例数据异常", str(e), 400)
     except Exception as e:  # noqa: BLE001
@@ -583,7 +625,7 @@ def real():
     try:
         html, res, quotes = _audit([("上海卓观 · 两房半包（真实单据）", path)])
         aid = _persist(quotes, res, source="real")
-        html = _decorate(html, quotes, res, aid, "真实单据", xlsx_url="/real.xlsx")
+        html = _decorate(html, quotes, res, aid, "真实单据", xlsx_url="/real.xlsx", pdf_url="/real.pdf")
     except Exception as e:  # noqa: BLE001
         return _err("真实单据跑失败", str(e), 500)
     return HTMLResponse(html)
@@ -604,6 +646,21 @@ def real_xlsx():
         return _err("真实单据缺失", "仓库内未找到真实单据。", 404)
     return _xlsx_response([("上海卓观 · 两房半包（真实单据）", path)],
                           "old_house", "full", "zhuangmingbai_real.xlsx")
+
+
+@app.get("/demo.pdf")
+def demo_pdf():
+    paths = [(lb, os.path.join(pipeline.DATA, "samples", fn)) for lb, fn in SAMPLES]
+    return _pdf_response(paths, "old_house", "full", "合成样例", "zhuangmingbai_demo.pdf")
+
+
+@app.get("/real.pdf")
+def real_pdf():
+    path = os.path.join(pipeline.DATA, "real", "sh_zhuoguan_halfpack.csv")
+    if not os.path.isfile(path):
+        return _err("真实单据缺失", "仓库内未找到真实单据。", 404)
+    return _pdf_response([("上海卓观 · 两房半包（真实单据）", path)],
+                         "old_house", "full", "真实单据", "zhuangmingbai_real.pdf")
 
 
 @app.post("/audit.xlsx")
@@ -631,6 +688,8 @@ async def audit_xlsx(request: Request, files: List[UploadFile] = File(default=No
                 w.write(raw)
             paths.append((_label_from_name(f.filename or "报价%d" % i), dst))
         return _xlsx_response(paths, template_key, scope)
+    except WrongDocTypeError as e:
+        return _err("文档类型不符", str(e), 400)
     except EmptyRowsError as e:
         return _err("没有解析到行项", str(e), 400)
     except Exception as e:  # noqa: BLE001
@@ -776,6 +835,12 @@ async def perceive_run(request: Request, file: UploadFile = File(default=None),
         q0 = quotes[0]
         rec = q0.get("recon") or {}
         n_sum = len(q0.get("summary_rows") or [])
+    except WrongDocTypeError as e:
+        # /perceive 是单文件入口，守门失败必须明确报 400 并说明「为什么这不是报价单」，
+        # 不能让它冒泡成 500（2026-11-05 实测发现的真实缺陷）。
+        return _err("文档类型不符", str(e), 400)
+    except EmptyRowsError as e:
+        return _err("没有解析到行项", str(e), 400)
     finally:
         for f_ in (todo.name, todo.name + ".csv"):
             try:
@@ -845,6 +910,8 @@ async def audit(request: Request, files: List[UploadFile] = File(default=None),
                        docs=[f.filename or "quote_%d" % (i + 1) for i, f in enumerate(files)])
         html = _decorate(html, quotes, res, aid, "上传单据")
         return HTMLResponse(html)
+    except WrongDocTypeError as e:
+        return _err("文档类型不符", str(e), 400)
     except EmptyRowsError as e:
         return _err("没有解析到行项", str(e), 400)
     except Exception as e:  # noqa: BLE001

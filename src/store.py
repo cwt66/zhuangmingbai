@@ -19,6 +19,7 @@ import os
 import sqlite3
 import threading
 import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -128,6 +129,21 @@ class Store:
         conn.row_factory = sqlite3.Row
         return conn
 
+    @contextmanager
+    def _sqlite_cm(self):
+        """sqlite3 的 `with conn:` 只负责 commit/rollback，**不会关闭连接**。
+
+        之前两处 `with self._sqlite() as c` 会在每次审计/初始化后泄漏一个连接，
+        严格模式（-W error::ResourceWarning）会报警。这里包一层 closing，
+        同时保留 `with conn` 的自动提交语义。
+        """
+        conn = self._sqlite()
+        try:
+            with conn:
+                yield conn
+        finally:
+            conn.close()
+
     def _init_schema(self):
         try:
             with self._lock:
@@ -139,7 +155,7 @@ class Store:
                                 if stmt.strip():
                                     cur.execute(stmt)
                 else:
-                    with self._sqlite() as c:
+                    with self._sqlite_cm() as c:
                         c.executescript(SCHEMA_SQLITE)
         except Exception as e:  # noqa: BLE001
             self.degraded = "数据库初始化失败，已降级为内存不可用：%s" % e
@@ -161,7 +177,7 @@ class Store:
                             return cur.fetchall()
                         except Exception:  # noqa: BLE001
                             return []
-            with self._sqlite() as c:
+            with self._sqlite_cm() as c:
                 cur = c.execute(sql, params)
                 try:
                     return cur.fetchall()

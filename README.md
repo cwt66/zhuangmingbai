@@ -7,7 +7,7 @@
 [![Gitee](https://img.shields.io/badge/Gitee-Cwt66%2Fzhuangmingbai-c71d23)](https://gitee.com/Cwt66/zhuangmingbai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](./requirements.txt)
-[![Tests](https://img.shields.io/badge/tests-114-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-127-brightgreen.svg)](./tests)
 [![Rules](https://img.shields.io/badge/rules-13-002FA7.svg)](./data/rules_v0.json)
 
 签合同之前，上传 2–4 家装修公司的报价单（照片 / PDF / Excel / CSV），输出一份**可核对、可溯源、可复现**的审计报告：
@@ -15,7 +15,15 @@
 
 **边界**：不判断贵不贵（不做虚高/最低价断言），只判断漏没漏、重没重；低置信度结论不进核减金额，只进「待确认清单」。
 
+![作品介绍](docs/assets/deck-cover.png)
+
+**评委 5 分钟复验页**（单文件 HTML，双击即用、可离线）：
+<https://zmb-quotes-20261029.obs.cn-north-4.myhuaweicloud.com/verify/index.html> ·
+[PDF 版](https://zmb-quotes-20261029.obs.cn-north-4.myhuaweicloud.com/verify/%E8%A3%85%E6%98%8E%E7%99%BD_%E8%AF%84%E5%A7%94%E5%A4%8D%E9%AA%8C%E9%A1%B5_10%E9%A1%B5.pdf) ·
+每页都给出该页数字的复现命令。
+
 ![架构](docs/assets/architecture.svg)
+![四层架构](docs/assets/deck-architecture.png)
 
 ---
 
@@ -53,8 +61,11 @@
 | **分位金额** | ✅ `src/money.py`：Decimal 求和/求差；R8 仍保留 1 元容差，质量门额外报「精确到分」差额 |
 | **多 sheet Excel** | ✅ `.xlsx` 解析所有 worksheet，选非空行最多的一张，避免「主表在第二个 sheet」直接报空 |
 | 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**；两份完整黄金标注；注入实验 242 例 |
-| 单元测试 | ✅ **114 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9） |
+| 单元测试 | ✅ **127 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 13） |
 | 可打印报告 | ✅ `/demo`、`/real`（打印级 HTML，判定指纹上封面） |
+| **服务端 PDF** | ✅ `/demo.pdf`、`/real.pdf`、`scripts/make_report_pdf.py`（不依赖浏览器打印） |
+| **上传守门** | ✅ `src/doc_gate.py`：判 报价单/合同/无关，非报价单直接 400 并给证据 |
+| **确定性增项预测** | ✅ `src/addon_forecast.py`：金额区间来自参照价库，**不编概率**，开口条款金额不重复计入 |
 | 解析校对台 | ✅ `/review`（低置信度标黄 → 修改 → 导出 CSV） |
 | 问询单 | ✅ 把结论变成可直接发给报价方的逐条问询（`src/inquiry.py`） |
 | 输入兼容 | ✅ UTF-8 / **GBK** / UTF-16、逗号 / **TAB**、表头别名 |
@@ -62,7 +73,8 @@
 | 一键自检 | ✅ `bash scripts/check_all.sh`（测试 + 评测 + 注入 + 指纹 + 隐私扫描） |
 | 在线 Demo | ✅ `python3 -m uvicorn main:app --port 8000` |
 | 离线演示包 | ✅ 干净目录可独立复现（含跨领域 demo） |
-| RenoPit 对照实验 | 🚧 协议已预注册，跑批进行中 |
+| RenoPit 对照实验 | 🚧 协议已预注册，跑批进行中（我们已借鉴其文档分类/增项预测，但改为确定性实现） |
+| 永久公网展示页 | ✅ 华为云 OBS 静态托管（上），不随沙箱 72h 释放 |
 | 第二标注人 / n>2 完整召回率 | 🚧 黄金标注机制就绪，待第二人 |
 
 ### 2.1 「云原生」不是形容词：代码里真的用了
@@ -187,7 +199,7 @@ python3 eval/cohen_kappa.py --dir eval/annotator/回传
 git clone https://gitee.com/Cwt66/zhuangmingbai.git
 cd zhuangmingbai
 bash run_offline.sh                   # 合成三单 → out/audit_report.html
-bash scripts/check_all.sh             # 114 测试 + 评测门禁 + 注入 + 指纹 + 隐私 + 盲标页重建（9 步）
+bash scripts/check_all.sh             # 127 测试 + 评测门禁 + 注入 + 指纹 + 隐私 + 盲标页重建（9 步）
 ```
 
 ### 5.1.1 本地 OCR（macOS，可选）
@@ -285,7 +297,7 @@ data/rules_v0.json      13 条审计规则
 data/coverage_v0.json   证据词 + 父类吸收表
 data/real/              5 份真实单据（公开晒单/公开 PDF 的人工转录，无个人信息）
 eval/                   黄金标注评测 / 消融 / 注入 / 对照实验 / 冻结指纹 / 指标库
-tests/                  114 个单元测试
+tests/                  127 个单元测试
 scripts/                感知层 CLI / 本地 OCR / 指纹快照 / 离线包 / 隐私扫描 / 一键自检
 docs/                   架构 / 评测 / 部署 / 安全 / 判断正确性 / 迁移实验
 deploy/                 Dockerfile · docker-compose · systemd · Nginx · DEPLOY
