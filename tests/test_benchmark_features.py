@@ -109,6 +109,10 @@ class TestDocGate(unittest.TestCase):
         self.assertEqual(info["doc_type"], "contract")
         self.assertIn("不审合同条款", info["message"])
         self.assertTrue(info["contract_hits"])
+        # 改名骗不过守门：文件名只给小幅加权，判类型靠内容证据。
+        ok2, info2 = G.gate_file(path, "报价单.csv")
+        self.assertFalse(ok2)
+        self.assertEqual(info2["doc_type"], "contract")
 
     def test_gate_file_accepts_all_real_quotes(self):
         """守门前移不能误伤真实报价单（含项目名里没「报价」字样的篱笆单）。"""
