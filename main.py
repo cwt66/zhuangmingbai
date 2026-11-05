@@ -38,6 +38,7 @@ from src import xlsx as xlsx_mod  # noqa: E402
 from src import money  # noqa: E402
 from src import doc_gate  # noqa: E402
 from src import report_pdf  # noqa: E402
+from src import version_diff as diff_mod  # noqa: E402
 fmt_money = pipeline.fmt_money
 
 app = FastAPI(title="装明白 · 可计算审计", version="0.5.0")
@@ -189,7 +190,7 @@ ERR = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 </div></body></html>"""
 
 NAV = """<div class="nav"><b>装明白 · 可计算审计</b>
-<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/perceive">图片识别</a><a href="/review">解析校对</a><a href="/inquiry">问询单</a>
+<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/perceive">图片识别</a><a href="/review">解析校对</a><a href="/inquiry">问询单</a><a href="/diff">两版对比</a>
 <span class="right">浏览器 Ctrl/⌘+P 可另存为 PDF · <a href="/health">健康检查</a></span></div>"""
 
 
@@ -737,6 +738,82 @@ def inquiry_page():
     except Exception as e:  # noqa: BLE001
         return _err("问询单生成失败", str(e), 500)
     return HTMLResponse(html)
+
+
+DIFF_FORM = """<form method="post" action="/diff" enctype="multipart/form-data"
+ style="margin:22px 0 0;padding:16px 18px;border:1px solid #E4E2DC;background:#fff">
+<div style="font-size:13px;font-weight:600;margin-bottom:4px">比你自己手上的两版</div>
+<div style="font-size:12px;color:#8A877F;margin-bottom:10px">
+  第 1 份是原版、第 2 份是变更后（CSV / XLSX）。只比同一项目、同一计价口径的两版，不做跨公司比价。</div>
+<input type="file" name="files" accept=".csv,.xlsx" required style="font-size:12px">
+<input type="file" name="files" accept=".csv,.xlsx" required style="font-size:12px;margin-left:8px">
+<button type="submit" style="margin-left:10px;padding:6px 16px;background:#002FA7;color:#fff;
+ border:0;border-radius:2px;font-size:13px;cursor:pointer">对比</button>
+</form>"""
+
+
+@app.get("/diff", response_class=HTMLResponse)
+def diff_page():
+    """两版对比：默认演示「真实单据 → 模拟变更」，也可上传两份自己比。
+
+    为什么单独一屏：审计回答「这一份有没有问题」，业主在签约现场问的是
+    「你上次报 15 万，这次怎么 17 万，多在哪」。两个问题必须分开答。
+    """
+    try:
+        onto, _, _, _ = _load_rules()
+        q1 = pipeline.build_line_index(
+            pipeline.load_quote(os.path.join(pipeline.DATA, "real", "feitai_budget.csv"), "原报价"), onto)
+        q2 = pipeline.build_line_index(
+            pipeline.load_quote(os.path.join(pipeline.DATA, "samples", "feitai_change_demo.csv"), "变更后"), onto)
+        d = diff_mod.diff(q1, q2)
+    except Exception as e:  # noqa: BLE001
+        return _err("对比演示生成失败", str(e), 500)
+    banner = ("演示：第 2 份是第一份真实单据（翡翠台 123 行）上构造的 5 处模拟变更——"
+              "补 2 项漏项、1 项涨价、1 项增量、删 1 项重复计价。不是真实结算单。")
+    return HTMLResponse(diff_mod.to_html(d, banner=banner, top_html=DIFF_FORM))
+
+
+@app.post("/diff", response_class=HTMLResponse)
+async def diff_upload(files: List[UploadFile] = File(default=None)):
+    if not files or len(files) != 2:
+        return _err("需要两份报价", "请选择 2 份：第 1 份原版、第 2 份变更后。", 400)
+    tmp = tempfile.mkdtemp(prefix="zmbdiff_")
+    paths = []
+    try:
+        for i, f in enumerate(files, start=1):
+            raw = await f.read()
+            if not raw.strip():
+                return _err("空文件", "《%s》是空文件。" % (f.filename or i), 400)
+            if len(raw) > MAX_BYTES:
+                return _err("文件过大", "《%s》超过 4MB。" % (f.filename or i), 400)
+            dst = os.path.join(tmp, "v%d%s" % (i, os.path.splitext(f.filename or "")[1] or ".csv"))
+            with open(dst, "wb") as w:
+                w.write(raw)
+            paths.append((_label_from_name(f.filename or "第%d份" % i), dst))
+        onto, _, _, _ = _load_rules()
+        for lb, p in paths:
+            ok_f, info_f = doc_gate.gate_file(p, lb)
+            if not ok_f:
+                raise WrongDocTypeError(info_f["message"])
+        q1 = pipeline.build_line_index(pipeline.load_quote(paths[0][1], paths[0][0]), onto)
+        q2 = pipeline.build_line_index(pipeline.load_quote(paths[1][1], paths[1][0]), onto)
+        return HTMLResponse(diff_mod.to_html(diff_mod.diff(q1, q2), top_html=DIFF_FORM))
+    except WrongDocTypeError as e:
+        return _err("文档类型不符", str(e), 400)
+    except pipeline.HeaderMismatchError as e:
+        return _err("表头不符", "%s 请确认为带「项目名称/数量/单价/合价」列的报价表。" % e, 400)
+    except Exception as e:  # noqa: BLE001
+        return _err("对比失败", str(e), 500)
+    finally:
+        for _, p in paths:
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+        try:
+            os.rmdir(tmp)
+        except OSError:
+            pass
 
 
 @app.get("/perceive", response_class=HTMLResponse)

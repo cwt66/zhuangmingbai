@@ -7,7 +7,7 @@
 [![Gitee](https://img.shields.io/badge/Gitee-Cwt66%2Fzhuangmingbai-c71d23)](https://gitee.com/Cwt66/zhuangmingbai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](./requirements.txt)
-[![Tests](https://img.shields.io/badge/tests-130-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-145-brightgreen.svg)](./tests)
 [![Rules](https://img.shields.io/badge/rules-13-002FA7.svg)](./data/rules_v0.json)
 
 签合同之前，上传 2–4 家装修公司的报价单（照片 / PDF / Excel / CSV），输出一份**可核对、可溯源、可复现**的审计报告：
@@ -42,7 +42,7 @@
 
 ---
 
-## 2. 当前状态（2026-11-01）
+## 2. 当前状态（2026-11-05）
 
 | 模块 | 状态 |
 |---|---|
@@ -61,11 +61,13 @@
 | **分位金额** | ✅ `src/money.py`：Decimal 求和/求差；R8 仍保留 1 元容差，质量门额外报「精确到分」差额 |
 | **多 sheet Excel** | ✅ `.xlsx` 解析所有 worksheet，选非空行最多的一张，避免「主表在第二个 sheet」直接报空 |
 | 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**；两份完整黄金标注；注入实验 242 例 |
-| 单元测试 | ✅ **130 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16） |
+| 单元测试 | ✅ **145 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5） |
 | 可打印报告 | ✅ `/demo`、`/real`（打印级 HTML，判定指纹上封面） |
 | **服务端 PDF** | ✅ `/demo.pdf`、`/real.pdf`、`scripts/make_report_pdf.py`（不依赖浏览器打印） |
 | **上传守门** | ✅ `src/doc_gate.py`：**解析前**就判 报价单/合同/无关（只看表头与原文），非报价单直接 400 并给合同词/列结构证据 |
 | **确定性增项预测** | ✅ `src/addon_forecast.py`：金额区间来自参照价库，**不编概率**，开口条款金额不重复计入 |
+| **两版对比** | ✅ `src/version_diff.py` + `/diff`：按本体概念配对，算出「增项 / 减项 / 同项调整」，且**增−减+调整 = 账面差额**（对不上账就报警）；单位变了不比金额 |
+| **审计回放页** | ✅ `scripts/build_replay.py` → 单文件 HTML：5 份真实单据 / 603 行 / 85 条结论，点一条结论高亮它指向的原表行；**预计算回放，不冒充实时引擎** |
 | 解析校对台 | ✅ `/review`（低置信度标黄 → 修改 → 导出 CSV） |
 | 问询单 | ✅ 把结论变成可直接发给报价方的逐条问询（`src/inquiry.py`） |
 | 输入兼容 | ✅ UTF-8 / **GBK** / UTF-16、逗号 / **TAB**、表头别名 |
@@ -199,7 +201,7 @@ python3 eval/cohen_kappa.py --dir eval/annotator/回传
 git clone https://gitee.com/Cwt66/zhuangmingbai.git
 cd zhuangmingbai
 bash run_offline.sh                   # 合成三单 → out/audit_report.html
-bash scripts/check_all.sh             # 130 测试 + 评测门禁 + 注入 + 指纹 + 隐私 + 盲标页重建（9 步）
+bash scripts/check_all.sh             # 145 测试 + 评测门禁 + 注入 + 指纹 + 隐私 + 盲标页重建（9 步）
 ```
 
 ### 5.1.1 本地 OCR（macOS，可选）
@@ -218,7 +220,23 @@ python3 -m uvicorn main:app --host 0.0.0.0 --port 8000
 # http://127.0.0.1:8000  → 上传 2-4 份 CSV/XLSX → 审计
 # /demo 合成样例 · /real 真实单据 · /review 校对台 · /inquiry 问询单 · /history 历史
 # /demo.xlsx 审计工作簿（6 sheet，可直接给业主/监理）
+# /diff 两版对比（原版 vs 变更后，回答「多在哪」）
+# /perceive 图片识别 · /review 校对台
 ```
+
+### 5.2.1 两版对比：回答「你上次报 15 万，这次怎么 17 万」
+
+```bash
+python3 scripts/diff_quotes.py 原版.csv 变更后.csv --md out/diff.md
+# 或浏览器打开 http://127.0.0.1:8000/diff （内置一份「真实单据 vs 模拟变更」演示）
+```
+
+配对靠本体概念（不是字面）：`拆墙` 与 `墙体拆除` 算同一项；`m` 换 `㎡` 这种单位变化
+不进金额差，单列待核对。输出必须满足 `增项 − 减项 + 同项调整 = 账面差额`，
+对不上就报警——这条对账是单测锁住的。
+
+> 口径：只比同一项目、同一计价口径的两版；**不做跨公司比价**（那是「贵不贵」，我们不做）。
+> 演示用的第二份是在真实单据上构造的 5 处模拟变更，不是真实结算单。
 
 ### 5.3 本地验证「RDS + Redis 真的被用到」
 
@@ -277,7 +295,7 @@ curl -s localhost:8000/api/audits | python3 -m json.tool
 ## 7. 仓库结构
 
 ```
-main.py                 FastAPI：/ 上传 · /demo · /real · /review · /inquiry · /perceive
+main.py                 FastAPI：/ · /demo · /real · /review · /inquiry · /diff · /perceive
                         /history · /report/{id} · /api/audit · /api/audits · /health
 src/pipeline.py         审计引擎（本体对齐 / 13 规则 / 证据链 / 报告）
 src/perception.py       感知层五 provider（file / vision / maas / ocr_table / mock）
@@ -289,6 +307,9 @@ src/xlsx.py             零依赖 XLSX 导出（6 sheet，金额为数值）
 scripts/vision_ocr.m    macOS Vision OCR 小工具（本地编译）
 src/privacy.py          脱敏与提示词注入防护
 src/inquiry.py          问询单
+src/version_diff.py     两版对比（本体配对 + 差额对账，单位变化不比金额）
+src/doc_gate.py         上传守门（解析前判 报价单/合同/无关）
+src/addon_forecast.py   增项预测（区间来自参照价库，不给概率）
 src/obligations.py      条款 → 义务 → 验收证据
 src/pricing_system.py   计价体系识别
 data/ontology_v0.json   工序本体 119 概念 / 388 别名
@@ -297,8 +318,9 @@ data/rules_v0.json      13 条审计规则
 data/coverage_v0.json   证据词 + 父类吸收表
 data/real/              5 份真实单据（公开晒单/公开 PDF 的人工转录，无个人信息）
 eval/                   黄金标注评测 / 消融 / 注入 / 对照实验 / 冻结指纹 / 指标库
-tests/                  130 个单元测试
+tests/                  145 个单元测试
 scripts/                感知层 CLI / 本地 OCR / 指纹快照 / 离线包 / 隐私扫描 / 一键自检
+                        diff_quotes.py（两版对比）· build_replay.py（审计回放页）
 docs/                   架构 / 评测 / 部署 / 安全 / 判断正确性 / 迁移实验
 deploy/                 Dockerfile · docker-compose · systemd · Nginx · DEPLOY
 ```
