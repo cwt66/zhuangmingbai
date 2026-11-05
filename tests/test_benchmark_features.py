@@ -81,6 +81,50 @@ class TestDocGate(unittest.TestCase):
         self.assertTrue(info["quote_hits"])
         self.assertIn("不是概率", info["note"])
 
+    # --- 以下三条锁「解析之前先守门」---
+    # 2026-11-05 实测：把装修合同传到 /audit，返回 500「没找到『项目名称』列」。
+    # 根因是守门发生在解析之后，而合同根本解析不了。用户该看到的是
+    # 「这不是报价单」，不是内部字段名。所以守门必须前移到读文件时。
+
+    def _contract_csv(self):
+        import tempfile
+        fd, path = tempfile.mkstemp(suffix=".csv")
+        os.close(fd)
+        with open(path, "w", encoding="utf-8-sig") as f:
+            f.write("条款号,条款内容,约定\n"
+                    "第一条,工程概况,甲方将住宅发包给乙方\n"
+                    "第二条,合同价款,总价款 180000 元\n"
+                    "第三条,付款方式,签订当日支付 60%\n"
+                    "第四条,违约责任,逾期按日万分之五\n"
+                    "第五条,争议解决,向法院起诉\n"
+                    "第六条,其他,本合同一式两份 签字盖章生效\n")
+        self.addCleanup(os.remove, path)
+        return path
+
+    def test_gate_file_rejects_contract_before_parse(self):
+        """文件级守门：不解析也能判出「这是合同」，并给出可核对理由。"""
+        path = self._contract_csv()
+        ok, info = G.gate_file(path, "家庭装修施工合同.csv")
+        self.assertFalse(ok)
+        self.assertEqual(info["doc_type"], "contract")
+        self.assertIn("不审合同条款", info["message"])
+        self.assertTrue(info["contract_hits"])
+
+    def test_gate_file_accepts_all_real_quotes(self):
+        """守门前移不能误伤真实报价单（含项目名里没「报价」字样的篱笆单）。"""
+        for f, _ in REAL:
+            with self.subTest(f=f):
+                ok, info = G.gate_file(os.path.join(ROOT, "data", "real", f), f)
+                self.assertTrue(ok, (f, info["message"]))
+                self.assertEqual(info["doc_type"], "quotation", f)
+
+    def test_header_mismatch_is_typed(self):
+        """解析不出来的单据要抛具名异常，接口层才能回 400 而不是 500。"""
+        path = self._contract_csv()
+        with self.assertRaises(P.HeaderMismatchError) as ctx:
+            P.load_quote(path, "合同")
+        self.assertTrue(ctx.exception.got)
+
 
 class TestAddonForecast(unittest.TestCase):
     @classmethod

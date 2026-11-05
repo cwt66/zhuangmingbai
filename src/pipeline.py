@@ -236,15 +236,28 @@ def _map_columns(fieldnames):
     return mapping, got
 
 
+class HeaderMismatchError(ValueError):
+    """表头里没有「项目名称」列——不是本系统能解析的量价清单。
+
+    单独成类，是为了让接口层回 400 + 可读原因，而不是 500。
+    传一份合同/清单之外的文档进来时，用户该看到「这不是报价单」，
+    而不是「没找到『项目名称』列」这种内部字段名。
+    """
+
+    def __init__(self, message, got=None):
+        super().__init__(message)
+        self.got = list(got or [])
+
+
 def load_quote(path, label):
     text, encoding = _read_text(path)
     delim = _sniff_delimiter(text)
     reader = csv.DictReader(io.StringIO(text), delimiter=delim)
     mapping, got = _map_columns(reader.fieldnames)
     if "项目名称" not in mapping:
-        raise ValueError(
+        raise HeaderMismatchError(
             "没找到「项目名称」列。识别到的表头：%s｜支持的别名：项目/名称/施工项目/工序…"
-            % ("、".join(got) or "（空）"))
+            % ("、".join(got) or "（空）"), got)
     rows = []
     for i, r in enumerate(reader, start=1):
         def cell(canon):

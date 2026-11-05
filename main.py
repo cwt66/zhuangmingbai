@@ -230,6 +230,12 @@ def _load_rules():
 def _audit(paths, template_key="old_house", scope="full"):
     """paths: [(label, csv_path)] -> (html, res, quotes)"""
     onto, templates, rules, coverage = _load_rules()
+    # 解析之前先守门：合同/无关文档连解析都不该开始。否则用户看到的是
+    # 「没找到『项目名称』列」这种内部字段名，而不是「这不是报价单」。
+    for lb, p in paths:
+        ok_f, info_f = doc_gate.gate_file(p, lb)
+        if not ok_f:
+            raise WrongDocTypeError(info_f["message"])
     quotes = [pipeline.build_line_index(pipeline.load_quote(p, lb), onto) for lb, p in paths]
     for q in quotes:
         if not q["rows"]:
@@ -538,6 +544,8 @@ async def vision_audit(request: Request, csv_text: str = Form(default=""),
         html = _decorate(html, quotes, res, aid, "本地 OCR + 人工校对")
     except WrongDocTypeError as e:
         return _err("文档类型不符", str(e), 400)
+    except pipeline.HeaderMismatchError as e:
+        return _err("表头不符", "%s 请确认为带「项目名称/数量/单价/合价」列的报价表。" % e, 400)
     except EmptyRowsError as e:
         return _err("没有解析到行项", str(e), 400)
     except Exception as e:  # noqa: BLE001
@@ -609,6 +617,8 @@ def demo():
         html = _decorate(html, quotes, res, aid, "合成样例", xlsx_url="/demo.xlsx", pdf_url="/demo.pdf")
     except WrongDocTypeError as e:
         return _err("文档类型不符", str(e), 400)
+    except pipeline.HeaderMismatchError as e:
+        return _err("表头不符", "%s 请确认为带「项目名称/数量/单价/合价」列的报价表。" % e, 400)
     except EmptyRowsError as e:
         return _err("样例数据异常", str(e), 400)
     except Exception as e:  # noqa: BLE001
@@ -690,6 +700,8 @@ async def audit_xlsx(request: Request, files: List[UploadFile] = File(default=No
         return _xlsx_response(paths, template_key, scope)
     except WrongDocTypeError as e:
         return _err("文档类型不符", str(e), 400)
+    except pipeline.HeaderMismatchError as e:
+        return _err("表头不符", "%s 请确认为带「项目名称/数量/单价/合价」列的报价表。" % e, 400)
     except EmptyRowsError as e:
         return _err("没有解析到行项", str(e), 400)
     except Exception as e:  # noqa: BLE001
@@ -839,6 +851,8 @@ async def perceive_run(request: Request, file: UploadFile = File(default=None),
         # /perceive 是单文件入口，守门失败必须明确报 400 并说明「为什么这不是报价单」，
         # 不能让它冒泡成 500（2026-11-05 实测发现的真实缺陷）。
         return _err("文档类型不符", str(e), 400)
+    except pipeline.HeaderMismatchError as e:
+        return _err("表头不符", "%s 请确认为带「项目名称/数量/单价/合价」列的报价表。" % e, 400)
     except EmptyRowsError as e:
         return _err("没有解析到行项", str(e), 400)
     finally:
@@ -912,6 +926,8 @@ async def audit(request: Request, files: List[UploadFile] = File(default=None),
         return HTMLResponse(html)
     except WrongDocTypeError as e:
         return _err("文档类型不符", str(e), 400)
+    except pipeline.HeaderMismatchError as e:
+        return _err("表头不符", "%s 请确认为带「项目名称/数量/单价/合价」列的报价表。" % e, 400)
     except EmptyRowsError as e:
         return _err("没有解析到行项", str(e), 400)
     except Exception as e:  # noqa: BLE001

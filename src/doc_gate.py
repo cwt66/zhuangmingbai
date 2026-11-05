@@ -18,11 +18,22 @@
     from doc_gate import classify, gate
     info = classify(rows, filename="xxx.csv")
 """
+import csv
+import io
+import os
 import re
 
 # 报价单的结构列（我们的标准 schema）。结构证据比关键词可靠得多。
 STRUCT_COLS = ("序号", "项目名称", "单位", "数量", "单价", "合价", "备注", "规格工艺")
 NUMERIC_COLS = ("数量", "单价", "合价")
+
+# 表头别名 → 标准列。用于「还没解析就先守门」：只拿到表头时也要能认结构。
+HDR_ALIAS = {
+    "项目": "项目名称", "名称": "项目名称", "施工项目": "项目名称", "工序": "项目名称",
+    "工序名称": "项目名称", "工程项目": "项目名称", "材料名称": "项目名称",
+    "规格": "规格工艺", "工艺": "规格工艺", "规格型号": "规格工艺", "说明": "规格工艺",
+    "工程量": "数量", "综合单价": "单价", "金额": "合价", "小计": "合价", "总计": "合价",
+}
 
 QUOTE_WORDS = (
     "报价", "预算", "工程量", "单价", "合价", "小计", "合计", "工序", "施工",
@@ -69,34 +80,25 @@ def _confidence(n):
     return 0.45
 
 
-def classify(rows, filename=""):
-    """对已解析的行项做类型判定。rows 是 pipeline 里的标准行字典列表。"""
-    text = _text_of(rows)
+def _norm_header(header):
+    """把表头映射到标准列；认不出来就保留原文（不参与结构计分）。"""
+    cols = []
+    for h in header or []:
+        h = (h or "").strip()
+        if not h:
+            continue
+        cols.append(HDR_ALIAS.get(h, h))
+    return cols
+
+
+def _assemble(text, struct, amount_ratio, n_rows, filename):
+    """两种入口（已解析行 / 原始文本）共用的判定，保证口径只有一份。"""
     lower = (filename or "").lower()
     q_hits = _count_hits(text, QUOTE_WORDS)
     c_hits = _count_hits(text, CONTRACT_WORDS)
     i_hits = _count_hits(text, IRRELEVANT_WORDS)
     nq = sum(h["count"] for h in q_hits)
     nc = sum(h["count"] for h in c_hits)
-
-    # 结构证据：标准列覆盖数 + 可核算金额行占比
-    keys = set()
-    for r in (rows or [])[:1]:
-        keys = set(r.keys())
-    struct = [c for c in STRUCT_COLS if c in keys]
-    # pipeline 内部行是 {"no","name","spec","unit","qty","price","amount","note"}
-    if not struct and keys:
-        alias = {"no": "序号", "name": "项目名称", "spec": "规格工艺", "unit": "单位",
-                 "qty": "数量", "price": "单价", "amount": "合价", "note": "备注"}
-        struct = [alias[k] for k in keys if k in alias]
-    numeric_rows = 0
-    for r in rows or []:
-        a = r.get("amount", r.get("合价"))
-        if isinstance(a, (int, float)) and a > 0:
-            numeric_rows += 1
-        elif isinstance(a, str) and _AMOUNT_RE.match(a) and float(a.replace(",", "")) > 0:
-            numeric_rows += 1
-    amount_ratio = numeric_rows / max(1, len(rows or []))
     has_amount = amount_ratio >= 0.3
 
     reasons = []
@@ -134,7 +136,7 @@ def classify(rows, filename=""):
     elif has_amount and nq >= 3:
         doc_type = "quotation_nonstandard"
         reasons.append("有金额但列结构不完整 → 非标准报价单，建议先校对再审")
-    elif not rows:
+    elif n_rows == 0:
         doc_type = "empty"
         conf = 0.0
     else:
@@ -153,17 +155,77 @@ def classify(rows, filename=""):
         "contract_hits": c_hits[:8],
         "structure_cols": sorted(struct),
         "amount_ratio": round(amount_ratio, 3),
-        "rows": len(rows or []),
+        "rows": n_rows,
         "filename": filename,
         "reasons": reasons,
         "note": "置信度表示证据充分程度，不是概率；判定可由命中词与列结构逐条复核。",
     }
 
 
-def gate(rows, filename="", strict=False):
-    """返回 (ok, info)。ok=False 时上层必须拒绝审计并展示 info['message']。"""
-    info = classify(rows, filename)
-    t = info["doc_type"]
+def classify(rows, filename=""):
+    """对已解析的行项做类型判定。rows 是 pipeline 里的标准行字典列表。"""
+    text = _text_of(rows)
+    keys = set()
+    for r in (rows or [])[:1]:
+        keys = set(r.keys())
+    struct = [c for c in STRUCT_COLS if c in keys]
+    # pipeline 内部行是 {"no","name","spec","unit","qty","price","amount","note"}
+    if not struct and keys:
+        alias = {"no": "序号", "name": "项目名称", "spec": "规格工艺", "unit": "单位",
+                 "qty": "数量", "price": "单价", "amount": "合价", "note": "备注"}
+        struct = [alias[k] for k in keys if k in alias]
+    numeric_rows = 0
+    for r in rows or []:
+        a = r.get("amount", r.get("合价"))
+        if isinstance(a, (int, float)) and a > 0:
+            numeric_rows += 1
+        elif isinstance(a, str) and _AMOUNT_RE.match(a) and float(a.replace(",", "")) > 0:
+            numeric_rows += 1
+    ratio = numeric_rows / max(1, len(rows or []))
+    return _assemble(text, struct, ratio, len(rows or []), filename)
+
+
+def _read_text(path):
+    with open(path, "rb") as f:
+        raw = f.read()
+    for enc in ("utf-8-sig", "utf-8", "gb18030"):
+        try:
+            return raw.decode(enc)
+        except UnicodeDecodeError:
+            continue
+    return raw.decode("utf-8", errors="replace")
+
+
+def classify_text(text, filename="", header=None):
+    """只靠原始文本判类型。
+
+    用于「还没解析就先守门」：合同、菜单这类文档没有「项目名称/数量/单价」列，
+    解析阶段会先报「表头不符」，用户看到的是技术错误，而不是「这不是报价单」。
+    先判类型，才能给出人能看懂的理由。
+    """
+    delim = "\t" if text.count("\t") > text.count(",") else ","
+    if text.count("，") > text.count(delim):
+        delim = "，"
+    try:
+        rd = csv.reader(io.StringIO(text), delimiter=delim)
+        rows = [r for r in rd if any((c or "").strip() for c in r)]
+    except csv.Error:
+        rows = []
+    hdr = header if header is not None else (rows[0] if rows else [])
+    body = rows[1:] if header is None and rows else rows
+    struct = [c for c in set(_norm_header(hdr)) if c in STRUCT_COLS]
+    numeric = 0
+    for r in body:
+        for c in r:
+            c = (c or "").strip()
+            if c and _AMOUNT_RE.match(c) and float(c.replace(",", "")) > 0:
+                numeric += 1
+                break
+    ratio = numeric / max(1, len(body))
+    return _assemble(" ".join(" ".join(r) for r in rows)[:20000], struct, ratio, len(body), filename)
+
+
+def _verdict(info, filename, strict=False):
     labels = {
         "quotation": "报价单",
         "quotation_nonstandard": "非标准报价单",
@@ -172,6 +234,7 @@ def gate(rows, filename="", strict=False):
         "empty": "空文件",
         "unknown": "无法判定",
     }
+    t = info["doc_type"]
     info["label"] = labels.get(t, t)
     info["ok"] = True
     info["message"] = ""
@@ -189,3 +252,23 @@ def gate(rows, filename="", strict=False):
                            "请先在校对台确认列结构，或关闭严格模式重试。"
                            % (filename or "该文件", "；".join(info["reasons"][:2])))
     return info["ok"], info
+
+
+def gate(rows, filename="", strict=False):
+    """返回 (ok, info)。ok=False 时上层必须拒绝审计并展示 info['message']。"""
+    return _verdict(classify(rows, filename), filename, strict)
+
+
+def gate_file(path, filename="", strict=False):
+    """解析之前先守门：只看原始文本与表头。
+
+    返回 (ok, info)；这里 ok=False 时不必再尝试解析——省得把
+    「没有项目名称列」这种技术错误抛给用户。
+    """
+    name = filename or os.path.basename(path)
+    try:
+        text = _read_text(path)
+    except OSError:
+        return True, {"doc_type": "unknown", "label": "无法读取", "ok": True,
+                      "message": "", "reasons": ["文件读不出来，交给解析阶段处理"]}
+    return _verdict(classify_text(text, name), name, strict)
