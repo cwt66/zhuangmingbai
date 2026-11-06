@@ -1,0 +1,46 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>装明白 · 可计算审计（公开复验页）</title>
+<style>
+:root{--ink:#0A0A0A;--paper:#FAFAF8;--ikb:#002FA7;--grey:#6B7280;--hair:#E4E2DC;--faint:#8A877F}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);line-height:1.75;
+font:15px/1.75 -apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+.masthead{background:var(--ikb);color:#fff;padding:10px 48px;display:flex;justify-content:space-between;
+font-size:12px;letter-spacing:.12em}
+.wrap{max-width:860px;margin:0 auto;padding:52px 48px 72px}
+h1{font-size:34px;margin:0 0 8px;letter-spacing:-.02em;font-weight:600}
+.sub{color:var(--faint);font-size:14px;margin-bottom:34px}
+a.card{display:block;text-decoration:none;color:inherit;border:1px solid var(--hair);background:#fff;
+padding:20px 22px;margin-bottom:14px;border-left:3px solid var(--hair)}
+a.card:hover{border-left-color:var(--ikb);background:#FBFCFF}
+.t{font-size:17px;font-weight:600}
+.d{color:var(--grey);font-size:13.5px;margin-top:4px}
+.tag{display:inline-block;font-size:11px;color:var(--grey);border:1px solid var(--hair);
+border-radius:10px;padding:1px 8px;margin-left:8px;vertical-align:2px;font-weight:400}
+.foot{margin-top:34px;padding-top:14px;border-top:1px solid var(--hair);color:var(--faint);font-size:12.5px}
+code{font-family:ui-monospace,Menlo,monospace;background:#F2F1EC;padding:1px 5px}
+</style></head><body>
+<div class="masthead"><span>装明白 · 可计算审计</span><span>PUBLIC REVIEW</span></div>
+<div class="wrap">
+<h1>装明白 · 公开复验页</h1>
+<div class="sub">第十一届华为 ICT 大赛 · 创新赛 · 赛题一 ｜ 这两个页面都是<b>静态</b>的，用来让评委在没有环境的情况下也能核结论。</div>
+
+<a class="card" href="./verify/index.html">
+  <div class="t">10 页评委复验页<span class="tag">只读</span></div>
+  <div class="d">每一句主张配一条能当场跑的命令；含评测口径、证据链、云原生状态、诚实边界。<br>
+  同目录还有 PDF 版：<code>verify/装明白_评委复验页_10页.pdf</code></div>
+</a>
+
+<a class="card" href="./replay/index.html">
+  <div class="t">审计回放页<span class="tag">可点 · 预计算</span></div>
+  <div class="d">5 份真实单据 / 614 行 / 85 条结论。点一条结论，高亮它在原表里的行号。<br>
+  <b>这不是实时引擎</b>：数据由仓库同一套规则生成后嵌进单文件，页面内写明重建命令。</div>
+</a>
+
+<div class="foot">
+交互式 Demo 需要本地跑：<code>python3 -m uvicorn main:app --port 8000</code><br>
+代码：<a href="https://github.com/cwt66/zhuangmingbai">github.com/cwt66/zhuangmingbai</a> ·
+<a href="https://gitee.com/Cwt66/zhuangmingbai">gitee.com/Cwt66/zhuangmingbai</a>（MIT）
+</div>
+</div></body></html>
