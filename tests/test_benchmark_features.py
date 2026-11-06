@@ -207,6 +207,8 @@ class TestShareablePDF(unittest.TestCase):
             import report_pdf  # noqa: E402
         except ImportError:
             self.skipTest("reportlab / pypdf 未安装")
+        if not report_pdf.has_cjk_font():
+            self.skipTest("系统无中文字体（Linux 装 fonts-wqy-zenhei 后可跑）")
         onto, tpl, rules, cov = _env()
         q = P.build_line_index(P.load_quote(
             os.path.join(ROOT, "data", "real", "feitai_budget.csv"), "翡翠台"), onto)

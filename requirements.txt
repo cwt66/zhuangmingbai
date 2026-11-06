@@ -10,6 +10,11 @@ python-multipart>=0.0.9
 # 装了它，扫描件 PDF 会在「没有文本层」时明确报错，而不是返回空表。
 pypdf>=5.0,<7.0
 
+# 服务端 PDF 报告（/demo.pdf、/real.pdf）。不装也能跑，只是这两个端点返回 503、
+# 退回浏览器打印；装上即为默认交付方式。
+# 注意：还需要系统里有中文字体（Linux 见 .github/workflows/ci.yml 的 fonts-wqy-zenhei）。
+reportlab>=4.0,<5.0
+
 # 云上运行时（本地离线演示不需要；缺了会自动降级 SQLite / 进程内缓存）
 psycopg[binary]>=3.1,<4
 redis>=5.0,<7.0

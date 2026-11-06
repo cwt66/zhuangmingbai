@@ -33,6 +33,16 @@ def available():
         return False
 
 
+def has_cjk_font():
+    """有没有可用的中文字体（只探测路径，不注册、不抛错）。
+
+    为什么单独暴露：CI/裸 Linux 上 reportlab 装了但没装中文字体，
+    这时生成 PDF 会在 _register() 里抛「找不到中文字体」——测试该跳过而不是报错，
+    但**产品行为**仍然是明确的失败，不会静默生成一份全是方块的 PDF。
+    """
+    return any(os.path.isfile(path) for path, _, _ in FONT_CANDIDATES)
+
+
 def _register():
     global FONT
     from reportlab.pdfbase import pdfmetrics
