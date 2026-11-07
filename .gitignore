@@ -16,7 +16,12 @@ data/state.db
 data/*.sqlite3
 eval/injection_runs/
 eval/ab_runs/
-eval/predictions/
+# 冻结基线**不是**运行时状态，是判定口径的锚点，必须入库。
+# 曾经整目录忽略，导致本地补到 5 份、仓库里只有 3 份——
+# 干净 clone 跑 check_all 会 FAIL「缺少基线文件」，而本地永远是绿的。
+# 所以：忽略目录下的一切，但白名单放行 *.json。
+eval/predictions/*
+!eval/predictions/*.json
 .env.example.bak
 
 # 本地 OCR 二进制（按平台编译，不提交）

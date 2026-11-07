@@ -1,0 +1,361 @@
+{
+  "meta": {
+    "slug": "guijiao124",
+    "doc": "124㎡·基础报价单",
+    "template_key": "new_house",
+    "scope": "base",
+    "git_commit": "09b3216",
+    "created_at": "2026-11-07 17:14:59",
+    "fingerprint": "f9e38787793ddb5e",
+    "hashes": {
+      "data": "ea34a68cc85729b9",
+      "template": "ac907aae6c55f0ef",
+      "ontology": "f22bb82ae253f42f",
+      "rules": "2a00875c1be6415b",
+      "coverage": "a687c69917c45cc4"
+    }
+  },
+  "items": [
+    {
+      "cid": "mep",
+      "concept": "水电改造",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "2"
+        ]
+      }
+    },
+    {
+      "cid": "waterproof",
+      "concept": "防水涂料",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "18",
+          "25",
+          "30",
+          "35"
+        ]
+      }
+    },
+    {
+      "cid": "water_test",
+      "concept": "闭水试验",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": []
+      }
+    },
+    {
+      "cid": "pressure_test",
+      "concept": "打压试验",
+      "decision": "missing_auto",
+      "tier": "auto",
+      "confidence": 0.938,
+      "evidence": {
+        "basis": "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中",
+        "formula": "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项",
+        "checked_words": [
+          "打压",
+          "试压"
+        ]
+      }
+    },
+    {
+      "cid": "tile_wall",
+      "concept": "贴墙砖",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "16",
+          "23",
+          "28",
+          "33"
+        ]
+      }
+    },
+    {
+      "cid": "tile_floor",
+      "concept": "贴地砖",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "12",
+          "15",
+          "22",
+          "27",
+          "32",
+          "41",
+          "49",
+          "57"
+        ]
+      }
+    },
+    {
+      "cid": "level_floor",
+      "concept": "地面找平",
+      "decision": "missing_auto",
+      "tier": "auto",
+      "confidence": 0.938,
+      "evidence": {
+        "basis": "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中",
+        "formula": "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项",
+        "checked_words": []
+      }
+    },
+    {
+      "cid": "grout",
+      "concept": "填缝",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": []
+      }
+    },
+    {
+      "cid": "pipe_wrap",
+      "concept": "包立管",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "8"
+        ]
+      }
+    },
+    {
+      "cid": "ceiling",
+      "concept": "吊顶",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "9",
+          "20",
+          "37",
+          "45",
+          "53"
+        ]
+      }
+    },
+    {
+      "cid": "wall_base",
+      "concept": "墙面基层处理",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "17",
+          "24",
+          "29",
+          "34"
+        ]
+      }
+    },
+    {
+      "cid": "putty",
+      "concept": "批刮腻子",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": []
+      }
+    },
+    {
+      "cid": "primer",
+      "concept": "刷底漆",
+      "decision": "missing_review",
+      "tier": "review",
+      "confidence": 0.85,
+      "evidence": {
+        "basis": "未单列，但复合工序「刷面漆」已在报价中，可能已含",
+        "formula": "T \\ S 未命中，且存在可吸收它的复合工序",
+        "checked_words": [
+          "底漆"
+        ]
+      }
+    },
+    {
+      "cid": "topcoat",
+      "concept": "刷面漆",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": [
+          "10",
+          "11",
+          "21",
+          "39",
+          "40",
+          "47",
+          "48",
+          "55",
+          "56"
+        ]
+      }
+    },
+    {
+      "cid": "interface_agent",
+      "concept": "界面剂",
+      "decision": "missing_review",
+      "tier": "review",
+      "confidence": 0.85,
+      "evidence": {
+        "basis": "未单列，但复合工序「墙面基层处理」已在报价中，可能已含",
+        "formula": "T \\ S 未命中，且存在可吸收它的复合工序",
+        "checked_words": [
+          "界面剂"
+        ]
+      }
+    },
+    {
+      "cid": "switch_install",
+      "concept": "开关插座安装",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": []
+      }
+    },
+    {
+      "cid": "clean",
+      "concept": "竣工保洁",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": []
+      }
+    },
+    {
+      "cid": "mgmt_fee",
+      "concept": "管理费",
+      "decision": "missing_auto",
+      "tier": "auto",
+      "confidence": 0.938,
+      "evidence": {
+        "basis": "标准工序模板（老房翻新）；概念对齐与文本证据词两路均未命中",
+        "formula": "T \\ S（模板必做项 − 实列项），再扣除文本证据命中项",
+        "checked_words": [
+          "管理费"
+        ]
+      }
+    },
+    {
+      "cid": "water_pipe",
+      "concept": "给水管",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": []
+      }
+    },
+    {
+      "cid": "wire",
+      "concept": "布线",
+      "decision": "present",
+      "tier": "-",
+      "confidence": null,
+      "evidence": {
+        "matched_rows": []
+      }
+    }
+  ],
+  "duplicates": [],
+  "risks": [
+    {
+      "cid": "pipe_wrap",
+      "concept": "包水管",
+      "line": "8",
+      "issue": "命中「按根」",
+      "amount": 1600.0,
+      "rule": "R4_vague_term",
+      "confidence": 0.764,
+      "tier": "review",
+      "evidence": {
+        "basis": "报价单风险表述清单 v0",
+        "formula": "命中「按根」"
+      }
+    },
+    {
+      "cid": "ceiling",
+      "concept": "吊顶",
+      "line": "20",
+      "issue": "面积/长度类工序按「项」报价，工程量不可核",
+      "rule": "R6_unit_anomaly",
+      "confidence": 0.86,
+      "tier": "review",
+      "evidence": {
+        "basis": "本体默认单位 ㎡",
+        "formula": "unit=项 且 default∈{㎡,m}"
+      }
+    },
+    {
+      "cid": "tile_corner",
+      "concept": "瓷砖倒角",
+      "line": "62",
+      "issue": "面积/长度类工序按「项」报价，工程量不可核",
+      "rule": "R6_unit_anomaly",
+      "confidence": 0.834,
+      "tier": "review",
+      "evidence": {
+        "basis": "本体默认单位 m",
+        "formula": "unit=项 且 default∈{㎡,m}"
+      }
+    },
+    {
+      "cid": "design_fee",
+      "concept": "首席设计师",
+      "line": "1",
+      "issue": "有工程量但未报价，需确认是赠送还是留待按实结算",
+      "rule": "R9_qty_unit",
+      "confidence": 0.762,
+      "tier": "review",
+      "evidence": {
+        "basis": "报价单完整性",
+        "formula": "qty>0 且 单价=0 且 合价=0（名称不含赠送字样）"
+      }
+    },
+    {
+      "cid": null,
+      "concept": "文档合计",
+      "line": "66",
+      "issue": "整单加总对不上：明细 75,763 + 取费 0 = 75,763，印刷合计 76,269，差 507 元",
+      "amount": 506.6,
+      "rule": "R13_doc_recon",
+      "confidence": 0.962,
+      "tier": "auto",
+      "evidence": {
+        "basis": "报价单文档级算术一致性（印刷合计 vs 逐行明细之和）",
+        "formula": "|印刷合计 − (工序明细之和 + 派生费用) | ≤ max(1, 0.5%×合计)"
+      }
+    }
+  ],
+  "stats": {
+    "rows": 65,
+    "aligned": 62,
+    "total": 75762.56,
+    "missing_auto": 3,
+    "missing_review": 2,
+    "present": 15
+  }
+}
