@@ -8,6 +8,7 @@ import csv
 import json
 import os
 import sys
+import tempfile
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -102,6 +103,75 @@ class TestFeeRuleAlive(unittest.TestCase):
     def test_silent_below_threshold(self):
         rule = {x["id"]: x for x in _load("rules_v0.json")["rules"]}["R10_fee_rate"]
         self.assertEqual(P.find_fee_rate(self._quote_with_fee(0.05), rule), [])
+
+
+class TestDiscountAndSigns(unittest.TestCase):
+    """优惠（减项）与负号变体 —— 2026-11-07 补的洞。
+
+    两个缺陷都是在「造一张带优惠的报价单」时撞出来的，现有 5 份真实样本
+    一条负金额都没有，所以过去的评测完全覆盖不到：
+
+    1. `num()` 只认 ASCII "-"：全角「－」、数学减号「−」、破折号「—」全部
+       `float()` 失败 → 静默变 0。报告上看不出任何异常，优惠被吞掉。
+    2. `PAID_KEYWORDS` 里有「优惠」，但对账公式只减「取费」，从没减过「减项」。
+       于是「明细 4,000 + 优惠 -3,000 + 合计 1,000」被判「整单加总对不上」——
+       账其实是对的，这是假阳性。
+    """
+
+    BASE = ("项目名称,规格工艺,单位,数量,单价,合价\n"
+            "拆除墙体,砖混,m2,10,50,500\n"
+            "防水,聚氨酯,m2,20,80,1600\n"
+            "墙面粉刷,立邦,m2,50,38,1900\n")
+
+    def _quote(self, tail):
+        d = tempfile.mkdtemp()
+        p = os.path.join(d, "q.csv")
+        with open(p, "w", encoding="utf-8-sig") as f:
+            f.write(self.BASE + tail)
+        return P.load_quote(p, "t")
+
+    def test_all_negative_sign_variants_parse(self):
+        """六种负号都要解析成负数。少一种，那份单据的优惠就白写了。"""
+        for raw in ("-3000", "\uff0d3000", "\u22123000", "\u20143000",
+                    "\u20133000", "\ufe633000"):
+            q = self._quote("全屋优惠,,项,1,%s,%s\n" % (raw, raw))
+            rows = q["rows"] + (q.get("summary_rows") or [])
+            target = [r for r in rows if "优惠" in r["name"]]
+            self.assertEqual(len(target), 1, raw)
+            self.assertAlmostEqual(target[0]["amount"], -3000.0, places=2,
+                                   msg="负号变体未被识别：%r" % raw)
+
+    def test_negative_discount_reconciles(self):
+        """优惠写成负数：对账必须闭合，不许报「整单对不上」。"""
+        q = self._quote("全屋优惠,,项,1,\uff0d3000,\uff0d3000\n合计,,,,,1000\n")
+        rc = q["recon"]
+        self.assertAlmostEqual(rc["discount_sum"], -3000.0, places=2)
+        self.assertAlmostEqual(rc["detail_sum"], 4000.0, places=2)
+        self.assertAlmostEqual(rc["diff"], 0.0, places=2)
+        self.assertTrue(rc["ok"], "带优惠的单据被误判为对不上账：diff=%s" % rc["diff"])
+
+    def test_positive_discount_is_flagged_not_consumed(self):
+        """优惠写成正数：语义无法从单行判断，只标记、不猜。"""
+        q = self._quote("全屋优惠,,项,1,3000,3000\n合计,,,,,1000\n")
+        rc = q["recon"]
+        self.assertEqual(rc["discount_sum"], 0.0, "正数优惠不该被当成减项算进公式")
+        self.assertTrue(rc["discount_ambiguous"], "正数优惠必须被标出来待人工核对")
+        self.assertFalse(rc["ok"], "此时对账确实对不上，应当报出来")
+
+    def test_discount_does_not_leak_into_received(self):
+        """「优惠」不能冒充「实收」——实收是结果，减项是算式里的一项。"""
+        q = self._quote("全屋优惠,,项,1,-3000,-3000\n实收,,,,,1000\n")
+        rc = q["recon"]
+        self.assertIsNotNone(rc["received"])
+        self.assertEqual(rc["received"]["amount"], 1000.0)
+
+    def test_no_discount_unchanged(self):
+        """回归：没有优惠行的单据，行为必须和以前一模一样。"""
+        q = self._quote("合计,,,,,4000\n")
+        rc = q["recon"]
+        self.assertEqual(rc["discount_sum"], 0.0)
+        self.assertAlmostEqual(rc["diff"], 0.0, places=2)
+        self.assertTrue(rc["ok"])
 
 
 class TestReferenceBook(unittest.TestCase):

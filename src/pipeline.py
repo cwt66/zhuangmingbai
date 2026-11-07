@@ -113,6 +113,12 @@ FEE_KEYWORDS = ("管理费", "设计费", "税金", "税费", "服务费", "措�
 # 印刷总额（对账锚点）：这些字样代表「整单合计」而不是分项小计
 GRAND_KEYWORDS = ("合计", "总计", "总价", "造价")
 PAID_KEYWORDS = ("实收", "优惠", "折扣")
+# 减项（优惠/折扣/让利）。必须与「实收」分开：实收是**结果**，减项是**算式里的一项**。
+# 混在一起的后果是真实的：一张「明细 4,000 + 优惠 -3,000 + 合计 1,000」的报价单，
+# 旧的 diff = 1,000 − 4,000 − 0 = −3,000 被判「整单加总对不上」——账其实是对的。
+# 本项目 5 份真实单据里恰好一条负金额都没有，所以这个洞没被样本覆盖到。
+DISCOUNT_KEYWORDS = ("优惠", "折扣", "让利", "减免", "抵扣", "返现", "特惠", "活动价")
+RECEIVED_KEYWORDS = ("实收", "应付", "应收", "结算价", "成交价")
 
 
 def _is_summary_row(row):
@@ -157,6 +163,23 @@ def reconcile(detail_rows, summary_rows):
     grand = max(grand_rows, key=lambda r: r["amount"]) if grand_rows else None
     paid_rows = [r for r in summary_rows if any(k in r["name"] for k in PAID_KEYWORDS)]
     paid = max(paid_rows, key=lambda r: r["amount"]) if paid_rows else None
+    # 减项：只有**写成负数**时才认。写成正数的「优惠 3000」语义无法从单行判断
+    # （可能是「优惠金额」也可能是「已优惠后的价」），标 ambiguous，不进算式。
+    discount_rows = [r for r in summary_rows
+                     if any(k in r["name"] for k in DISCOUNT_KEYWORDS)]
+    discounts = [r for r in discount_rows if r["amount"] < 0]
+    discount_sum = round(sum(r["amount"] for r in discounts), 2)
+    # 明细区里出现「优惠」行，说明这张表是混排而非「明细 + 表尾」——
+    # 它要么被当成一道工序（虚增明细和），要么被当汇总（丢出算式）。两种都不对，
+    # 只能标出来让人看一眼。真实单据确实有这种排法。
+    mixed_discount = [{"name": r["name"], "no": r["no"], "amount": r["amount"]}
+                      for r in detail_rows
+                      if any(k in r["name"] for k in DISCOUNT_KEYWORDS)]
+    discount_ambiguous = [{"name": r["name"], "no": r["no"], "amount": r["amount"]}
+                          for r in discount_rows if r["amount"] >= 0] + mixed_discount
+    received_rows = [r for r in summary_rows
+                     if any(k in r["name"] for k in RECEIVED_KEYWORDS)]
+    received = max(received_rows, key=lambda r: r["amount"]) if received_rows else None
     subtotals = [r for r in summary_rows if "小计" in r["name"]]
     out = {
         "detail_sum": detail_sum,
@@ -164,12 +187,18 @@ def reconcile(detail_rows, summary_rows):
         "fees": [{"name": r["name"], "no": r["no"], "amount": r["amount"]} for r in fees],
         "grand": {"name": grand["name"], "no": grand["no"], "amount": grand["amount"]} if grand else None,
         "paid": {"name": paid["name"], "no": paid["no"], "amount": paid["amount"]} if paid else None,
+        "discount_sum": discount_sum,
+        "discounts": [{"name": r["name"], "no": r["no"], "amount": r["amount"]} for r in discounts],
+        "discount_ambiguous": discount_ambiguous,
+        "received": {"name": received["name"], "no": received["no"],
+                     "amount": received["amount"]} if received else None,
         "subtotals": [{"name": r["name"], "no": r["no"], "amount": r["amount"]} for r in subtotals],
         "diff": None,
         "ok": None,
     }
     if grand:
-        diff = round(grand["amount"] - detail_sum - fee_sum, 2)
+        # 对账式：印刷合计 − 明细 − 取费 − 减项 = 0。减项是负数，所以这里减它等于加上绝对值。
+        diff = round(grand["amount"] - detail_sum - fee_sum - discount_sum, 2)
         tol = max(1.0, abs(grand["amount"]) * 0.005)
         out["diff"] = diff
         out["ok"] = abs(diff) <= tol
@@ -266,6 +295,13 @@ def load_quote(path, label):
 
         def num(canon):
             v = cell(canon).replace(",", "").replace("，", "")
+            # 负号在真实单据里至少有 6 种写法。OCR 会把 ASCII "-" 认成全角「－」、
+            # 数学减号「−」或破折号「—」，手工录入还有「﹣」「―」。
+            # 只认 ASCII 的后果不是报错，而是**静默变成 0**——一张写着「优惠 3,000」的
+            # 报价单会被算成没有优惠，而报告里看不出任何异常。
+            for ch in ("\uff0d", "\u2212", "\u2014", "\u2013", "\ufe63", "\u2015"):
+                v = v.replace(ch, "-")
+            v = v.strip()
             try:
                 return float(v)
             except ValueError:
