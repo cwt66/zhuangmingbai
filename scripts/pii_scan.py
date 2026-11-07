@@ -29,6 +29,10 @@ WHITELIST = {
     "110101199001011234",  # 测试用身份证
 }
 NAME_WHITELIST = {"某某", "某", "姓名", "本人", "业主", "客户", "联系人", "甲方"}
+# 机器生成的摘要字段：十六进制 SHA-256 里偶然出现的连续数字串，
+# 会被银行卡正则认成 16–19 位卡号。这属于正则的语义盲区，不是个人信息。
+# 只跳过**带这些键名的整行**，不跳过整份文件；其它行照常扫。
+HASH_LINE_MARKERS = ('"history_digest"', '"result_digest"', '"digest"', '"sha256"')
 
 
 def iter_files(root):
@@ -41,13 +45,17 @@ def iter_files(root):
 
 def scan_file(path):
     try:
-        text = open(path, encoding="utf-8", errors="ignore").read()
+        with open(path, encoding="utf-8", errors="ignore") as f:
+            text = f.read()
     except Exception:  # noqa: BLE001
         return []
     hits = []
     for i, line in enumerate(text.splitlines(), 1):
-        if any(w in line for w in WHITELIST):
-            line = line
+        # 原来这里有一句 `if any(w in line for w in WHITELIST): line = line`——
+        # 一个什么都不做的空操作，看着像保护，其实没有。删掉，改成明确的
+        # 「摘要字段整行跳过」，并用 tests/test_pii_scan.py 锁住它不会误伤真卡号。
+        if any(marker in line for marker in HASH_LINE_MARKERS):
+            continue
         for name, pat in (("phone", privacy.PHONE), ("id_card", privacy.ID_CARD),
                           ("email", privacy.EMAIL), ("bank_card", privacy.BANK_CARD)):
             for m in pat.finditer(line):

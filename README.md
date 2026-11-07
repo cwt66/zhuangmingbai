@@ -7,7 +7,7 @@
 [![Gitee](https://img.shields.io/badge/Gitee-Cwt66%2Fzhuangmingbai-c71d23)](https://gitee.com/Cwt66/zhuangmingbai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](./requirements.txt)
-[![Tests](https://img.shields.io/badge/tests-243-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-268-brightgreen.svg)](./tests)
 [![Rules](https://img.shields.io/badge/rules-13-002FA7.svg)](./data/rules_v0.json)
 
 签合同之前，上传 2–4 家装修公司的报价单（照片 / PDF / Excel / CSV），输出一份**可核对、可溯源、可复现**的审计报告：
@@ -18,8 +18,10 @@
 ![作品介绍](docs/assets/deck-cover.png)
 
 **评委 5 分钟复验页**（单文件 HTML，双击即用、可离线）：
-<https://zmb-quotes-20261029.obs.cn-north-4.myhuaweicloud.com/verify/index.html> ·
-[PDF 版](https://zmb-quotes-20261029.obs.cn-north-4.myhuaweicloud.com/verify/%E8%A3%85%E6%98%8E%E7%99%BD_%E8%AF%84%E5%A7%94%E5%A4%8D%E9%AA%8C%E9%A1%B5_10%E9%A1%B5.pdf) ·
+<https://cwt66.github.io/zhuangmingbai/verify/>（**当前入口**，随代码更新）。
+OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失效，不能覆盖更新，
+所以不再把它当主入口：[HTML](https://zmb-quotes-20261029.obs.cn-north-4.myhuaweicloud.com/verify/index.html) ·
+[PDF](https://zmb-quotes-20261029.obs.cn-north-4.myhuaweicloud.com/verify/%E8%A3%85%E6%98%8E%E7%99%BD_%E8%AF%84%E5%A7%94%E5%A4%8D%E9%AA%8C%E9%A1%B5_10%E9%A1%B5.pdf)。
 每页都给出该页数字的复现命令。
 
 ![架构](docs/assets/architecture.svg)
@@ -42,11 +44,11 @@
 
 ---
 
-## 2. 当前状态（2026-11-05）
+## 2. 当前状态（2026-11-07）
 
 | 模块 | 状态 |
 |---|---|
-| 审计引擎（分层 / 漏项 / 重复 / 算术 / 对账 / 口径 / 义务 + 证据链） | ✅ `src/pipeline.py`（1,198 行，零第三方依赖） |
+| 审计引擎（分层 / 漏项 / 重复 / 算术 / 对账 / 口径 / 义务 + 证据链） | ✅ `src/pipeline.py`（**零第三方包**：纯标准库 + 同仓 `src/` 模块；行数由台账 C10 探针查导入，不再写死） |
 | 工序本体 | ✅ **119 概念 / 388 别名** / 8 大类 |
 | 工序模板 | ✅ 老房翻新 39 项 / 新房毛坯 28 项；支持「报价范围声明 → 模板裁剪」 |
 | 规则 DSL | ✅ **13 条**，全部可逐条审阅（`data/rules_v0.json`） |
@@ -60,8 +62,8 @@
 | **可审计 Excel** | ✅ `/demo.xlsx`、`/audit.xlsx`：总览/漏项/重复/风险/对账/说明 6 个 sheet，金额是数值 |
 | **分位金额** | ✅ `src/money.py`：Decimal 求和/求差；R8 仍保留 1 元容差，质量门额外报「精确到分」差额 |
 | **多 sheet Excel** | ✅ `.xlsx` 解析所有 worksheet，选非空行最多的一张，避免「主表在第二个 sheet」直接报空 |
-| 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**；两份完整黄金标注；注入实验 242 例 |
-| 单元测试 | ✅ **243 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / **红队与易混词 17** / **Skill 证据校验 16** / **规则活性 15** / **Web 交付门 4** / 优惠与负号 5 / 指纹一致性 3） |
+| 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**（合计 **614 行**原始表格数据）；两份完整黄金标注；注入实验 242 例 |
+| 单元测试 | ✅ **268 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / **红队与易混词 17** / **Skill 证据校验 16** / **规则活性 15** / **Web 交付门 4** / 优惠与负号 5 / 指纹一致性 3 / 主张台账 14 例 / Skills 规范 7 例 / 隐私扫描 4 例） |
 | 可打印报告 | ✅ `/demo`、`/real`（打印级 HTML，判定指纹上封面） |
 | **服务端 PDF** | ✅ `/demo.pdf`、`/real.pdf`、`scripts/make_report_pdf.py`（不依赖浏览器打印） |
 | **上传守门** | ✅ `src/doc_gate.py`：**解析前**就判 报价单/合同/无关（只看表头与原文），非报价单直接 400 并给合同词/列结构证据 |
@@ -81,11 +83,11 @@
 | 问询单 | ✅ 把结论变成可直接发给报价方的逐条问询（`src/inquiry.py`） |
 | 输入兼容 | ✅ UTF-8 / **GBK** / UTF-16、逗号 / **TAB**、表头别名 |
 | 审计历史 | ✅ `/history` + `/api/audits`（证明 RDS 真的在存业务数据） |
-| 一键自检 | ✅ `bash scripts/check_all.sh`（15 步：测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性） |
+| 一键自检 | ✅ `bash scripts/check_all.sh`（16 步：测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性 + **主张台账**） |
 | 在线 Demo | ✅ `python3 -m uvicorn main:app --port 8000` |
 | 离线演示包 | ✅ 干净目录可独立复现（含跨领域 demo） |
 | RenoPit 对照实验 | 🚧 协议已预注册，跑批进行中（我们已借鉴其文档分类/增项预测，但改为确定性实现） |
-| 永久公网展示页 | ✅ 华为云 OBS 静态托管（上），不随沙箱 72h 释放 |
+| 永久公网展示页 | ✅ **GitHub Pages** `https://cwt66.github.io/zhuangmingbai/` 为当前入口；OBS 为 10-29 快照（AK 失效，不能覆盖） |
 | 第二标注人 / n>2 完整召回率 | 🚧 黄金标注机制就绪，待第二人 |
 
 ### 2.1 「云原生」不是形容词：代码里真的用了
@@ -100,6 +102,56 @@
 
 > 云上实例是否已开通，以账号控制台为准；**代码侧不再有"只有设计没有实现"的模块**。
 > `docker-compose.yml` 可在没有华为云账号的机器上验证同一套 RDS/Redis 逻辑。
+
+### 2.2 主张台账：材料里的数字，自己会说话
+
+前面所有门禁管的都是**引擎输出对不对**。还有一类东西从来没人管：
+**我们对外说的话对不对**。材料里写着「268 个测试」「119 概念 / 388 别名」
+「16 步自检」，代码一改就悄悄过期，评委不会去数，我们自己也不会。
+
+所以加了第 16 步：**每条可量化主张都必须带一条产生它的命令**
+（`data/claims_v0.json`，19 条）。判定不认台账里写的 `value`，
+只认 `probe` 当场从源头重算出来的 `observed`；同时用 `{v}` 模板反查文档，
+「改了文档没改台账」和「改了代码没改文档」两个方向都会红。
+
+方法直接来自华为云社区《一个会自我审计的系统：可信度是怎样被公开建造的》
+可操作清单第 1、2、3、6 条。证据分三档，**别让「我看过」和「我跑过」长得一样**：
+
+| 档 | 含义 | 条数 | 例子 |
+|---|---|---:|---|
+| ① 跑出过结果 | 校验器当场执行命令，从源头重算 | 14 | 测试数、本体重命名、614 行、16 步、红队 7/8、±1.01 元 |
+| ② 读过原文 | 值来自命令生成的产物，本次未独立重算 | 2 | 消融精确率、规则活性被杀数 |
+| ③ 只按元数据判 | 写不出命令的边界声明，**不计已验证** | 3 | n=2 只作存在性证明、鲲鹏未实测、Key 未开通 |
+
+```bash
+python3 scripts/claim_ledger.py --self-test   # 干净必须 PASS / 6 种故障必须 FAIL
+python3 scripts/claim_ledger.py               # 人读的表：out/claim_ledger.md
+```
+
+`data/claim_history_v0.json` 是**撤回档案**：10 条被撤回结论、误报、假发现、
+已知未修，加 3 条**预测 MISS 永久保留**；指纹锁在台账里，删一条自检即红。
+第一次规则活性只杀 18/47、红队有一招得手、冻结基线曾「本地绿 / clone 红」——
+这些不好看的记录一条都没删。
+
+**为什么这算一个创新点**：别人证明「我能干活」，我们证明「我说过的每句话都能被查」。
+判据都由我们自己定的时代结束了——现在**连宣传语都由 CI 管**。
+
+### 2.3 华为云 Agent Skills 规范符合性（可复算，不是一句话）
+
+项目级 Skill `.codeartsdoer/skills/zmb-audit/` 按
+[`huaweicloud/huaweicloud-skills`](https://github.com/huaweicloud/huaweicloud-skills)（MIT）
+的包结构与验收项对齐：frontmatter（`name`/`description`/`tags`、**无 `version`**）、
+`references/` 五件套、最小权限、无硬编码凭据、≤500 行 / ≤30 文件 / 扩展名白名单。
+`scripts/verify_skill_spec.py` 把 **18 项**逐条自动核对，随 CI 每次推送重跑。
+
+本 Skill **不调用 hcloud CLI、不碰任何云 API、不接遥测**——这三处偏离写进
+`SKILL.md` 的「偏离声明」，而不是伪造一份 CLI 安装指南或 IAM policy 混过检查。
+校验器查的是「偏离被写清楚」，不是「偏离不存在」。
+
+```bash
+python3 scripts/verify_skill_spec.py              # 18/18 人读的表
+python3 scripts/verify_skill_spec.py --self-test  # 干净 PASS / 6 种故障 FAIL
+```
 
 ---
 
@@ -210,7 +262,7 @@ python3 eval/cohen_kappa.py --dir eval/annotator/回传
 git clone https://gitee.com/Cwt66/zhuangmingbai.git
 cd zhuangmingbai
 bash run_offline.sh                   # 合成三单 → out/audit_report.html
-bash scripts/check_all.sh             # 243 测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性（15 步）
+bash scripts/check_all.sh             # 测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性 + 主张台账（16 步）
 ```
 
 ### 5.1.1 本地 OCR（macOS，可选）
@@ -329,15 +381,20 @@ data/coverage_v0.json   证据词 + 父类吸收表
 data/not_applicable_v0.json  负向知识库：13 条「不判」+ 理由 + 若判了的后果
 docs/RULE-BLIND-SPOTS.md 规则盲点清单：诊断，不是修复日志
 data/confusable_v0.json 易混词对：15 组只差一字但语义相反的词，fuzzy 匹配必须跳过
+data/claims_v0.json     主张台账：19 条公开主张 + 证据档位 + 文档出现位置
+data/claim_history_v0.json 撤回档案：10 条撤回/误报/已知未修 + 3 条预测 MISS
 data/real/              5 份真实单据（公开晒单/公开 PDF 的人工转录，无个人信息）
 eval/                   黄金标注评测 / 消融 / 注入 / 对照实验 / 冻结指纹 / 指标库
-tests/                  243 个单元测试
+tests/                  单元测试（含主张台账 14 例、Skills 规范 7 例、隐私扫描 4 例）
 scripts/                感知层 CLI / 本地 OCR / 指纹快照 / 离线包 / 隐私扫描 / 一键自检
                         diff_quotes.py（两版对比）· build_replay.py（审计回放页）
                         gate_report.py（交付门：7 检查 + 5 故障注入）· na_report.py（负向库）
                         redteam.py（在 eval/：红队自测 8 招）· verify_skill_evidence.py（证据复算）
                         rule_liveness.py（在 eval/：规则变异测试）
+                        claim_ledger.py（主张复算 + 双向断言）· verify_skill_spec.py（Skills 规范）
 docs/                   架构 / 评测 / 部署 / 安全 / 判断正确性 / 迁移实验
+                        CLAIM-LEDGER.md（方法论）· 华为云IaC实测与硬件边界.md
+.codeartsdoer/skills/zmb-audit/  项目级 Skill（对齐华为云官方规范，references/ 五件套）
 deploy/                 Dockerfile · docker-compose · systemd · Nginx · DEPLOY
 ```
 
@@ -406,6 +463,9 @@ python3 scripts/audit_with.py \
 - 工序本体没有官方标准背书，权威性靠覆盖度 + 标注 + 与定额/监理实践对标，不靠自称。
 - 置信度是**证据强度分，不是概率**；不做 ECE 声称。
 - Redis / RDS 代码已接入，但云上实例是否开通以账号控制台为准；未开通时自动降级并如实显示。
+- **③ 档声明不算「已验证」**：黄金标注 n=2 只作存在性证明、鲲鹏实例未实测、
+  MaaS Key / OCR 服务未开通——这三条写不出复算命令，只作声明，单列在
+  `out/claim_ledger.md` 的欠账清单里。
 
 ---
 
@@ -414,7 +474,12 @@ python3 scripts/audit_with.py \
 - 真实单据来自公开晒单 / 公开 PDF 或业主授权；原始照片不入库，只保留脱敏转录 CSV。
 - 合成样例明确标注，不写成真实数据。
 - 代码 MIT（见 `LICENSE`）；`data/` 仅用于评测与研究，转载原始单据需遵守来源平台条款。
-- 相关：[RenoPit / 装闭](https://github.com/fthux/RenoPit)（LLM 直读对照路线）· 华为云 CodeArts / MaaS / RDS / Redis / OBS。
+- 相关：[RenoPit / 装闭](https://github.com/fthux/RenoPit)（LLM 直读对照路线）·
+  [Jessmatth/invoice-auditor](https://github.com/Jessmatth/invoice-auditor)（模型提取 + 代码审算术）·
+  [huaweicloud/huaweicloud-skills](https://github.com/huaweicloud/huaweicloud-skills)（官方 Agent Skills 规范，MIT）·
+  [simin-yuan/self-auditing-agent](https://github.com/simin-yuan/self-auditing-agent)（gatecheck 变异测试，MIT）。
+- 方法论：华为云社区《[CI 全绿，但你的质量门禁可能已经悄悄少了一条规则](https://bbs.huaweicloud.com/blogs/491618)》
+  与《[一个会自我审计的系统：可信度是怎样被公开建造的](https://bbs.huaweicloud.cn/blogs/494747)》。
 
 ---
 

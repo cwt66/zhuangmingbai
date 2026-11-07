@@ -1,0 +1,304 @@
+{
+  "meta": {
+    "schema": "zmb-claim-ledger/v1",
+    "updated": "2026-11-07",
+    "purpose": "参赛材料里每一句可量化的主张，都要能追到一条产生它的命令。写不出命令的，降级成推测，不许混进「已验证」。",
+    "method_from": "华为云社区《一个会自我审计的系统：可信度是怎样被公开建造的》(2026-10-03) 可操作清单第 1、2、3、6 条",
+    "tiers": {
+      "ran": "① 跑出过结果：校验器当场执行一条命令，从源头重算出这个值",
+      "read": "② 读过原文：值来自某个产物文件，有产生该产物的命令，但本次没有独立重算",
+      "declared": "③ 只按元数据判：写不出命令（多为边界声明、否定式主张），只计声明，不计已验证"
+    },
+    "discipline": [
+      "台账里的 value 是「公开宣称的值」，不是判定依据；判定只认 probe 当场重算出来的 observed",
+      "①/② 必须有 probe + command；③ 必须没有 probe，且进欠账清单",
+      "occurrences 里的 {v} 会被替换成 value，用来抓「改了文档没改台账」和「改了代码没改文档」两个方向",
+      "被撤回的结论不删：data/claim_history_v0.json 的指纹写在这里，删一条就会红"
+    ],
+    "history_digest": "7772a69dc8baddde1baae2ae8556a6efbf5b26443593d3dcfe12f055e7531921"
+  },
+  "claims": [
+    {
+      "id": "C01",
+      "text": "单元测试 268 个",
+      "value": "268",
+      "tier": "ran",
+      "probe": "tests_count",
+      "command": "python3 -m unittest discover -s tests",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "tests-{v}-brightgreen"
+        },
+        {
+          "file": "README.md",
+          "pattern": "**{v} 个**"
+        }
+      ],
+      "note": "刻意再跑一次，不复用自检第 2 步的输出——证据必须由产生它的命令当场跑出来。"
+    },
+    {
+      "id": "C02",
+      "text": "工序本体 119 个标准概念",
+      "value": "119",
+      "tier": "ran",
+      "probe": "ontology_concepts",
+      "command": "python3 -c \"import json;print(len(json.load(open('data/ontology_v0.json'))))\"",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "**{v} 概念"
+        }
+      ]
+    },
+    {
+      "id": "C03",
+      "text": "388 个别名",
+      "value": "388",
+      "tier": "ran",
+      "probe": "ontology_aliases",
+      "command": "python3 -c \"import json;print(sum(len(x.get('a',[])) for x in json.load(open('data/ontology_v0.json'))))\"",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "{v} 别名"
+        }
+      ]
+    },
+    {
+      "id": "C04",
+      "text": "13 条可逐条审阅的判定规则",
+      "value": "13",
+      "tier": "ran",
+      "probe": "rules_count",
+      "command": "python3 -c \"import json;print(len(json.load(open('data/rules_v0.json'))['rules']))\"",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "rules-{v}-002FA7"
+        },
+        {
+          "file": "README.md",
+          "pattern": "**{v} 条**，全部可逐条审阅"
+        }
+      ]
+    },
+    {
+      "id": "C05",
+      "text": "13 条明确的「不判」负向知识",
+      "value": "13",
+      "tier": "ran",
+      "probe": "na_count",
+      "command": "python3 -c \"import json;print(len(json.load(open('data/not_applicable_v0.json'))['items']))\"",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "**{v} 条明确「不判」"
+        }
+      ]
+    },
+    {
+      "id": "C06",
+      "text": "5 份真实单据评测",
+      "value": "5",
+      "tier": "ran",
+      "probe": "real_quote_files",
+      "command": "ls data/real/{sh_zhuoguan_halfpack,huaxibeian_newhouse,szxinxin_clinic_pdf,feitai_budget,guijiao_124_basic}.csv",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "**{v} 份 / 603 行工序明细"
+        }
+      ]
+    },
+    {
+      "id": "C07",
+      "text": "614 行原始表格数据（603 行工序明细 + 11 行汇总）",
+      "value": "614",
+      "tier": "ran",
+      "probe": "real_quote_rows",
+      "command": "python3 scripts/claim_ledger.py --probe real_quote_rows",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "**{v} 行**原始表格数据"
+        }
+      ]
+    },
+    {
+      "id": "C08",
+      "text": "一键自检 16 步全绿",
+      "value": "16",
+      "tier": "ran",
+      "probe": "check_all_steps",
+      "command": "grep -c '^echo \"== ' scripts/check_all.sh",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "（{v} 步："
+        }
+      ]
+    },
+    {
+      "id": "C09",
+      "text": "报告交付门 7 项检查 D1–D7",
+      "value": "7",
+      "tier": "ran",
+      "probe": "gate_checks",
+      "command": "python3 -c \"import src.report_gate as g;print(len(g.CHECKS))\"",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "{v} 项检查"
+        }
+      ]
+    },
+    {
+      "id": "C10",
+      "text": "判定引擎零第三方依赖（纯标准库）",
+      "value": "零第三方依赖",
+      "tier": "ran",
+      "probe": "pipeline_stdlib_only",
+      "command": "python3 scripts/claim_ledger.py --probe pipeline_stdlib_only",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "零第三方依赖"
+        }
+      ]
+    },
+    {
+      "id": "C11",
+      "text": "红队 8 招主动攻击，拦住 7/8",
+      "value": "7/8",
+      "tier": "ran",
+      "probe": "redteam_blocked",
+      "command": "python3 eval/redteam.py",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "**拦住 {v}**"
+        }
+      ]
+    },
+    {
+      "id": "C12",
+      "text": "单行最小可捕获误差 ±1.01 元",
+      "value": "1.01",
+      "tier": "ran",
+      "probe": "detection_floor",
+      "command": "python3 eval/detection_floor.py",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "±{v} 元**"
+        }
+      ]
+    },
+    {
+      "id": "C13",
+      "text": "项目级 Skill 与华为云官方 Agent Skills 规范符合",
+      "value": "PASS",
+      "tier": "ran",
+      "probe": "skill_spec",
+      "command": "python3 scripts/verify_skill_spec.py --json",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "华为云 Agent Skills 规范"
+        }
+      ]
+    },
+    {
+      "id": "C14",
+      "text": "开发与全量自检架构 arm64（鲲鹏未实测）",
+      "value": "arm64",
+      "tier": "ran",
+      "probe": "platform_machine",
+      "command": "python3 -c \"import platform;print(platform.machine())\"",
+      "occurrences": [
+        {
+          "file": "docs/华为云依赖与失效矩阵.md",
+          "pattern": "**{v}**"
+        }
+      ]
+    },
+    {
+      "id": "C15",
+      "text": "消融实验 L0→L2 auto 精确率 0.267 → 0.800",
+      "value": "0.800",
+      "tier": "read",
+      "probe": "ablation_l2",
+      "command": "python3 eval/ablation.py",
+      "artifact": "out/ablation.md",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "0.267"
+        }
+      ],
+      "note": "② 档：值读自 out/ablation.md（由命令生成），本次未独立重跑；干净 clone 里直接跑会显示「待复算」，不算通过。"
+    },
+    {
+      "id": "C16",
+      "text": "规则活性：47 个变异杀 35 个、判定字段存活 0",
+      "value": "35",
+      "tier": "read",
+      "probe": "liveness_killed",
+      "command": "python3 eval/rule_liveness.py --json",
+      "artifact": "out/rule_liveness.md",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "**{v}/47"
+        }
+      ],
+      "note": "② 档：自检第 15 步会生成该产物，第 16 步读它；不为此第三次重跑变异。"
+    },
+    {
+      "id": "C17",
+      "text": "黄金标注只有 2 份，n=2 只作存在性证明，不外推召回率",
+      "value": "n=2",
+      "tier": "declared",
+      "probe": null,
+      "command": null,
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "n=2 份完整黄金标注"
+        }
+      ],
+      "note": "③ 档：这是一条边界声明，没有命令能「证明」样本量小。故意不伪装成已验证。"
+    },
+    {
+      "id": "C18",
+      "text": "鲲鹏实例未实测、昇腾 NPU 未涉及",
+      "value": "未实测",
+      "tier": "declared",
+      "probe": null,
+      "command": null,
+      "occurrences": [
+        {
+          "file": "docs/华为云依赖与失效矩阵.md",
+          "pattern": "没在鲲鹏实例上实测过"
+        }
+      ],
+      "note": "③ 档：否定式主张无法用命令证明「没做过」，只能声明。写进欠账清单。"
+    },
+    {
+      "id": "C19",
+      "text": "MaaS Key 未开通、华为云 OCR 表格服务未订阅",
+      "value": "未开通",
+      "tier": "declared",
+      "probe": null,
+      "command": null,
+      "occurrences": [
+        {
+          "file": "docs/华为云依赖与失效矩阵.md",
+          "pattern": "服务未订阅"
+        }
+      ],
+      "note": "③ 档：账号状态以控制台为准，本地命令无法证明。写进欠账清单。"
+    }
+  ]
+}

@@ -33,4 +33,5 @@ jobs:
             out/alignment_report.md
             out/golden_eval.md
             out/ablation.md
+            out/claim_ledger.md
           if-no-files-found: ignore
