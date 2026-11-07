@@ -42,6 +42,12 @@ DOCS = [
     # 第一份**文本版 PDF**（7 页、19 个分区、168 行），经坐标法解析得到
     {"slug": "szxinxin_clinic", "doc": "深圳新新·诊所装饰（公开 PDF）",
      "csv": "data/real/szxinxin_clinic_pdf.csv", "template_key": "new_house"},
+    # 补全到 5/5：之前只冻结了 3 份，另 2 份的判定变化不会被发现——
+    # 2026-11-07 加 R9「有量无价」时，124㎡ 多出一条结论而指纹没报警，就是这个洞。
+    {"slug": "feitai", "doc": "上海翡翠台·老房全案",
+     "csv": "data/real/feitai_budget.csv", "template_key": "old_house"},
+    {"slug": "guijiao124", "doc": "124㎡·基础报价单", "scope": "base",
+     "csv": "data/real/guijiao_124_basic.csv", "template_key": "new_house"},
 ]
 
 
@@ -64,12 +70,15 @@ def git_commit():
 def run_one(onto, templates, rules, coverage, spec):
     csv_path = os.path.join(ROOT, spec["csv"])
     q = P.build_line_index(P.load_quote(csv_path, spec["doc"]), onto)
+    scope = spec.get("scope", "full")
     res = P.audit([q], onto, templates, rules, coverage,
-                  template_key=spec["template_key"])[q["label"]]
+                  template_key=spec["template_key"], scope=scope)[q["label"]]
 
     flagged = {m["cid"]: m for m in res["missing"]}
     items = []
-    for cid in templates[spec["template_key"]]:
+    # 用**裁剪后**的模板：base 口径下主材项不参与判漏，
+    # 若仍按完整模板遍历，被裁掉的 7 项会被误记成 missing_auto（假的漏项）。
+    for cid in P.trim_template(templates[spec["template_key"]], scope):
         m = flagged.get(cid)
         if m:
             decision = "missing_auto" if m["tier"] == "auto" else "missing_review"
@@ -101,6 +110,7 @@ def run_one(onto, templates, rules, coverage, spec):
     fingerprint = hashlib.sha256(json.dumps(body, sort_keys=True, ensure_ascii=False)
                                  .encode()).hexdigest()[:16]
     meta = {"slug": spec["slug"], "doc": spec["doc"], "template_key": spec["template_key"],
+            "scope": scope,
             "git_commit": git_commit(), "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "fingerprint": fingerprint, "hashes": hashes}
     return {"meta": meta, **body}

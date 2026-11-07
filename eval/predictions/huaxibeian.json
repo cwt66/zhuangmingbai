@@ -3,14 +3,15 @@
     "slug": "huaxibeian",
     "doc": "花溪北岸·5 页施工报价",
     "template_key": "new_house",
-    "git_commit": "379a83c",
-    "created_at": "2026-11-01 14:29:15",
+    "scope": "full",
+    "git_commit": "09b3216",
+    "created_at": "2026-11-07 17:14:58",
     "fingerprint": "456e1bd94ab39a08",
     "hashes": {
       "data": "f2dc5e131c73da2e",
       "template": "ac907aae6c55f0ef",
       "ontology": "f22bb82ae253f42f",
-      "rules": "238c7ed0cbe62f6a",
+      "rules": "2a00875c1be6415b",
       "coverage": "a687c69917c45cc4"
     }
   },
