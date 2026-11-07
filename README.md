@@ -7,7 +7,7 @@
 [![Gitee](https://img.shields.io/badge/Gitee-Cwt66%2Fzhuangmingbai-c71d23)](https://gitee.com/Cwt66/zhuangmingbai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](./requirements.txt)
-[![Tests](https://img.shields.io/badge/tests-169-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-179-brightgreen.svg)](./tests)
 [![Rules](https://img.shields.io/badge/rules-13-002FA7.svg)](./data/rules_v0.json)
 
 签合同之前，上传 2–4 家装修公司的报价单（照片 / PDF / Excel / CSV），输出一份**可核对、可溯源、可复现**的审计报告：
@@ -61,7 +61,7 @@
 | **分位金额** | ✅ `src/money.py`：Decimal 求和/求差；R8 仍保留 1 元容差，质量门额外报「精确到分」差额 |
 | **多 sheet Excel** | ✅ `.xlsx` 解析所有 worksheet，选非空行最多的一张，避免「主表在第二个 sheet」直接报空 |
 | 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**；两份完整黄金标注；注入实验 242 例 |
-| 单元测试 | ✅ **169 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / 优惠与负号 5 / 指纹一致性 3） |
+| 单元测试 | ✅ **179 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / 优惠与负号 5 / 指纹一致性 3） |
 | 可打印报告 | ✅ `/demo`、`/real`（打印级 HTML，判定指纹上封面） |
 | **服务端 PDF** | ✅ `/demo.pdf`、`/real.pdf`、`scripts/make_report_pdf.py`（不依赖浏览器打印） |
 | **上传守门** | ✅ `src/doc_gate.py`：**解析前**就判 报价单/合同/无关（只看表头与原文），非报价单直接 400 并给合同词/列结构证据 |
@@ -74,7 +74,7 @@
 | 问询单 | ✅ 把结论变成可直接发给报价方的逐条问询（`src/inquiry.py`） |
 | 输入兼容 | ✅ UTF-8 / **GBK** / UTF-16、逗号 / **TAB**、表头别名 |
 | 审计历史 | ✅ `/history` + `/api/audits`（证明 RDS 真的在存业务数据） |
-| 一键自检 | ✅ `bash scripts/check_all.sh`（11 步：测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限） |
+| 一键自检 | ✅ `bash scripts/check_all.sh`（12 步：测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限） |
 | 在线 Demo | ✅ `python3 -m uvicorn main:app --port 8000` |
 | 离线演示包 | ✅ 干净目录可独立复现（含跨领域 demo） |
 | RenoPit 对照实验 | 🚧 协议已预注册，跑批进行中（我们已借鉴其文档分类/增项预测，但改为确定性实现） |
@@ -203,7 +203,7 @@ python3 eval/cohen_kappa.py --dir eval/annotator/回传
 git clone https://gitee.com/Cwt66/zhuangmingbai.git
 cd zhuangmingbai
 bash run_offline.sh                   # 合成三单 → out/audit_report.html
-bash scripts/check_all.sh             # 169 测试 + 评测 + 注入 + 指纹 + 隐私 + 盲标 + 交付门 + 检测下限（11 步）
+bash scripts/check_all.sh             # 179 测试 + 评测 + 注入 + 指纹 + 隐私 + 盲标 + 交付门 + 检测下限（12 步）
 ```
 
 ### 5.1.1 本地 OCR（macOS，可选）
@@ -319,9 +319,10 @@ data/ontology_v0.json   工序本体 119 概念 / 388 别名
 data/templates_v0.json  老房 39 项 / 新房 28 项
 data/rules_v0.json      13 条审计规则
 data/coverage_v0.json   证据词 + 父类吸收表
+data/not_applicable_v0.json  负向知识库：12 条「不判」+ 理由 + 若判了的后果
 data/real/              5 份真实单据（公开晒单/公开 PDF 的人工转录，无个人信息）
 eval/                   黄金标注评测 / 消融 / 注入 / 对照实验 / 冻结指纹 / 指标库
-tests/                  169 个单元测试
+tests/                  179 个单元测试
 scripts/                感知层 CLI / 本地 OCR / 指纹快照 / 离线包 / 隐私扫描 / 一键自检
                         diff_quotes.py（两版对比）· build_replay.py（审计回放页）
                         gate_report.py（交付门：7 检查 + 5 故障注入）

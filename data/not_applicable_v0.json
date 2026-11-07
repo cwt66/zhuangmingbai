@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "version": "v0",
+    "created": "2026-11-07",
+    "note": "负向知识库：本项目明确「不判什么」以及为什么。与 rules_v0.json 互为补集——那份说判什么，这份说不判什么。",
+    "why": "判什么写在规则里，不判什么只活在人的记忆里。记忆会丢、会被人改规则时踩掉，所以把它写成可执行规格：每条都有 guard 指向一个测试，改坏了测试会红。",
+    "reference": "对标 ogasurfproject-jpg/japan-construction-cost-database 的 retracted 层——它也把「证明不存在」的 608 条单列并给理由，而不是删掉了事。"
+  },
+  "items": [
+    {
+      "id": "NA1",
+      "case": "工装单据套家装模板",
+      "decision": "不判漏项",
+      "why": "工装的工序构成和家装模板不同：家装要求门槛石、踢脚线、防水高度，工装按分区做隔墙与机电，这些项在工装里本就不存在。",
+      "evidence": "深圳新源诊所：168 行、对齐 113 行（67.3%）、auto 漏项 11 条——人工逐条核实，11 条全部不成立。",
+      "if_judged": "11 条假阳性；该单会被读成「问题最多的一份」，而它其实只是行业不同。",
+      "guard": "docs/评测方法学.md 已注明该单漏项不作数；report_gate D7 不会为它报警",
+      "status": "documented"
+    },
+    {
+      "id": "NA2",
+      "case": "同一概念在同一分区出现多行，但变体不同",
+      "decision": "不判重复计价",
+      "why": "12 个不同柜子、4 种电线、墙面防水与地面防水分开计价，是不同部位/规格的两件事，不是重复收费。判定看行名去掉正式名后的「变体残差」是否一致。",
+      "evidence": "全库累计排除 72 组：篱笆 21 / 花溪 10 / 诊所 21 / 翡翠台 16 / 124㎡ 4。",
+      "if_judged": "72 条假阳性。报告里堆满假重复，用户会把真结论一起忽略。",
+      "guard": "tests/test_recon.py + find_duplicates 的 excluded 计数",
+      "status": "enforced"
+    },
+    {
+      "id": "NA3",
+      "case": "只写「水电改造」一行，没有逐项列管线和线路",
+      "decision": "不判子项漏项",
+      "why": "父类目被覆盖时，子项视为已含在包干价里。真实报价单不会写「PPR 给水管 DN25」这种颗粒度。",
+      "evidence": "data/coverage_v0.json 的 absorb 表，逐条可人工审阅。",
+      "if_judged": "整单水电全部判漏，漏项金额虚高数万元。",
+      "guard": "data/coverage_v0.json absorb 表 + TestSummarySplit 回归",
+      "status": "enforced"
+    },
+    {
+      "id": "NA4",
+      "case": "管理费/税金出现在表尾汇总区",
+      "decision": "不判漏项（只认汇总行作证据）",
+      "why": "费类是按费率在表尾算出来的，本来就不会作为工序行出现在明细里。但完全不让汇总行作证，又会把「已收管理费」误判成漏项——所以只对 fee 类开放这条通道。",
+      "evidence": "feitai：管理费 3,493 + 4,761 在表尾；若不作证会报 2 条假漏项。",
+      "if_judged": "每份带管理费的报价单都多 1–2 条假阳性。",
+      "guard": "find_missing 的 summary_texts 分支",
+      "status": "enforced"
+    },
+    {
+      "id": "NA5",
+      "case": "PDF 把分区小计标签拼进了工序名",
+      "decision": "不按关键词当汇总行删掉",
+      "why": "深圳新源诊所 PDF 有 19 行「批腻子打磨刷乳胶漆小计」，名称带「小计」但数量×单价=合价 精确成立——那是 PDF 排版把标签并进了行名，不是汇总行。所以门控是「算不出来才算汇总」，不是「名字像就算」。",
+      "evidence": "诊所 19 行，量价精确成立；靠关键词剔除会删掉它们。",
+      "if_judged": "19 行真实工序消失，该单明细从 168 行掉到 149 行。",
+      "guard": "tests/test_recon.py::test_clinic_keeps_rows_named_xiaoji",
+      "status": "enforced"
+    },
+    {
+      "id": "NA6",
+      "case": "单价写成区间（8000-12000）或「按实结算」",
+      "decision": "只判开口条款（R4），不判算术不符（R8）",
+      "why": "区间价解析不出单一单价，用 0 或均值代入都算编数。它本身就是一条该被报出来的口径风险，但性质是「不确定」，不是「算错」。",
+      "evidence": "实测：`水电改造 项 1 8000-12000 8000` → 只出 R4，不出 R8。",
+      "if_judged": "每一条区间价都变成一条算术错误，假阳性且误导。",
+      "guard": "tests/test_recon.py 的区间价用例",
+      "status": "enforced"
+    },
+    {
+      "id": "NA7",
+      "case": "赠送项（数量或单价为 0）",
+      "decision": "不判单位异常 / 数量缺失",
+      "why": "「（赠送）开关面板 20 个 0 元」是促销写法，不是数据错误。判成异常会让报告在最不该出错的地方出错。",
+      "evidence": "实测：赠送行进入明细，amount=0，不触发 R6/R9。",
+      "if_judged": "每份带赠品的报价单多 2 条假阳性。",
+      "guard": "tests/test_recon.py::TestDiscountAndSigns",
+      "status": "enforced"
+    },
+    {
+      "id": "NA8",
+      "case": "优惠/折扣写成正数",
+      "decision": "只标歧义，不进对账算式",
+      "why": "「优惠 3000」既可能是「优惠金额 3000」，也可能是「已优惠后价 3000」——单行看不出。写成负数才无歧义。既然判断不了，就不猜：标 discount_ambiguous 让人看一眼。",
+      "evidence": "tests/test_recon.py::test_positive_discount_is_flagged_not_consumed",
+      "if_judged": "猜错方向会把「减 3000」算成「加 3000」，差额直接错 6000。",
+      "guard": "reconcile 的 discount_ambiguous 字段",
+      "status": "enforced"
+    },
+    {
+      "id": "NA9",
+      "case": "置信度低于 0.90 的结论",
+      "decision": "不进核减金额，只进待确认清单",
+      "why": "「我们做得准」是广告，「不确定的时候不进钱」才是方法。业主拿报告去谈判，金额必须是站得住的。",
+      "evidence": "5 份单据的 missing_cost 全部逐分等于 auto 档 ref_amount 之和（report_gate D5 每次校验）。",
+      "if_judged": "一旦松动，报告就会带着没有把握的钱出门。",
+      "guard": "src/report_gate.py::_check_tier_discipline（D5，block 级）",
+      "status": "enforced"
+    },
+    {
+      "id": "NA10",
+      "case": "套餐制 / 按面积计价 / 只有汇总金额的单据",
+      "decision": "不逐行比单价",
+      "why": "按面积计价单里每行单价接近统一，逐行比没有意义，应该比总面积与总价。识别体系后只输出「倾向 + 依据 + 置信度」，识别错误也不影响判定——不允许它成为漏报的理由。",
+      "evidence": "src/pricing_system.py 四类体系（qty_price / area_rate / package / lump_sum）。",
+      "if_judged": "套餐单会被按工程量清单口径审，逐行单价异常刷屏。",
+      "guard": "src/pricing_system.py 的 confidence 与 implication 字段",
+      "status": "documented"
+    },
+    {
+      "id": "NA11",
+      "case": "单行金额差 ≤1 元的舍入",
+      "decision": "不判算术不符",
+      "why": "真实单据有大量「单价×数量 后按元取整」的写法，差几分钱是习惯不是问题。但这条也留下了空隙——所以由 report_gate 的 D7 兜住「同向累积」的情形。",
+      "evidence": "eval/detection_floor.py：单行最小可捕获 ±1.01 元；篱笆 15 行小额偏差净额仅 +0.23 元（正负抵消）。",
+      "if_judged": "每份单据刷出十几条几分钱的假阳性。",
+      "guard": "src/report_gate.py::_check_uncovered_drift（D7）",
+      "status": "enforced"
+    },
+    {
+      "id": "NA12",
+      "case": "对不上账但没有印刷合计行",
+      "decision": "不判「对不上账」，只标注「未做整单对账」",
+      "why": "没有锚点就无从对起。5 份单据里 3 份是照片转录，没有印刷合计——把「没得对」写成「对不上」是两种性质的错误。",
+      "evidence": "report_gate D3 对这 3 份返回 skip 并在报告里写明「无印刷合计，未做整单对账」，不计入 pass 的六项全过。",
+      "if_judged": "3 份单据被冤枉成「账目有问题」。",
+      "guard": "src/report_gate.py::_check_reconciled 的 ok is None 分支",
+      "status": "enforced"
+    }
+  ]
+}
