@@ -7,7 +7,7 @@
 [![Gitee](https://img.shields.io/badge/Gitee-Cwt66%2Fzhuangmingbai-c71d23)](https://gitee.com/Cwt66/zhuangmingbai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](./requirements.txt)
-[![Tests](https://img.shields.io/badge/tests-268-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-278-brightgreen.svg)](./tests)
 [![Rules](https://img.shields.io/badge/rules-13-002FA7.svg)](./data/rules_v0.json)
 
 签合同之前，上传 2–4 家装修公司的报价单（照片 / PDF / Excel / CSV），输出一份**可核对、可溯源、可复现**的审计报告：
@@ -63,7 +63,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 | **分位金额** | ✅ `src/money.py`：Decimal 求和/求差；R8 仍保留 1 元容差，质量门额外报「精确到分」差额 |
 | **多 sheet Excel** | ✅ `.xlsx` 解析所有 worksheet，选非空行最多的一张，避免「主表在第二个 sheet」直接报空 |
 | 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**（合计 **614 行**原始表格数据）；两份完整黄金标注；注入实验 242 例 |
-| 单元测试 | ✅ **268 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / **红队与易混词 17** / **Skill 证据校验 16** / **规则活性 15** / **Web 交付门 4** / 优惠与负号 5 / 指纹一致性 3 / 主张台账 14 例 / Skills 规范 7 例 / 隐私扫描 4 例） |
+| 单元测试 | ✅ **278 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / **红队与易混词 17** / **Skill 证据校验 16** / **规则活性 15** / **Web 交付门 4** / 优惠与负号 5 / 指纹一致性 3 / 主张台账 14 例 / Skills 规范 7 例 / 隐私扫描 4 例 / 干净 clone 保障 4 例 / 提交包数字 6 例） |
 | 可打印报告 | ✅ `/demo`、`/real`（打印级 HTML，判定指纹上封面） |
 | **服务端 PDF** | ✅ `/demo.pdf`、`/real.pdf`、`scripts/make_report_pdf.py`（不依赖浏览器打印） |
 | **上传守门** | ✅ `src/doc_gate.py`：**解析前**就判 报价单/合同/无关（只看表头与原文），非报价单直接 400 并给合同词/列结构证据 |
@@ -106,7 +106,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 ### 2.2 主张台账：材料里的数字，自己会说话
 
 前面所有门禁管的都是**引擎输出对不对**。还有一类东西从来没人管：
-**我们对外说的话对不对**。材料里写着「268 个测试」「119 概念 / 388 别名」
+**我们对外说的话对不对**。材料里写着「278 个测试」「119 概念 / 388 别名」
 「16 步自检」，代码一改就悄悄过期，评委不会去数，我们自己也不会。
 
 所以加了第 16 步：**每条可量化主张都必须带一条产生它的命令**
@@ -160,6 +160,27 @@ python3 scripts/claim_ledger.py               # 人读的表：out/claim_ledger.
 python3 scripts/verify_skill_spec.py              # 18/18 人读的表
 python3 scripts/verify_skill_spec.py --self-test  # 干净 PASS / 6 种故障 FAIL
 ```
+
+### 2.4 台账管不到的两处，也补上了（并且如实说它们不是 ① 档）
+
+- **评委拿的是仓库外的 `国奖提交包/`**：55 份 md、几十处数字、commit hash 与
+  sha256 清单，台账的 `occurrences` 只反查仓库内文件，CI 里也没有这个目录。
+  `scripts/verify_package_numbers.py` 查旧值残留 / 当前值覆盖 / HEAD 一致性 /
+  sha256 逐条复算，报告写进提交包 `09_证据附录/`。**本地 ② 档工具，不进 CI 假装通过。**
+- **「干净 clone 也是绿的」** 此前靠人工记得跑；H05 就是这么翻车的
+  （本地 5/5 冻结基线、clone 只有 3/5）。`scripts/verify_clean_clone.py` 从 HEAD
+  建干净 clone 跑全量自检，CI 加**第二个独立 job** `clean-clone`。
+  **不能塞进 `check_all.sh`**——clone 自己再跑 check_all 会无限递归。
+
+```bash
+python3 scripts/verify_package_numbers.py --self-test  # 1 正向 + 5 故障
+python3 scripts/verify_clean_clone.py    --self-test  # 5 项静态不变量
+python3 scripts/verify_clean_clone.py    --json       # 真跑一次干净 clone（约 1 分钟）
+```
+
+两者都带双向断言，共 10 个单测锁住不退化。
+**不进 ① 档不是免责，是把它放在真能被复算的地方，而不是换一个假绿勾。**
+细节见 `docs/CLAIM-LEDGER.md` §5.1。
 
 ---
 

@@ -108,6 +108,8 @@ python3 eval/redteam.py               # 红队 8 招，看它能被哪一招骗�
 python3 eval/detection_floor.py       # 最小可捕获误差（单行 ±1.01 元）
 python3 scripts/verify_skill_spec.py --self-test   # 本 Skill 的规范符合性 + 双向断言
 python3 scripts/claim_ledger.py --self-test        # 材料里每句数字的复算台账
+python3 scripts/verify_package_numbers.py          # 提交包数字一致性（仓库外，本地 ② 档）
+python3 scripts/verify_clean_clone.py --self-test  # 干净 clone 保障的静态不变量
 bash scripts/check_all.sh             # 16 步全量自检
 ```
 

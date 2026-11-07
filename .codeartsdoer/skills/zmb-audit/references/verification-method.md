@@ -18,7 +18,15 @@ python3 scripts/audit_one.py data/samples/company_a.csv --label A
 bash scripts/check_all.sh                  # 16 步：测试 / 评测 / 交付门 / 红队 / 台账 / 规范
 python3 scripts/claim_ledger.py --json     # 材料里每句数字是否与代码一致
 python3 scripts/verify_skill_spec.py --json
+python3 scripts/verify_clean_clone.py --self-test   # 干净 clone 保障还在不在
+python3 scripts/verify_clean_clone.py --json        # 真跑一次干净 clone（约 1 分钟）
+python3 scripts/verify_package_numbers.py           # 提交包数字一致性（需本地有国奖提交包）
 ```
+
+> 两条边界（都不进 ① 档台账，理由见 `docs/CLAIM-LEDGER.md` §5.1）：
+> `verify_clean_clone` 塞进 `check_all.sh` 会无限递归，改由 CI 第二个 job 保证；
+> `verify_package_numbers` 检查的提交包在仓库外，CI 的 checkout 里没有它，
+> 所以在 CI 上只会报「待复算」，**不算通过也不算失败**，报告留在提交包里供现场重跑。
 
 ## 三条判据，缺一条不算通过
 

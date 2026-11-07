@@ -15,13 +15,13 @@
       "occurrences 里的 {v} 会被替换成 value，用来抓「改了文档没改台账」和「改了代码没改文档」两个方向",
       "被撤回的结论不删：data/claim_history_v0.json 的指纹写在这里，删一条就会红"
     ],
-    "history_digest": "1c152b182eac0c3bc7343f0ebe0cee4ccb6dcdacf6bb39a63eca23be432f9eb2"
+    "history_digest": "d25c7df2ff9788ecdfc803e8784309d18ca948a99a2b5d7de59a25b898d6915a"
   },
   "claims": [
     {
       "id": "C01",
-      "text": "单元测试 268 个",
-      "value": "268",
+      "text": "单元测试 278 个",
+      "value": "278",
       "tier": "ran",
       "probe": "tests_count",
       "command": "python3 -m unittest discover -s tests",
