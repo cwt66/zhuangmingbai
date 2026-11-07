@@ -48,13 +48,13 @@ class ClaimLedgerTests(unittest.TestCase):
         self.assertTrue(all(c["status"] in
                             ("verified", "read_verified", "declared")
                             for c in rep["claims"]))
-        self.assertEqual(rep["history_entries"], 10)
+        self.assertEqual(rep["history_entries"], 11)
         self.assertEqual(rep["misses"], 3)
 
     def test_three_tiers_are_present_and_declared_not_counted(self):
         rep = self._verify()
-        self.assertEqual(rep["tier_counts"].get("ran"), 14)
-        self.assertEqual(rep["tier_counts"].get("read"), 2)
+        self.assertEqual(rep["tier_counts"].get("ran"), 13)
+        self.assertEqual(rep["tier_counts"].get("read"), 3)
         self.assertEqual(rep["tier_counts"].get("declared"), 3)
         # ③ 档必须进欠账清单，且状态不是 verified
         debts = {d["id"] for d in rep["debts"]}
@@ -64,6 +64,10 @@ class ClaimLedgerTests(unittest.TestCase):
             if c["tier"] == "declared":
                 self.assertEqual(c["status"], "declared")
                 self.assertIsNone(c["observed"])
+        # C14 是「开发机 arm64」，CI 在 x86_64 上跑不出这个值，
+        # 必须从 ① 降到 ②。锁住这次降级，不许为了好看偷偷升回去。
+        c14 = next(c for c in rep["claims"] if c["id"] == "C14")
+        self.assertEqual(c14["tier"], "read")
 
     # ---------- 六种故障必须被拒（校验器会说「不」） ----------
     def test_value_drift_fails(self):
@@ -147,6 +151,7 @@ class ClaimLedgerTests(unittest.TestCase):
         self.assertEqual(CL.probe_real_quote_rows()[0], "614")
         self.assertEqual(CL.probe_gate_checks()[0], "7")
         self.assertEqual(CL.probe_pipeline_stdlib_only()[0], "零第三方依赖")
+        self.assertEqual(CL.probe_dev_arch_record()[0], "arm64")
 
     def test_stdlib_probe_would_catch_a_third_party_import(self):
         """把 numpy 塞进源码，探针必须报出来——否则它只是个永远说通过的橡皮图章。"""

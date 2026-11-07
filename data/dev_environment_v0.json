@@ -1,0 +1,10 @@
+{
+  "schema": "zmb-dev-environment/v1",
+  "purpose": "记录开发机的架构事实。CI runner 是另一台机器，不能用自己的 platform.machine() 去「复算」开发机架构。",
+  "captured_at": "2026-11-07",
+  "captured_by": "python3 -c \"import platform,sys;print(platform.machine(),platform.platform(),sys.version.split()[0])\"",
+  "machine": "arm64",
+  "platform": "macOS-26.6-arm64-arm-64bit-Mach-O",
+  "python": "3.13.12",
+  "note": "① 档要求「当场跑出结果」；这个值在 x86_64 的 CI 上跑不出来，所以 C14 只能降为 ② 读档。这不是降级口径凑数，是证据分档在起作用。"
+}

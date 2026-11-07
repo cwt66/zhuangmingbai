@@ -99,6 +99,15 @@
       "now": "校验器与 16 个单测都在，但 raw/stage6_skill.txt 仍未采集，R7 保持 🟡「待采集」",
       "why": "校验器能验 ≠ 证据已经存在。",
       "kept_because": "把「工具就绪」和「证据到位」分开，是这套台账必须守的线。"
+    },
+    {
+      "id": "H11",
+      "kind": "false_positive",
+      "date": "2026-11-07",
+      "was": "把「开发机 arm64」标成 ① 跑出过结果，探针用 platform.machine() 当场复算",
+      "now": "降为 ② 读档（data/dev_environment_v0.json）；CI runner 是 x86_64，跑不出 arm64",
+      "why": "① 档要求「当场跑出结果」，但被主张的对象是另一台机器。用自己的架构去复算别人的架构，等于拿错的证据盖对的章。推送后 GitHub Actions run 42372612688（3438a5d）conclusion=failure，第 16 步报「C14 宣称 arm64，实测 x86_64」。",
+      "kept_because": "误报留案：这是主张台账上线当天被自己的 CI 抓到的第一个口径错误，有可核对的 run URL。降级不是把报告改好看，而是把「跑不出来」如实说出来。"
     }
   ],
   "predictions": [

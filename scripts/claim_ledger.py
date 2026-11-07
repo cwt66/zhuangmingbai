@@ -197,7 +197,23 @@ def probe_skill_spec():
 
 
 def probe_platform_machine():
+    """当前进程所在机器的架构（CI 用；不代表开发机）。"""
     return platform.machine(), "platform.machine()"
+
+
+def probe_dev_arch_record():
+    """读开发机架构记录 —— ② 档。
+
+    不能把这条做成 ①：GitHub Actions 跑在 x86_64 上，
+    `platform.machine()` 会返回 x86_64，而主张说的是**开发机** arm64。
+    用自己的架构去「复算」别人的架构，是拿错的证据盖对的章。
+    """
+    p = DATA / "dev_environment_v0.json"
+    if not p.is_file():
+        return None, "开发机架构记录不存在"
+    d = read_json(p)
+    return d.get("machine"), "data/dev_environment_v0.json（采集命令：%s）" % d.get(
+        "captured_by", "?")
 
 
 def probe_ablation_l2():
@@ -241,6 +257,7 @@ PROBES = {
     "detection_floor": probe_detection_floor,
     "skill_spec": probe_skill_spec,
     "platform_machine": probe_platform_machine,
+    "dev_arch_record": probe_dev_arch_record,
     "ablation_l2": probe_ablation_l2,
     "liveness_killed": probe_liveness_killed,
 }

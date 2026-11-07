@@ -15,7 +15,7 @@
       "occurrences 里的 {v} 会被替换成 value，用来抓「改了文档没改台账」和「改了代码没改文档」两个方向",
       "被撤回的结论不删：data/claim_history_v0.json 的指纹写在这里，删一条就会红"
     ],
-    "history_digest": "7772a69dc8baddde1baae2ae8556a6efbf5b26443593d3dcfe12f055e7531921"
+    "history_digest": "1c152b182eac0c3bc7343f0ebe0cee4ccb6dcdacf6bb39a63eca23be432f9eb2"
   },
   "claims": [
     {
@@ -211,17 +211,19 @@
     },
     {
       "id": "C14",
-      "text": "开发与全量自检架构 arm64（鲲鹏未实测）",
+      "text": "开发与全量自检架构 arm64（开发机实测；CI runner 为 x86_64）",
       "value": "arm64",
-      "tier": "ran",
-      "probe": "platform_machine",
-      "command": "python3 -c \"import platform;print(platform.machine())\"",
+      "tier": "read",
+      "probe": "dev_arch_record",
+      "command": "python3 -c \"import platform;print(platform.machine())\"（采集开发机时）",
       "occurrences": [
         {
           "file": "docs/华为云依赖与失效矩阵.md",
           "pattern": "**{v}**"
         }
-      ]
+      ],
+      "artifact": "data/dev_environment_v0.json",
+      "note": "原本误标 ①：CI 在 x86_64 上跑不出 arm64。事实是「开发机 arm64」，只能用采集记录读档，不能用当前进程的架构去复算。这次降级正是证据分档在起作用。"
     },
     {
       "id": "C15",
