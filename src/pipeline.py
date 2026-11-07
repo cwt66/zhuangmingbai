@@ -16,6 +16,7 @@
 """
 import csv
 import difflib
+import html as _html_lib
 import hashlib
 import io
 import json
@@ -549,6 +550,14 @@ def find_duplicates(quote, onto, rule_pair, rule_same, template):
             if len(variants) > 1:
                 excluded += 1
                 continue
+            # R3 的开关与阈值必须由规则文件说了算，不能藏在代码里。
+            # 规则活性测试（eval/rule_liveness.py）会改这两个字段重跑；
+            # 之前它们是死的——写成 `min_lines: 2` 却硬编码 `len>=2`，
+            # 改规则一个字符都不影响判定。默认值与旧行为一致，故真实输出不变。
+            if not rule_same.get("enabled", True):
+                continue
+            if len(lines) < int(rule_same.get("min_lines", 2)):
+                continue
             ls = sorted(lines, key=lambda x: -x["amount"])
             dup = round(sum(x["amount"] for x in ls[1:]), 2)
             c = confidence(rule_same["strength"], 0.95, min(x["align_conf"] for x in lines), cid in template)
@@ -559,6 +568,8 @@ def find_duplicates(quote, onto, rule_pair, rule_same, template):
                                      "formula": "count(concept, zone) >= 2 且行名去掉正式名后完全一致",
                                      "line_nos": [x["no"] for x in lines]}})
     present = {r["cid"] for r in quote["rows"] if r["cid"]}
+    if not rule_pair.get("enabled", True):
+        return out, excluded
     for p in rule_pair["pairs"]:
         c_, d_ = p["container"], p["contained"]
         if c_ in present and d_ in present and d_ in template and c_ not in template:
@@ -818,6 +829,17 @@ def find_split(quote, rule, onto, template):
 
 
 def cross_unit_mix(quotes, onto, rule):
+    """R5：同一工序在不同单据里单位不一致。
+
+    之前这里把 `confidence` 写死 0.70、`tier` 写死 review，
+    `rules_v0.json` 里的 `strength` / `enabled` / `scope` 三个字段全是摆设。
+    规则活性测试把这三个字段改坏后输出纹丝不动，才把这个洞翻出来。
+    现在它们都真正参与判定；默认 strength=0.7 算出的仍是 review 档。
+    """
+    if not rule.get("enabled", True):
+        return []
+    if rule.get("scope") not in (None, "cross_quote"):
+        return []
     units = defaultdict(lambda: defaultdict(set))
     for q in quotes:
         for r in q["rows"]:
@@ -829,8 +851,9 @@ def cross_unit_mix(quotes, onto, rule):
         for s in per_q.values():
             allu |= s
         if len(allu) > 1:
+            c = confidence(rule["strength"], 0.95, 0.9, False)
             out.append({"cid": cid, "concept": onto.by_id[cid]["n"], "units": sorted(allu),
-                        "rule": rule["id"], "confidence": 0.70, "tier": "review",
+                        "rule": rule["id"], "confidence": c, "tier": tier(c),
                         "evidence": {"basis": "本体单位定义", "formula": "unit(q1) != unit(q2)"}})
     return out
 
@@ -912,22 +935,53 @@ def audit(quotes, onto, templates, rules, coverage=None, template_key="old_house
     scope: full（全包，默认）或 base（只报基础施工，主材/安装类不判漏）。
     模板与范围都会写进报告——选错模板，漏项结论全错，所以做成显式参数。"""
     R = {r["id"]: r for r in rules["rules"]}
+
+    def on(rid):
+        """规则开关。曾几何时 `rules_v0.json` 里每条都写着 `enabled: true`，
+        但没有一行代码读它——把某条改成 false，结论一条不少。
+        规则活性测试拿这个字段做变异，13 条全部存活，才把这个洞翻出来。"""
+        return bool(R.get(rid, {}).get("enabled", True))
+
     template = trim_template(templates[template_key], scope)
     results = {}
     for q in quotes:
+        # R13 的容差由规则文件决定，不是在 reconcile() 里硬编码。
+        # reconcile() 在 load_quote() 阶段就跑完了（那时还没加载规则），
+        # 所以这里按规则重算一次 ok。默认值 0.005 与原硬编码完全一致，
+        # 因此真实输出零变化；但改 rules_v0.json 会立刻生效——
+        # 之前 `tolerance_pct` 是个写了没人读的装饰字段。
+        rc = q.get("recon")
+        if rc and rc.get("diff") is not None and rc.get("grand"):
+            try:
+                pct = float(R["R13_doc_recon"].get("tolerance_pct", 0.005))
+            except (TypeError, ValueError):
+                pct = 0.005
+            tol = max(1.0, abs(rc["grand"]["amount"]) * pct)
+            rc["ok"] = abs(rc["diff"]) <= tol
         others = [x for x in quotes if x is not q]
-        missing = find_missing(q, others, template, onto, R["R1_missing_item"], coverage)
-        dups, dup_excluded = find_duplicates(q, onto, R["R2_duplicate_known"], R["R3_duplicate_same_concept"], template)
+        missing = (find_missing(q, others, template, onto, R["R1_missing_item"], coverage)
+                   if on("R1_missing_item") else [])
+        dups, dup_excluded = find_duplicates(
+            q, onto, R["R2_duplicate_known"], R["R3_duplicate_same_concept"], template)
         risks = []
-        risks += find_vague(q, R["R4_vague_term"])
-        risks += find_unit_anomaly(q, onto, R["R6_unit_anomaly"])
-        risks += find_arithmetic_grouped(q, R["R8_arithmetic"])
-        risks += find_qty_unit(q, R["R9_qty_unit"])
-        risks += find_fee_rate(q, R["R10_fee_rate"])
-        risks += find_spec_missing(q, R["R11_spec_missing"])
-        risks += find_wp_height(q, R["R12_wp_height"])
-        risks += find_split(q, R["R7_split_billing"], onto, template)
-        risks += find_doc_recon(q, R["R13_doc_recon"])
+        if on("R4_vague_term"):
+            risks += find_vague(q, R["R4_vague_term"])
+        if on("R6_unit_anomaly"):
+            risks += find_unit_anomaly(q, onto, R["R6_unit_anomaly"])
+        if on("R8_arithmetic"):
+            risks += find_arithmetic_grouped(q, R["R8_arithmetic"])
+        if on("R9_qty_unit"):
+            risks += find_qty_unit(q, R["R9_qty_unit"])
+        if on("R10_fee_rate"):
+            risks += find_fee_rate(q, R["R10_fee_rate"])
+        if on("R11_spec_missing"):
+            risks += find_spec_missing(q, R["R11_spec_missing"])
+        if on("R12_wp_height"):
+            risks += find_wp_height(q, R["R12_wp_height"])
+        if on("R7_split_billing"):
+            risks += find_split(q, R["R7_split_billing"], onto, template)
+        if on("R13_doc_recon"):
+            risks += find_doc_recon(q, R["R13_doc_recon"])
         miss_cost = sum(m["ref_amount"] for m in missing if m["tier"] == "auto" and m["ref_amount"]) or 0.0
         dup_cut = sum(d["amount"] for d in dups if d["tier"] == "auto") or 0.0
         row = {
@@ -1132,6 +1186,17 @@ def _report_fingerprint(res):
     return one(res)
 
 
+def _esc(s):
+    """渲染层转义。报价单里的字是**用户上传的**，不是我们写的。
+
+    工作流梳理 + XSS 回归测试撞出来的：build_html 原来把所有字段直接 %s 拼进
+    HTML，单据名（文件名）、工序名、备注、依据文案全都没转义。
+    上传一个名字带 <script> 的 CSV，报告页就会执行它。
+    这不是"理论上可能"——测试里已经复现。
+    """
+    return _html_lib.escape("" if s is None else str(s), quote=True)
+
+
 def _missing_note(missing):
     """漏项表的脚注：区分「可计价项」与「只能定性的工艺项」。
 
@@ -1165,7 +1230,7 @@ def build_html(quotes, res):
         kpis.append('<div class="kpi"><div class="l">%s · 真实成本</div>'
                     '<div class="v">%s <small>元</small></div>'
                     '<div class="n">报价 %s ｜ 漏项 %d 项 ｜ 重复 %d 项</div></div>' %
-                    (q["label"], fmt_money(r["effective"]), fmt_money(q["total"]),
+                    (_esc(q["label"]), fmt_money(r["effective"]), fmt_money(q["total"]),
                      len(r["missing"]), len(r["duplicates"])))
     rows = []
     maxv = max(res[q["label"]]["effective"] for q in quotes)
@@ -1177,7 +1242,7 @@ def build_html(quotes, res):
         rows.append("<tr><td>%s</td><td class='num'>%s</td><td class='num'>%s</td><td class='num'>%s</td>"
                     "<td class='num barcell'>%s<div class='bar'><i style='width:%d%%'></i></div></td>"
                     "<td class='num'>%s</td><td class='num'>%d</td><td class='num'>%d</td><td class='num'>%d</td></tr>" %
-                    (q["label"], fmt_money(q["total"]), fmt_money(r["missing_cost"]),
+                    (_esc(q["label"]), fmt_money(q["total"]), fmt_money(r["missing_cost"]),
                      fmt_money(r["duplicate_cut"]), fmt_money(r["effective"]), pct,
                      exp_s, len(r["missing"]), len(r["duplicates"]), len(r["risks"])))
     summary = ("<table><tr><th>公司</th><th class='num'>报价总价</th><th class='num'>漏项补项</th>"
@@ -1199,15 +1264,15 @@ def build_html(quotes, res):
     for q in quotes:
         r = res[q["label"]]
         idx += 1
-        h = ["<h2><span class='idx'>%02d</span>%s 明细</h2>" % (idx, q["label"]),
+        h = ["<h2><span class='idx'>%02d</span>%s 明细</h2>" % (idx, _esc(q["label"])),
              "<p>总价 <b>%s</b>；漏项补项 <b>%s</b>；重复剔除 <b>%s</b>；真实成本 <b>%s</b>。</p>" %
              (fmt_money(q["total"]), fmt_money(r["missing_cost"]), fmt_money(r["duplicate_cut"]), fmt_money(r["effective"]))]
         pr = r.get("pricing") or {}
         if pr:
             h.append("<div class='note'><b>计价体系：%s</b>（置信度 %.2f）｜%s"
                      "<br><span class='evid'>依据：%s</span></div>" % (
-                         pr.get("label"), pr.get("confidence", 0), pr.get("implication", ""),
-                         "；".join(pr.get("evidence") or [])))
+                         _esc(pr.get("label")), pr.get("confidence", 0), _esc(pr.get("implication", "")),
+                         _esc("；".join(pr.get("evidence") or []))))
         if r["missing"]:
             h.append("<table><tr><th>漏项工序</th><th class='num'>参照金额</th><th>参照来源</th><th class='num'>置信度</th><th>档位</th></tr>")
             for m in r["missing"]:
@@ -1215,7 +1280,7 @@ def build_html(quotes, res):
                 amt = fmt_money(m["ref_amount"]) if m["ref_amount"] else "—"
                 h.append("<tr><td>%s</td><td class='num'>%s</td><td class='evid'>%s</td><td class='num'>%.2f</td>"
                          "<td><span class='tag %s'>%s</span></td></tr>" %
-                         (m["concept"], amt, src, m["confidence"], m["tier"], m["tier"]))
+                         (_esc(m["concept"]), amt, _esc(src), m["confidence"], m["tier"], m["tier"]))
             h.append("</table>")
             h.append(_missing_note(r["missing"]))
         if r["duplicates"]:
@@ -1223,8 +1288,8 @@ def build_html(quotes, res):
             for d in r["duplicates"]:
                 h.append("<tr><td>%s</td><td class='evid'><code>%s</code></td><td class='num'>%s</td>"
                          "<td class='evid'>%s</td><td class='num'>%.2f</td></tr>" %
-                         (d["concept"], ",".join(d["lines"]), fmt_money(d["amount"]),
-                          d["evidence"]["basis"], d["confidence"]))
+                         (_esc(d["concept"]), _esc(",".join(d["lines"])), fmt_money(d["amount"]),
+                          _esc(d["evidence"]["basis"]), d["confidence"]))
             h.append("</table>")
         if r["risks"]:
             h.append("<table><tr><th>行号</th><th>项目</th><th>问题</th><th>依据</th><th>档位</th></tr>")
@@ -1232,7 +1297,7 @@ def build_html(quotes, res):
                 ln = x.get("line") or ",".join(x.get("lines", []))
                 h.append("<tr><td class='evid'><code>%s</code></td><td>%s</td><td>%s</td>"
                          "<td class='evid'>%s</td><td><span class='tag %s'>%s</span></td></tr>" %
-                         (ln, x["concept"], x["issue"], x["evidence"]["basis"], x["tier"], x["tier"]))
+                         (_esc(ln), _esc(x["concept"]), _esc(x["issue"]), _esc(x["evidence"]["basis"]), x["tier"], x["tier"]))
             h.append("</table>")
         obs = r.get("obligations") or []
         if obs:
@@ -1242,10 +1307,10 @@ def build_html(quotes, res):
             for o in obs:
                 h.append("<tr><td><b>%s</b></td><td class='evid'>%s<br><code>行 %s</code></td>"
                          "<td class='num'>%s</td><td>%s</td><td class='evid'>%s</td></tr>" % (
-                             o["title"], "、".join(o["patterns"]),
-                             ",".join(o["lines"][:8]) + ("…" if len(o["lines"]) > 8 else ""),
+                             _esc(o["title"]), _esc("、".join(o["patterns"])),
+                             _esc(",".join(o["lines"][:8]) + ("…" if len(o["lines"]) > 8 else "")),
                              fmt_money(o["amount"]) if o["amount"] else "—",
-                             o["confirm"], o["evidence"]))
+                             _esc(o["confirm"]), _esc(o["evidence"])))
             h.append("</table>")
             h.append("<div class='note'>%s</div>" % oblig.summary(obs))
         af = r.get("addon_forecast") or {}
@@ -1265,15 +1330,15 @@ def build_html(quotes, res):
                 amt = ("%s – %s" % (fmt_money(rg[0]), fmt_money(rg[1]))) if rg else "不可估计"
                 h.append("<tr><td><b>%s</b><br><span class='evid'>%s</span></td><td>%s</td>"
                          "<td class='num'>%s</td><td class='evid'>%s</td><td>%s</td></tr>" % (
-                             x["title"], x["kind"], x["trigger_stage"], amt,
-                             x["amount_basis"], x["prevention"]))
+                             _esc(x["title"]), _esc(x["kind"]), _esc(x["trigger_stage"]), amt,
+                             _esc(x["amount_basis"]), _esc(x["prevention"])))
             h.append("</table>")
         dg = r.get("doc_gate")
         if dg:
             h.append("<div class='note'><b>上传守门</b>：判定为「%s」（证据充分度 %.2f）｜%s"
                      "<br><span class='evid'>%s</span></div>" % (
-                         dg.get("label"), dg.get("confidence", 0),
-                         "；".join(dg.get("reasons") or [])[:180], dg.get("note", "")))
+                         _esc(dg.get("label")), dg.get("confidence", 0),
+                         _esc("；".join(dg.get("reasons") or [])[:180]), _esc(dg.get("note", ""))))
         secs.append("".join(h))
 
     # 对账条：整单加起来对不对。差额本身是一条结论，不是噪声——
@@ -1282,7 +1347,7 @@ def build_html(quotes, res):
     for q in quotes:
         rec = (res[q["label"]] or {}).get("recon") or {}
         head = ('<span class="t">对账</span>' if len(quotes) == 1
-                else '<span class="t">对账 · %s</span>' % q["label"])
+                else '<span class="t">对账 · %s</span>' % _esc(q["label"]))
         if not rec.get("grand"):
             rec_lines.append('<div class="recon">%s<span class="k">本单未提供印刷合计，跳过对账'
                              '（明细之和 <b>%s</b>）</span></div>'

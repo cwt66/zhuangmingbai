@@ -43,7 +43,21 @@ block 用得越多越像营销，用得越少越没意义。
 它也是本项目导出给评委看时最硬的一句：**你可以不信我的话，但不能不信同一个数跑两次还是它。**
 """
 
-import pipeline as P
+import os as _os
+import sys as _sys
+
+# 这个模块有两条被加载的路径，导入方式不同：
+#   1. scripts/*.py 先 `sys.path.insert(0, <repo>/src)`，于是 `import report_gate`；
+#   2. main.py 用 `from src import report_gate`（FastAPI/Web 场景）。
+# 原来只写 `import pipeline as P`，第 2 条会直接 ModuleNotFoundError——
+# 这也是交付门一直没接进 Web 主链路的真实原因（不是设计取舍，是 import 崩了）。
+try:
+    import pipeline as P
+except ModuleNotFoundError:  # pragma: no cover - 仅在 Web 场景走这里
+    _HERE = _os.path.dirname(_os.path.abspath(__file__))
+    if _HERE not in _sys.path:
+        _sys.path.insert(0, _HERE)
+    import pipeline as P
 
 # 检查项定义：id / 名称 / 级别（block 表示失败即禁止交付）
 CHECKS = (
@@ -240,7 +254,7 @@ def _check_reproducible(quote, res, expected_digest, replay):
 
 
 def check(quote, res, expected_digest=None, replay=None):
-    """对一份审计结果做交付前的六项检查。
+    """对一份审计结果做交付前的七项检查。
 
     参数
     ----

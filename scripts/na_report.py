@@ -25,7 +25,7 @@ def build():
         doc = json.load(f)
     items = doc["items"]
     lines = []
-    lines.append("# 负向知识库：我们明确「不判」的 12 件事")
+    lines.append("# 负向知识库：我们明确「不判」的 13 件事")
     lines.append("")
     lines.append("> 与 `data/rules_v0.json` 互为补集——那份说判什么，这份说不判什么、为什么。")
     lines.append("> 每条都有可执行验证（`tests/test_not_applicable.py`）；改坏了测试会红。")

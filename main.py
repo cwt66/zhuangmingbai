@@ -38,6 +38,7 @@ from src import xlsx as xlsx_mod  # noqa: E402
 from src import money  # noqa: E402
 from src import doc_gate  # noqa: E402
 from src import report_pdf  # noqa: E402
+from src import report_gate  # noqa: E402
 from src import version_diff as diff_mod  # noqa: E402
 fmt_money = pipeline.fmt_money
 
@@ -228,6 +229,48 @@ def _load_rules():
     return onto, templates, rules, coverage
 
 
+def _gate_banner(quotes, res, onto, templates, rules, coverage, template_key, scope):
+    """把交付门结论放在报告最上面——之前它只活在 CLI 与测试里。
+
+    工作流梳理发现一个真断点：`report_gate` 在 main.py 里零引用，
+    Web 的 12 条判定路由全都「算出结论就直接出报告」。
+    也就是说评委在页面上点开的那份报告，从来没问过自己「能不能交出去」。
+
+    这里不阻断 Web（演示环境仍需能看），但把三档判定明明白白写在最顶上：
+    block 时直接写「此报告不应交付给业主」。**不阻断 ≠ 不告知**。
+    """
+    def replay(label):
+        def _run():
+            return pipeline.audit(quotes, onto, templates, rules, coverage,
+                                  template_key=template_key, scope=scope)[label]
+        return _run
+
+    marks = {"pass": ("可交付", "#1B5E20", "#E8F5E9", "#2E7D32"),
+             "needs_fix": ("需修正", "#7A4B00", "#FFF8E1", "#B26A00"),
+             "block": ("禁止交付", "#8E1B1B", "#FFEBEE", "#C62828")}
+    cards = []
+    for q in quotes:
+        r = res.get(q["label"]) or {}
+        try:
+            g = report_gate.check(q, r, replay=replay(q["label"]))
+        except Exception as e:  # noqa: BLE001
+            cards.append('<div style="padding:8px 12px;background:#FFF8E1;color:#7A4B00;'
+                         'font-size:13px">交付门本次未运行（%s）；这不代表通过。</div>'
+                         % html_mod.escape(type(e).__name__))
+            continue
+        word, fg, bg, bd = marks.get(g["verdict"], marks["needs_fix"])
+        failed = [c for c in g["checks"] if not c["ok"] and c.get("level") not in (None, "skip")]
+        detail = "、".join("%s %s" % (c["id"], c["name"]) for c in failed[:4]) or "7 项检查全部通过"
+        warn = ("<b>此报告不应交付给业主</b>；" if g["verdict"] == "block" else "")
+        cards.append(
+            '<div style="margin:10px 24px 0;padding:9px 14px;border-left:4px solid %s;'
+            'background:%s;color:%s;font-size:13px;line-height:1.6">'
+            '<b>交付门 · %s</b>｜%s %s'
+            '<span style="opacity:.75">（D1–D7；失败项：%s）</span></div>'
+            % (bd, bg, fg, html_mod.escape(q["label"]), word, warn, html_mod.escape(detail)))
+    return "".join(cards)
+
+
 def _audit(paths, template_key="old_house", scope="full"):
     """paths: [(label, csv_path)] -> (html, res, quotes)"""
     onto, templates, rules, coverage = _load_rules()
@@ -253,7 +296,9 @@ def _audit(paths, template_key="old_house", scope="full"):
                          template_key=template_key, scope=scope)
     html = pipeline.build_html(quotes, res)
     if "<body>" in html:
-        html = html.replace("<body>", "<body>" + NAV, 1)
+        banner = _gate_banner(quotes, res, onto, templates, rules, coverage,
+                              template_key, scope)
+        html = html.replace("<body>", "<body>" + NAV + banner, 1)
     return html, res, quotes
 
 

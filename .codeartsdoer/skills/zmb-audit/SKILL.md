@@ -88,7 +88,7 @@ python3 scripts/audit_one.py <报价单.csv> --label "<公司或单据名>"
 python3 scripts/gate_report.py        # 7 项交付门 + 5 个故障注入（证明它真会拦）
 python3 eval/redteam.py               # 红队 8 招，看它能被哪一招骗过
 python3 eval/detection_floor.py       # 最小可捕获误差（单行 ±1.01 元）
-bash scripts/check_all.sh             # 13 步全量自检
+bash scripts/check_all.sh             # 15 步全量自检
 ```
 
 ## 数据与隐私
