@@ -54,7 +54,7 @@ class TestIndexIntegrity(unittest.TestCase):
                 self.assertTrue(str(it[k]).strip(), "%s 的 %s 是空的" % (it["id"], k))
             self.assertNotIn(it["id"], ids, "id 重复：%s" % it["id"])
             ids.add(it["id"])
-            self.assertIn(it["status"], ("enforced", "documented"))
+            self.assertIn(it["status"], ("enforced", "documented", "known_gap"))
         self.assertGreaterEqual(len(doc["items"]), 10)
 
 

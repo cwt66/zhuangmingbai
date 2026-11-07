@@ -84,6 +84,9 @@ class Ontology:
             return None, 0.0, "empty"
         best, best_r, best_fee = None, 0.0, False
         for a, cid in self.alias.items():
+            # 易混词直接跳过：宁可落到包含匹配或判 unmatched，也不许张冠李戴
+            if _confusable(n, a):
+                continue
             r = difflib.SequenceMatcher(None, n, a).ratio()
             is_fee = cid in self.fee_ids
             # 同分时工序优先于口径；分更高则照常覆盖
@@ -119,6 +122,30 @@ PAID_KEYWORDS = ("实收", "优惠", "折扣")
 # 本项目 5 份真实单据里恰好一条负金额都没有，所以这个洞没被样本覆盖到。
 DISCOUNT_KEYWORDS = ("优惠", "折扣", "让利", "减免", "抵扣", "返现", "特惠", "活动价")
 RECEIVED_KEYWORDS = ("实收", "应付", "应收", "结算价", "成交价")
+
+
+# 易混词对：编辑距离很近但语义相反/无关的词（地砖↔地漏、找平↔找坡、强电↔弱电）。
+# 红队自测撞出来的真 bug：`地砖安装` 被 SequenceMatcher 判成 `地漏安装`（ratio 0.75），
+# 因为两者只差一个字。后果是双向的——既把贴砖判成漏项，又凭空多出一个地漏。
+# 编辑距离看不见语义，所以这类词必须显式列出，由 fuzzy 那一档跳过。
+def _load_confusable():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "confusable_v0.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            return [(x["a"], x["b"]) for x in json.load(f).get("pairs") or []]
+    except (OSError, ValueError, KeyError):
+        return []
+
+
+CONFUSABLE_PAIRS = _load_confusable()
+
+
+def _confusable(name, alias):
+    """`name` 与 `alias` 是否构成易混对（任一方含 a、另一方含 b）。"""
+    for a, b in CONFUSABLE_PAIRS:
+        if (a in name and b in alias) or (b in name and a in alias):
+            return True
+    return False
 
 
 def _is_summary_row(row):
@@ -459,18 +486,45 @@ def _zone(row):
     return m.group(1) if m else ""
 
 
-def _variant_residual(onto, row):
-    """行名里去掉「概念的正式名」之后剩下的部分，作为变体标识。
+# 通用施工动词：它们只区分「说法」，不区分「变体」。
+# 铺贴 / 安装 / 铺设 指的是同一件事，不该因为动词不同就被判成两个部位。
+TRADE_VERBS = ("铺贴", "铺设", "安装", "施工", "涂刷", "刷涂",
+               "铺", "贴", "刷", "装", "做")
 
-    只剥正式名、不剥别名：别名本身常带部位词（顶面涂料／墙面涂料都是 topcoat 的别名），
-    剥别名会把部位信息抹掉，导致顶面和墙面被判成重复计价。
-    「墙面找平」−「墙面找平」= 空，两条同名仍是重复；顶面/墙面各留部位词，不判重复。
+# 括号里这些词不区分工序，只表示「跟上一个一样」。留着它们，
+# 加个「（同款）」就能绕过重复检测——红队自测 A2 就是这么得手的。
+# 只剥**完全等于**这些词的括号内容：部位词（主卧/次卧/800x800）必须保留。
+NULL_PAREN = ("同款", "同上", "同", "甲供", "乙供", "待定", "暂定", "另计", "参见", "详见图纸")
+
+
+def _variant_residual(onto, row):
+    """行名里去掉「正式名」和「通用施工动词」之后剩下的部分，作为变体标识。
+
+    ## 只剥正式名是不够的（红队自测 A1/A2 撞出来的）
+
+    正式名是「贴地砖」，而真实单据里写的是「地砖铺贴」「地砖安装」——
+    它们都不包含正式名，于是残差退回**整个行名**，两条永远不相等，
+    重复检测直接失效。加个后缀（「（同款）」）也能达到同样效果。
+    这条路子太好走：想藏一次重复计价，只要换个说法。
+
+    所以再剥一层通用施工动词：「地砖铺贴」→ 地砖，「地砖安装」→ 地砖，两者相等，判重复。
+
+    ## 为什么仍然不剥别名
+
+    别名本身常带部位词（顶面涂料／墙面涂料都是 topcoat 的别名），
+    剥别名会把部位信息一起抹掉，导致顶面和墙面被判成重复计价。
+    部位词必须留下——它才是「变体」的真正含义。
     """
-    n = norm(row["name"])
+    raw = row["name"] or ""
+    for w in NULL_PAREN:
+        raw = raw.replace("（%s）" % w, "").replace("(%s)" % w, "")
+    n = norm(raw)
     item = onto.by_id.get(row["cid"]) or {}
     base = norm(item.get("n"))
     if base and base in n:
-        return n.replace(base, "", 1)
+        n = n.replace(base, "", 1)
+    for v in TRADE_VERBS:
+        n = n.replace(v, "")
     return n
 
 
@@ -651,15 +705,41 @@ def find_arithmetic_grouped(quote, rule):
     return out
 
 
+# 「赠送」的判定词。不能用单字「送」——「送风管」「送风口」会被误伤。
+GIFT_WORDS = ("赠送", "赠品", "免费", "附送", "赠：")
+
+
 def find_qty_unit(quote, rule):
+    """数量/单位缺失，以及**有工程量却无单价**。
+
+    后者是红队自测 A4 撞出来的盲区：报价单写「防水 20㎡，单价空着」，
+    业主以为含在总价里，施工时按实补收——这是最典型的开口套路之一。
+    旧实现只查 `qty<=0 or not unit`，这类行直接静默通过。
+
+    但不能一刀切：真实单据里的赠品（「（赠送）开关面板 20 个 0 元」）也是这个形态。
+    所以按名字区分——含「赠送/赠品/免费」的不报，其余报出来但只进待确认档，
+    措辞用「需确认是否赠送」，不替业主下结论。
+    """
     out = []
     for r in quote["rows"]:
+        name = r.get("name") or ""
+        gift = any(k in name for k in GIFT_WORDS)
         if r["qty"] <= 0 or not r["unit"]:
             c = confidence(rule["strength"], 0.95, r["align_conf"] or 0.8, False)
             out.append({"cid": r["cid"], "concept": r["name"], "line": r["no"],
                         "issue": "数量或单位缺失，工程量不可核", "rule": rule["id"],
                         "confidence": c, "tier": tier(c),
                         "evidence": {"basis": "报价单完整性", "formula": "qty<=0 或 unit 为空"}})
+            continue
+        if gift:
+            continue
+        if r["price"] <= 0 and r["amount"] <= 0:
+            c = confidence(rule["strength"], 0.95, r["align_conf"] or 0.8, False)
+            out.append({"cid": r["cid"], "concept": r["name"], "line": r["no"],
+                        "issue": "有工程量但未报价，需确认是赠送还是留待按实结算",
+                        "rule": rule["id"], "confidence": c, "tier": tier(c),
+                        "evidence": {"basis": "报价单完整性",
+                                     "formula": "qty>0 且 单价=0 且 合价=0（名称不含赠送字样）"}})
     return out
 
 

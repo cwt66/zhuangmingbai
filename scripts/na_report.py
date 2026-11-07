@@ -17,7 +17,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "data", "not_applicable_v0.json")
 
-STATUS = {"enforced": "有测试锁", "documented": "已记录"}
+STATUS = {"enforced": "有测试锁", "documented": "已记录", "known_gap": "已知拦不住（有测试断言）"}
 
 
 def build():
@@ -48,8 +48,13 @@ def build():
             STATUS.get(it["status"], it["status"])))
     lines.append("")
     enforced = sum(1 for x in items if x["status"] == "enforced")
-    lines.append("合计：%d 条，其中 **%d 条有测试锁**，%d 条已记录待补。"
-                 % (len(items), enforced, len(items) - enforced))
+    gaps = sum(1 for x in items if x["status"] == "known_gap")
+    lines.append("合计：%d 条，其中 **%d 条有测试锁**，%d 条已记录待补，%d 条是**已知拦不住**。"
+                 % (len(items), enforced, len(items) - enforced - gaps, gaps))
+    if gaps:
+        lines.append("")
+        lines.append("「已知拦不住」不是漏写——它有一条**断言拦不住**的测试："
+                     "既记录边界，也防止有人为了让指标变好而加粗暴规则，打出成片误报。")
     lines.append("")
     lines.append("## 依据")
     lines.append("")
