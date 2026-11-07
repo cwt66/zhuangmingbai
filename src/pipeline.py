@@ -1021,10 +1021,35 @@ footer code{font-family:ui-monospace,Menlo,monospace}
 
 
 def _report_fingerprint(res):
-    """报告判定指纹：对审计结果做规范化序列化后取 sha256 前 16 位。
-    与 scripts/snapshot_predictions.py 的冻结口径同源（sort_keys + ensure_ascii=False）。"""
-    body = json.dumps(res, sort_keys=True, ensure_ascii=False, default=str)
-    return hashlib.sha256(body.encode()).hexdigest()[:16]
+    """报告封面/页脚盖的判定指纹。
+
+    ## 为什么不能直接 digest 整个 res
+
+    之前这里是 `sha256(json.dumps(res))`，摘要的是**整个结果对象**——包括
+    单据原文、计价体系识别、增项预测、界面提示……于是：
+
+    1. 给 `reconcile()` 加一个不影响判定的字段（`received`），所有报告指纹全变；
+    2. 报告封面的指纹（全量摘要）与审计包里的指纹（`result_digest`，只摘要结论）
+       **不相等**。业主拿报告去核对审计包时对不上，第一反应是"被篡改了"。
+
+    「判定指纹」应该只对**判定**敏感。所以这里改成复用 `result_digest`：
+    同一份单据，报告上盖的、审计包里存的、重跑算出来的，是同一个数。
+
+    多单场景（2–4 家对比）按 label 分别取，再组合一次——
+    排序固定，所以单序不影响结果。
+    """
+    def one(r):
+        return result_digest(r.get("quote") or {}, r)
+
+    if isinstance(res, dict) and res and all(
+            isinstance(v, dict) and "missing" in v for v in res.values()):
+        if len(res) == 1:
+            # 单份：直接用该单的结论指纹，保证与审计包里的数一模一样
+            return one(next(iter(res.values())))
+        parts = {label: one(v) for label, v in res.items()}
+        body = json.dumps(parts, sort_keys=True, ensure_ascii=False)
+        return hashlib.sha256(body.encode()).hexdigest()[:16]
+    return one(res)
 
 
 def _missing_note(missing):

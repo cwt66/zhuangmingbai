@@ -5,39 +5,50 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 PY="${PYTHON:-python3}"
-echo "== 1/9 语法编译"
+echo "== 1/11 语法编译"
 "$PY" -m compileall -q main.py src eval scripts tests
 
-echo "== 2/9 单元测试"
+echo "== 2/11 单元测试"
 "$PY" -m unittest discover -s tests
 
-echo "== 3/9 本体对齐覆盖率"
+echo "== 3/11 本体对齐覆盖率"
 "$PY" eval/eval_alignment.py >/dev/null
 echo "   ok（out/alignment_report.md）"
 
-echo "== 4/9 黄金标注评测（精确率/召回率 + Wilson CI）"
+echo "== 4/11 黄金标注评测（精确率/召回率 + Wilson CI）"
 "$PY" eval/golden_eval.py >/dev/null
 echo "   ok（out/golden_eval.md）"
 
-echo "== 5/9 消融实验（L0→L3）"
+echo "== 5/11 消融实验（L0→L3）"
 "$PY" eval/ablation.py >/dev/null
 echo "   ok（out/ablation.md）"
 
-echo "== 6/9 注入实验（242 例已知缺陷形态）"
+echo "== 6/11 注入实验（242 例已知缺陷形态）"
 "$PY" eval/injection_test.py >/dev/null
 echo "   ok（eval/injection_runs/）"
 
-echo "== 7/9 评测门禁（低于阈值即失败）"
+echo "== 7/11 评测门禁（低于阈值即失败）"
 "$PY" eval/gate.py
 
-echo "== 8/9 冻结指纹 + 隐私扫描"
+echo "== 8/11 冻结指纹 + 隐私扫描"
 "$PY" scripts/snapshot_predictions.py --check
 "$PY" scripts/pii_scan.py --strict
 
 # 盲标页是从 templates/ontology/CSV 生成的产物；它一旦过期，第二标注者
 # 就会照着一份旧清单标——所以每次自检都重建，不提交「可能过期」的 HTML。
-echo "== 9/9 盲标工具重建（第二标注者用）"
+echo "== 9/11 盲标工具重建（第二标注者用）"
 "$PY" eval/make_annotator.py
+
+# 交付门是「报告能不能交出去」的判定，不是「结论对不对」。
+# 它自带故障注入（5 个坏样本），拦不住就返回非 0——所以这条会真的失败，
+# 不是只打印一段好看的表格。
+echo "== 10/11 报告交付门（7 检查 + 5 故障注入）"
+"$PY" scripts/gate_report.py | tail -8
+
+# 检测下限回答「最小能抓多少钱」。它不改任何东西，只把能力边界写成数字，
+# 顺便盯住那个已知盲区（单行<1 元、累计<对账容差）还在不在。
+echo "== 11/11 检测下限（单行/累计两维）"
+"$PY" eval/detection_floor.py | grep -E "^\*\*|盲区确认|最严重" || true
 
 echo
 echo "[ALL GREEN] 全部检查通过。"

@@ -162,6 +162,41 @@ class TestBundleDigest(unittest.TestCase):
         r3 = P.audit([q3], onto, tpl, rules, cov, template_key="old_house")[q3["label"]]
         self.assertNotEqual(d1, P.result_digest(q3, r3), "改一个数字必须变")
 
+    def test_report_fingerprint_equals_bundle_digest(self):
+        """报告封面的指纹必须与审计包里的指纹**同一个数**。
+
+        曾经的实现是对整个 result 做 sha256，于是「报告上的指纹」和
+        「审计包里的指纹」不相等——业主拿报告核对审计包时对不上，
+        第一反应就是被篡改。指纹只该对判定敏感。
+        """
+        onto, tpl, rules, cov = _env()
+        q = P.build_line_index(P.load_quote(os.path.join(REAL, "feitai_budget.csv"), "翡翠台"), onto)
+        r = P.audit([q], onto, tpl, rules, cov, template_key="old_house")[q["label"]]
+        self.assertEqual(P._report_fingerprint({q["label"]: r}), P.result_digest(q, r))
+
+    def test_report_fingerprint_ignores_irrelevant_fields(self):
+        """加一个只给界面用的字段，判定指纹不许变。"""
+        import copy
+        onto, tpl, rules, cov = _env()
+        q = P.build_line_index(P.load_quote(os.path.join(REAL, "feitai_budget.csv"), "翡翠台"), onto)
+        r = P.audit([q], onto, tpl, rules, cov, template_key="old_house")[q["label"]]
+        before = P._report_fingerprint({q["label"]: r})
+        noisy = copy.deepcopy(r)
+        noisy["_ui_hint"] = "只影响渲染"
+        noisy["generated_at"] = "2026-11-07 12:00"
+        self.assertEqual(before, P._report_fingerprint({q["label"]: noisy}))
+
+    def test_report_fingerprint_moves_when_conclusion_changes(self):
+        """删掉一条漏项，判定指纹必须变——否则指纹就白盖了。"""
+        import copy
+        onto, tpl, rules, cov = _env()
+        q = P.build_line_index(P.load_quote(os.path.join(REAL, "feitai_budget.csv"), "翡翠台"), onto)
+        r = P.audit([q], onto, tpl, rules, cov, template_key="old_house")[q["label"]]
+        before = P._report_fingerprint({q["label"]: r})
+        trimmed = copy.deepcopy(r)
+        trimmed["missing"] = trimmed["missing"][:-1]
+        self.assertNotEqual(before, P._report_fingerprint({q["label"]: trimmed}))
+
     def test_bundle_roundtrip_and_tamper(self):
         """真打一个包、真跑一次校验器：PASS；改一个数字后必须 FAIL。"""
         tmp = tempfile.mkdtemp(prefix="zmb_test_bundle_")
