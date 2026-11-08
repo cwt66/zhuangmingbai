@@ -110,6 +110,16 @@ def release_heads():
     return out
 
 
+def select_release_head(heads, texts, minimum=3):
+    """纯函数：从候选 hash 里挑出「在 ≥minimum 份文件出现」的发布快照。
+
+    刻意不读 git —— 双向断言在只有 1 个 commit 的浅克隆里也必须能构造。
+    CI 的 check job 用默认 fetch-depth=1，曾因此少跑一例断言而变红。
+    """
+    matched = [(h, [rel for rel, t in texts.items() if h and h in t]) for h in heads]
+    return next(((h, f) for h, f in matched if len(f) >= minimum), None)
+
+
 def is_history_file(rel):
     return any(rel.startswith(h.rstrip("/")) if h.endswith("/") else rel == h
                for h in HISTORY_FILES)
@@ -174,8 +184,7 @@ def scan(package):
     # 无关 hash（tamper_head）仍必须 FAIL，见 --self-test。
     heads = release_heads()
     head = heads[0] if heads else ""
-    matched = [(h, [rel for rel, t in texts.items() if h and h in t]) for h in heads]
-    picked = next(((h, f) for h, f in matched if len(f) >= 3), None)
+    picked = select_release_head(heads, texts)
     stats["head"] = picked[0] if picked else head
     stats["head_files"] = len(picked[1]) if picked else 0
     if not picked:
@@ -274,13 +283,13 @@ def self_test():
                       "ok": got == expect})
 
     case("干净最小包必须 PASS（会说「是」）", lambda r: None, "PASS")
-    parent = release_heads()[1] if len(release_heads()) > 1 else None
-    if parent:
-        def use_parent(r):
-            for p in r.glob("*.md"):
-                p.write_text(p.read_text(encoding="utf-8").replace(head, parent),
-                             encoding="utf-8")
-        case("发布快照是 HEAD~1（同步交付物的 commit）→ PASS", use_parent, "PASS")
+    # 这一例用纯函数构造，不读 git：浅克隆（1 个 commit）里也必须跑得到。
+    probe = select_release_head(
+        ["aaaaaaa", "bbbbbbb"],
+        {"a.md": "发布快照 `bbbbbbb`", "b.md": "`bbbbbbb`", "c.md": "`bbbbbbb`"})
+    ok = bool(probe and probe[0] == "bbbbbbb")
+    cases.append({"name": "发布快照落在 HEAD~1 仍被认可（纯函数，不依赖 git 深度）",
+                  "expected": "PASS", "got": "PASS" if ok else "FAIL", "ok": ok})
 
 
     def add_stale(r):

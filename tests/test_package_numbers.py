@@ -30,7 +30,7 @@ class PackageNumbersTests(unittest.TestCase):
         self.assertEqual(len(st["cases"]), 7)
         self.assertEqual(st["cases"][0]["expected"], "PASS")
         for c in st["cases"]:
-            if c["name"].startswith("发布快照是"):
+            if c["name"].startswith("发布快照落在"):
                 self.assertEqual(c["expected"], "PASS")
             elif c is not st["cases"][0]:
                 self.assertEqual(c["expected"], "FAIL")
