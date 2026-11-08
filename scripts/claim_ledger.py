@@ -89,6 +89,22 @@ def _py(expr):
     return [sys.executable, "-c", expr]
 
 
+def run_json(cmd, timeout=240):
+    """跑一条输出单行 JSON 的命令，**只读 stdout**。
+
+    `run()` 会把 stdout+stderr 拼在一起，若子进程往 stderr 写了 warning，
+    取「最后一行」就可能不是 JSON。JSON 契约只看 stdout，不猜。
+    """
+    try:
+        r = subprocess.run(cmd, cwd=str(ROOT), capture_output=True,
+                           text=True, timeout=timeout)
+        return json.loads((r.stdout or "").strip().splitlines()[-1]), r.returncode
+    except (ValueError, IndexError):
+        return {}, -1
+    except (OSError, subprocess.TimeoutExpired):
+        return {}, -1
+
+
 # ---------------------------------------------------------------- 探针
 # 每个探针返回 (observed: str|None, evidence: str)。
 # None 表示「这次没算出值」——对 ② 档是「待复算」，对 ① 档是 FAIL。
@@ -187,10 +203,8 @@ def probe_detection_floor():
 
 
 def probe_skill_spec():
-    code, out = run([sys.executable, "scripts/verify_skill_spec.py", "--json"])
-    try:
-        d = json.loads(out.strip().splitlines()[-1])
-    except (ValueError, IndexError):
+    d, code = run_json([sys.executable, "scripts/verify_skill_spec.py", "--json"])
+    if not d or code != 0:
         return None, "verify_skill_spec.py 未输出可解析 JSON"
     return str(d.get("status", "FAIL")), "规范符合性 %d/%d 项通过" % (
         d.get("passed", 0), d.get("total", 0))
@@ -203,11 +217,9 @@ def probe_platform_machine():
 
 def probe_cloud_failure_matrix():
     """华为云失效矩阵 9 个实验是否全过（含 5 例双向断言）。"""
-    code, out = run([sys.executable, "eval/cloud_failure_matrix.py",
-                     "--self-test", "--json"])
-    try:
-        d = json.loads(out.strip().splitlines()[-1])
-    except (ValueError, IndexError):
+    d, code = run_json([sys.executable, "eval/cloud_failure_matrix.py",
+                        "--self-test", "--json"])
+    if not d:
         return None, "cloud_failure_matrix.py 未输出可解析 JSON"
     ok = (code == 0 and d.get("status") == "PASS"
           and d.get("self_test") == "PASS" and not d.get("failed"))

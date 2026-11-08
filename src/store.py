@@ -158,8 +158,19 @@ class Store:
                     with self._sqlite_cm() as c:
                         c.executescript(SCHEMA_SQLITE)
         except Exception as e:  # noqa: BLE001
-            self.degraded = "数据库初始化失败，已降级为内存不可用：%s" % e
-            self.kind = "down"
+            # 文档承诺「连不上 PG 自动降级 SQLite」。原来的实现在这里直接置
+            # kind="down"（完全不可用），只写了句降级说明，其实没有降级——
+            # 2026-11-08 失效矩阵在 CI 上装了 psycopg 时抓到了这个不符。
+            # 现在真的回退：清掉 dsn、按 sqlite 重建 schema，degraded 说清原因。
+            self.degraded = "PostgreSQL 初始化失败，已回退 SQLite：%s" % e
+            self.kind = "sqlite"
+            self.dsn = None
+            try:
+                with self._sqlite_cm() as c:
+                    c.executescript(SCHEMA_SQLITE)
+            except Exception as e2:  # noqa: BLE001
+                self.degraded = "回退 SQLite 也失败：%s" % e2
+                self.kind = "down"
 
     # ---------------------------------------------------------------- queries
     def _q(self, sql):

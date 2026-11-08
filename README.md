@@ -211,6 +211,10 @@ python3 eval/cloud_failure_matrix.py            # 9 个实验的人读报告
 python3 eval/cloud_failure_matrix.py --self-test --json
 ```
 
+**第一次上 CI 就抓到一个真 bug**：CI 装了 `psycopg`，PG 初始化失败时
+`store.py` 把 `kind` 置为 `down` 而非回退 SQLite——文档承诺与实现不符。
+修的是实现，不是放宽断言；细节见 `docs/华为云依赖与失效矩阵.md` §5.1。
+
 > 边界：注入的是**本地不可达地址与空凭据**，不是真把华为云实例关掉；
 > 证明的是「代码在依赖不可用时的行为」，不是云服务的 SLA。
 

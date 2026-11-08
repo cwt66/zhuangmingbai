@@ -101,12 +101,47 @@ def _src_import_roots(path):
 
 
 def exp_rds():
-    """RDS 连不上 → 降级 SQLite，且 health 如实说 kind=sqlite / degraded 有原因。"""
-    st = S.Store("postgresql://u:p@127.0.0.1:1/nope")
-    h = st.health()
-    ok = (h.get("kind") == "sqlite" and bool(h.get("degraded")))
-    return ok, "kind=%s, degraded=%s" % (h.get("kind"), str(h.get("degraded"))[:40]), \
-        "注入不可达的 DATABASE_URL；不连真库"
+    """RDS 连不上 → 真的降级 SQLite，且 health 如实说 kind=sqlite / degraded 有原因。
+
+    两种失败都注入，行为与「CI 是否预装 psycopg」无关：
+    ① 驱动不可用；② 驱动在、但 PG 初始化失败（CI 装了 psycopg 的路径）。
+    都不发网络连接，也不写项目的 data/state.db。
+    """
+    import sys as _sys
+    import tempfile
+    import threading
+    import unittest.mock as mock
+
+    dsn = "postgresql://u:p@127.0.0.1:1/nope"
+    tmp = tempfile.mkdtemp(prefix="zmb_rds_")
+    orig_path = S.DEFAULT_SQLITE
+    S.DEFAULT_SQLITE = os.path.join(tmp, "state.db")
+    try:
+        # ① 驱动不可用
+        with mock.patch.dict(_sys.modules, {"psycopg": None}):
+            st1 = S.Store(dsn)
+        h1 = st1.health()
+
+        # ② 驱动在，但 PG 初始化失败 —— 原实现在这里只置 kind="down"，
+        #    与文档「自动降级 SQLite」不符，2026-11-08 被本实验在 CI 上抓到
+        st2 = S.Store.__new__(S.Store)
+        st2.raw, st2.kind, st2.dsn = dsn, "postgres", dsn
+        st2.path = os.path.join(tmp, "pg.db")
+        st2.degraded = None
+        st2._lock = threading.Lock()
+        with mock.patch.object(S.Store, "_pg",
+                               side_effect=OSError("connection refused")):
+            st2._init_schema()
+        h2 = st2.health()
+
+        good = lambda h: h.get("kind") == "sqlite" and bool(h.get("degraded")) \
+            and h.get("status") == "ok"
+        ok = good(h1) and good(h2) and "回退 SQLite" in (h2.get("degraded") or "")
+        return ok, "无驱动 kind=%s / PG失败 kind=%s, degraded=%s" % (
+            h1.get("kind"), h2.get("kind"), str(h2.get("degraded"))[:34]), \
+            "mock 屏蔽 psycopg + 注入 _pg 连接失败；不连真库、不写项目数据"
+    finally:
+        S.DEFAULT_SQLITE = orig_path
 
 
 def exp_redis():
