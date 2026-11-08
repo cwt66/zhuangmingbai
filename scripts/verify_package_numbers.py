@@ -181,9 +181,10 @@ def scan(package):
     if not picked:
         violations.append("发布快照 commit 不在最近 3 个祖先里（当前 HEAD `%s`），提交包可能已过期" % head)
     else:
-        gap = heads.index(picked[0])
-        notes.append("发布快照 commit `%s` 出现在 %d 份文件（当前 HEAD `%s`，相差 %d 个同步提交）" %
-                     (picked[0], len(picked[1]), head, gap))
+        # 报告是「生成时点的快照」，内容不能随之后的同步提交变化；
+        # 所以只写快照 hash 与覆盖份数，不写当前 HEAD / 相差几个提交。
+        notes.append("发布快照 commit `%s` 出现在 %d 份文件（认可 HEAD 最近 3 个祖先；无关 hash 仍 FAIL）" %
+                     (picked[0], len(picked[1])))
     other_hashes = {}
     for rel, t in texts.items():
         for h in re.findall(r"`([0-9a-f]{7})`", t):
@@ -319,7 +320,7 @@ def render(result, package, head):
         "# 提交包数字一致性报告", "",
         "> 由 `scripts/verify_package_numbers.py` 复算；评委可在干净 clone 里重跑。"
         "提交包本体不随公开仓库发布，所以这条**不是 ① 档台账条目**，是本地 ② 档边界。", "",
-        "**%s** ｜ 扫描 %d 份 md ｜ 当前 HEAD `%s` ｜ 历史存证豁免 %d 份" %
+        "**%s** ｜ 扫描 %d 份 md ｜ 发布快照 commit `%s` ｜ 历史存证豁免 %d 份" %
         ("PASS" if not result["violations"] else "FAIL",
          result["md_files"], head, s.get("history_files", 0)), "",
         "| 检查项 | 值 |", "|---|---:|",
@@ -328,7 +329,7 @@ def render(result, package, head):
         "| 引擎行数旧值残留 | %d 处 |" % s.get("stale_engine_lines", 0),
         "| 档位旧值残留 | %d 处 |" % s.get("stale_tiers", 0),
         "| 撤回档案旧值残留 | %d 处 |" % s.get("stale_history_count", 0),
-        "| 当前 HEAD 出现文件数 | %d |" % s.get("head_files", 0),
+        "| 发布快照 commit 出现文件数 | %d |" % s.get("head_files", 0),
         "| sha256 清单复算文件数 | %d |" % s.get("sha_checked", 0),
         "| 合法历史叙述豁免行 | %d |" % s.get("exempted_lines", 0), "",
         "## 明细", "",
