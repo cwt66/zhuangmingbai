@@ -27,10 +27,13 @@ class PackageNumbersTests(unittest.TestCase):
         self.assertEqual(st["status"], "PASS",
                          [c for c in st["cases"] if not c["ok"]])
         self.assertTrue(all(c["ok"] for c in st["cases"]))
-        self.assertEqual(len(st["cases"]), 6)
+        self.assertEqual(len(st["cases"]), 7)
         self.assertEqual(st["cases"][0]["expected"], "PASS")
-        for c in st["cases"][1:]:
-            self.assertEqual(c["expected"], "FAIL")
+        for c in st["cases"]:
+            if c["name"].startswith("发布快照是"):
+                self.assertEqual(c["expected"], "PASS")
+            elif c is not st["cases"][0]:
+                self.assertEqual(c["expected"], "FAIL")
 
     def test_step_regex_does_not_match_date(self):
         self.assertIsNone(re.search(_step_pattern(), "账号持有人 | 11/15 |"))

@@ -66,3 +66,29 @@ jobs:
           name: clean-clone-evidence
           path: out/clean_clone_report.md
           if-no-files-found: ignore
+
+  # 第三个 job：跨环境确定性。刻意不装 requirements —— 判定链路零第三方包，
+  # 用干净 venv 在 4 个 Python 版本、x86_64 runner 上比对 arm64 采集存档。
+  # 本机 arm64 跑绿只算「同架构复算」；这里跑绿才让「跨指令集确定性」成立。
+  determinism:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Cross-environment determinism (empty venv)
+        run: |
+          python -m venv /tmp/zmb-empty
+          /tmp/zmb-empty/bin/python eval/determinism_matrix.py --self-test --json
+      - name: Upload determinism evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: determinism-${{ matrix.python-version }}
+          path: out/determinism_matrix.md
+          if-no-files-found: ignore

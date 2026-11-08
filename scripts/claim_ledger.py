@@ -210,6 +210,16 @@ def probe_skill_spec():
         d.get("passed", 0), d.get("total", 0))
 
 
+def probe_determinism_matrix():
+    """跨环境确定性矩阵：12 变体 + arm64 存档比对是否 PASS。"""
+    d, code = run_json([sys.executable, "eval/determinism_matrix.py",
+                        "--self-test", "--json", "--no-report"])
+    if not d or code != 0:
+        return None, "determinism_matrix.py 未输出可解析 JSON"
+    return str(d.get("status", "FAIL")), "%d 个变体 / %d 次字段比对 / 双向断言 %s" % (
+        d.get("variants", 0), d.get("checks", 0), d.get("self_test", "未跑"))
+
+
 def probe_platform_machine():
     """当前进程所在机器的架构（CI 用；不代表开发机）。"""
     return platform.machine(), "platform.machine()"
@@ -285,6 +295,7 @@ PROBES = {
     "platform_machine": probe_platform_machine,
     "dev_arch_record": probe_dev_arch_record,
     "cloud_failure_matrix": probe_cloud_failure_matrix,
+    "determinism_matrix": probe_determinism_matrix,
     "ablation_l2": probe_ablation_l2,
     "liveness_killed": probe_liveness_killed,
 }

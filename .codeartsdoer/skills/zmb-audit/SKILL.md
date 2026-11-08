@@ -25,7 +25,7 @@ tags: [huawei-cloud, codearts, audit, quotation, deterministic]
 - 输入是带「项目名称 / 单位 / 数量 / 单价 / 合价」列的表格
 - 工作目录为仓库根目录；规则库 `data/rules_v0.json`、本体 `data/ontology_v0.json`、
   模板 `data/templates_v0.json` 必须存在
-- 可选：`bash scripts/check_all.sh` 先跑一遍 17 步自检，确认引擎没被改坏
+- 可选：`bash scripts/check_all.sh` 先跑一遍 18 步自检，确认引擎没被改坏
 
 ## 什么时候用
 
@@ -110,7 +110,7 @@ python3 scripts/verify_skill_spec.py --self-test   # 本 Skill 的规范符合�
 python3 scripts/claim_ledger.py --self-test        # 材料里每句数字的复算台账
 python3 scripts/verify_package_numbers.py          # 提交包数字一致性（仓库外，本地 ② 档）
 python3 scripts/verify_clean_clone.py --self-test  # 干净 clone 保障的静态不变量
-bash scripts/check_all.sh             # 17 步全量自检
+bash scripts/check_all.sh             # 18 步全量自检
 ```
 
 ## 偏离声明（对华为云官方 Agent Skills 规范）

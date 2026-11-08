@@ -7,7 +7,7 @@
 [![Gitee](https://img.shields.io/badge/Gitee-Cwt66%2Fzhuangmingbai-c71d23)](https://gitee.com/Cwt66/zhuangmingbai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](./requirements.txt)
-[![Tests](https://img.shields.io/badge/tests-284-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-298-brightgreen.svg)](./tests)
 [![Rules](https://img.shields.io/badge/rules-13-002FA7.svg)](./data/rules_v0.json)
 
 签合同之前，上传 2–4 家装修公司的报价单（照片 / PDF / Excel / CSV），输出一份**可核对、可溯源、可复现**的审计报告：
@@ -63,7 +63,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 | **分位金额** | ✅ `src/money.py`：Decimal 求和/求差；R8 仍保留 1 元容差，质量门额外报「精确到分」差额 |
 | **多 sheet Excel** | ✅ `.xlsx` 解析所有 worksheet，选非空行最多的一张，避免「主表在第二个 sheet」直接报空 |
 | 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**（合计 **614 行**原始表格数据）；两份完整黄金标注；注入实验 242 例 |
-| 单元测试 | ✅ **284 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / **红队与易混词 17** / **Skill 证据校验 16** / **规则活性 15** / **Web 交付门 4** / 优惠与负号 5 / 指纹一致性 3 / 主张台账 14 例 / Skills 规范 7 例 / 隐私扫描 4 例 / 干净 clone 保障 4 例 / 提交包数字 6 例 / 失效矩阵 6 例） |
+| 单元测试 | ✅ **298 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / **红队与易混词 17** / **Skill 证据校验 16** / **规则活性 15** / **Web 交付门 4** / 优惠与负号 5 / 指纹一致性 3 / 主张台账 14 例 / Skills 规范 7 例 / 隐私扫描 4 例 / 干净 clone 保障 4 例 / 提交包数字 6 例 / 失效矩阵 6 例） |
 | 可打印报告 | ✅ `/demo`、`/real`（打印级 HTML，判定指纹上封面） |
 | **服务端 PDF** | ✅ `/demo.pdf`、`/real.pdf`、`scripts/make_report_pdf.py`（不依赖浏览器打印） |
 | **上传守门** | ✅ `src/doc_gate.py`：**解析前**就判 报价单/合同/无关（只看表头与原文），非报价单直接 400 并给合同词/列结构证据 |
@@ -83,7 +83,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 | 问询单 | ✅ 把结论变成可直接发给报价方的逐条问询（`src/inquiry.py`） |
 | 输入兼容 | ✅ UTF-8 / **GBK** / UTF-16、逗号 / **TAB**、表头别名 |
 | 审计历史 | ✅ `/history` + `/api/audits`（证明 RDS 真的在存业务数据） |
-| 一键自检 | ✅ `bash scripts/check_all.sh`（17 步：测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性 + **主张台账** + **华为云失效矩阵**） |
+| 一键自检 | ✅ `bash scripts/check_all.sh`（18 步：测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性 + **主张台账** + **华为云失效矩阵**） |
 | 在线 Demo | ✅ `python3 -m uvicorn main:app --port 8000` |
 | 离线演示包 | ✅ 干净目录可独立复现（含跨领域 demo） |
 | RenoPit 对照实验 | 🚧 协议已预注册，跑批进行中（我们已借鉴其文档分类/增项预测，但改为确定性实现） |
@@ -106,11 +106,11 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 ### 2.2 主张台账：材料里的数字，自己会说话
 
 前面所有门禁管的都是**引擎输出对不对**。还有一类东西从来没人管：
-**我们对外说的话对不对**。材料里写着「284 个测试」「119 概念 / 388 别名」
-「17 步自检」，代码一改就悄悄过期，评委不会去数，我们自己也不会。
+**我们对外说的话对不对**。材料里写着「298 个测试」「119 概念 / 388 别名」
+「18 步自检」，代码一改就悄悄过期，评委不会去数，我们自己也不会。
 
 所以加了第 16 步：**每条可量化主张都必须带一条产生它的命令**
-（`data/claims_v0.json`，20 条）。判定不认台账里写的 `value`，
+（`data/claims_v0.json`，21 条）。判定不认台账里写的 `value`，
 只认 `probe` 当场从源头重算出来的 `observed`；同时用 `{v}` 模板反查文档，
 「改了文档没改台账」和「改了代码没改文档」两个方向都会红。
 
@@ -119,7 +119,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 
 | 档 | 含义 | 条数 | 例子 |
 |---|---|---:|---|
-| ① 跑出过结果 | 校验器当场执行命令，从源头重算 | 14 | 测试数、本体重命名、614 行、17 步、红队 7/8、±1.01 元 |
+| ① 跑出过结果 | 校验器当场执行命令，从源头重算 | 15 | 测试数、本体重命名、614 行、17 步、红队 7/8、±1.01 元 |
 | ② 读过原文 | 值来自命令生成的产物，本次未独立重算 | 3 | 消融精确率、规则活性被杀数 |
 | ③ 只按元数据判 | 写不出命令的边界声明，**不计已验证** | 3 | n=2 只作存在性证明、鲲鹏未实测、Key 未开通 |
 
@@ -217,6 +217,53 @@ python3 eval/cloud_failure_matrix.py --self-test --json
 
 > 边界：注入的是**本地不可达地址与空凭据**，不是真把华为云实例关掉；
 > 证明的是「代码在依赖不可用时的行为」，不是云服务的 SLA。
+
+---
+
+### 2.6 跨环境判定确定性：换台机器也不许换结论（创新点 ⑦）
+
+⑥ 证明「判定不依赖云」，⑦ 再往下问一句：**换环境呢？**
+`docs/华为云IaC实测与硬件边界.md` 里「鲲鹏 ARM ECS 未实测」是我们主动交代的欠账
+（台账 C18，③ 档声明）。不能把「ARM64 理论上能跑」包装成「已适配鲲鹏」，
+但可以把这句推论收敛成一条**谁都能复算的证据**。
+
+`eval/determinism_matrix.py` 用同一份 `data/real/feitai_budget.csv` 跑
+**12 个环境变体**：三个 `PYTHONHASHSEED`（0 / 1 / random）、UTC 与上海时区、
+C 与中文 locale、关掉 UTF-8 mode、`-O` 优化级别、注入假 `psycopg`/`redis`、
+以及 `python -S`（完全不加载 site-packages）。
+每个变体比对 6 个结论字段（digest / verdict / 核减 / 重复 / 行数 / 总额），
+共 144 次逐字段比对——**全部与基准 `52bf7b635204fd96` 一致**。
+
+```bash
+python3 eval/determinism_matrix.py                 # 12 个变体的人读报告
+python3 eval/determinism_matrix.py --self-test --json
+```
+
+方法参照 GitHub 上两个可核对的项目：
+`FlorianStuettgen/SOC_Replay` 的 *Reproducible Builds*（干净源树两次独立执行、
+固定哈希种子、比对完整校验和、**主动写明可复现构建证明不了什么**），
+以及 MEP-51 的 *Cross-target byte-equal differential gate*
+（跨 x86_64 / aarch64 / macOS-arm64 比对输出 SHA-256，并逐条列出
+历史上真正导致过分歧的原因：哈希种子、set 迭代顺序、locale 排序、时区）。
+上面那些变体就是照着这份「分歧原因清单」逐项注入的。
+
+**跨指令集这半边不在本机证明。** `data/determinism_arm64_v0.json` 是这台
+arm64 开发机采集的判定指纹存档；GitHub Actions 第三个 job `determinism`
+在 **x86_64** runner 上、用 Python 3.10 / 3.11 / 3.12 / 3.13 四个版本的
+**空 venv（刻意不装 `requirements.txt`）** 当场重算并比对。
+本机跑绿只算「同架构复算」，CI 跑绿才让「跨指令集 + 跨 Python 版本确定性」成立——
+报告里会如实写 `跨指令集比对：是 / 否(同架构复算)`，不给自己放水。
+
+接进自检第 18 步，台账 **C21** 锁住结果，`--self-test` 有 **8 例双向断言**：
+删掉存档、抹掉「鲲鹏实例未实测」边界声明、拿 x86_64 结果冒充 arm64 存档、
+某个种子下指纹漂移、少跑一个维度——都必须 FAIL。
+
+> **三条不许越过的线**：
+> ① C18「鲲鹏实例未实测、昇腾未涉及」**不因这条升级**，仍是 ③ 档声明；
+> ② 比对的是**判定结论**，不是构建产物字节，不是 reproducible build；
+> ③ 存档来自 macOS arm64 开发机，不是华为云 aarch64 实例，环境变量扰动
+> 也不等于真换了一台国产服务器。要补那条，仍需在真鲲鹏 ECS 上跑
+> `uname -m` + `bash scripts/check_all.sh` 并存证（见硬件边界文档 §4）。
 
 ---
 
@@ -327,7 +374,7 @@ python3 eval/cohen_kappa.py --dir eval/annotator/回传
 git clone https://gitee.com/Cwt66/zhuangmingbai.git
 cd zhuangmingbai
 bash run_offline.sh                   # 合成三单 → out/audit_report.html
-bash scripts/check_all.sh             # 测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性 + 主张台账 + 华为云失效矩阵（17 步）
+bash scripts/check_all.sh             # 测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性 + 主张台账 + 华为云失效矩阵（18 步）
 ```
 
 ### 5.1.1 本地 OCR（macOS，可选）
@@ -446,7 +493,7 @@ data/coverage_v0.json   证据词 + 父类吸收表
 data/not_applicable_v0.json  负向知识库：13 条「不判」+ 理由 + 若判了的后果
 docs/RULE-BLIND-SPOTS.md 规则盲点清单：诊断，不是修复日志
 data/confusable_v0.json 易混词对：15 组只差一字但语义相反的词，fuzzy 匹配必须跳过
-data/claims_v0.json     主张台账：20 条公开主张 + 证据档位 + 文档出现位置
+data/claims_v0.json     主张台账：21 条公开主张 + 证据档位 + 文档出现位置
 data/claim_history_v0.json 撤回档案：10 条撤回/误报/已知未修 + 3 条预测 MISS
 data/real/              5 份真实单据（公开晒单/公开 PDF 的人工转录，无个人信息）
 eval/                   黄金标注评测 / 消融 / 注入 / 对照实验 / 冻结指纹 / 指标库

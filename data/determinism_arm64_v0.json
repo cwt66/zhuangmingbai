@@ -1,0 +1,24 @@
+{
+  "schema": "zmb-determinism-arm64/v1",
+  "captured_at": "2026-11-08",
+  "captured_by": "python3 eval/determinism_matrix.py --capture",
+  "reference": {
+    "machine": "arm64",
+    "platform": "macOS-26.6-arm64-arm-64bit-Mach-O",
+    "python": "3.13.12",
+    "instruction_set": "ARM64 / AArch64（与鲲鹏、openEuler aarch64 同指令集）"
+  },
+  "fixture": "data/real/feitai_budget.csv",
+  "declares": [
+    "鲲鹏实例未实测",
+    "openEuler 未实测",
+    "昇腾 NPU 未涉及"
+  ],
+  "note": "本存档只证明「判定结论在这台 arm64 机器上是什么」。跨指令集结论由 x86_64 CI 当场算出同一 digest 后成立；它不是鲲鹏实例实测，也不是 openEuler 兼容性认证，更不涉及昇腾 NPU。",
+  "digest": "52bf7b635204fd96",
+  "verdict": "pass",
+  "missing_cost": 618.4,
+  "duplicate_cut": 182.0,
+  "rows": 123,
+  "total": 153384.0
+}

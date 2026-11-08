@@ -77,10 +77,10 @@ STALE_RULES = (
 
 # (名称, 字面值, 至少出现在几份非豁免文件里)
 REQUIRED_RULES = (
-    ("当前测试数", "284", 3),
-    ("当前步数", "17 步", 3),
-    ("主张台账条数", "20 条", 2),
-    ("当前档位", "① 14 / ② 3", 1),
+    ("当前测试数", "298", 3),
+    ("当前步数", "18 步", 3),
+    ("主张台账条数", "21 条", 2),
+    ("当前档位", "① 15 / ② 3", 1),
     ("Skills 规范", "18/18", 1),
 )
 
@@ -91,6 +91,23 @@ def short_head():
                               capture_output=True, text=True).stdout.strip()
     except OSError:
         return ""
+
+
+def release_heads():
+    """提交包是在某个 commit 上生成的，之后为同步交付物还会再提交一次。
+    所以认可最近 3 个祖先；任何无关 hash 仍必须 FAIL。
+    修的是「生成完再上传会误报自己过期」这个设计缺陷，不是放宽口径。
+    """
+    out = []
+    for spec in ("HEAD", "HEAD~1", "HEAD~2"):
+        try:
+            r = subprocess.run(["git", "rev-parse", "--short", spec], cwd=str(ROOT),
+                               capture_output=True, text=True)
+            if r.returncode == 0 and r.stdout.strip():
+                out.append(r.stdout.strip())
+        except OSError:
+            break
+    return out
 
 
 def is_history_file(rel):
@@ -152,20 +169,25 @@ def scan(package):
         else:
             notes.append("【%s】「%s」出现在 %d 份文件（≥%d）" % (name, literal, n, minimum))
 
-    # 3) commit hash：当前 HEAD 必须出现在至少 3 份文件；其它 7 位 hex 只提示不强判
-    head = short_head()
-    stats["head"] = head
-    head_files = [rel for rel, t in texts.items() if head and head in t]
-    stats["head_files"] = len(head_files)
-    if len(head_files) < 3:
-        violations.append("当前 HEAD `%s` 只在 %d 份文件里出现（要求 ≥3），提交包可能已过期" %
-                          (head, len(head_files)))
+    # 3) commit hash：发布快照 commit 必须出现在至少 3 份文件。
+    # 提交包生成后为把 zip 放进仓库会再提交一次，故认可最近 3 个祖先；
+    # 无关 hash（tamper_head）仍必须 FAIL，见 --self-test。
+    heads = release_heads()
+    head = heads[0] if heads else ""
+    matched = [(h, [rel for rel, t in texts.items() if h and h in t]) for h in heads]
+    picked = next(((h, f) for h, f in matched if len(f) >= 3), None)
+    stats["head"] = picked[0] if picked else head
+    stats["head_files"] = len(picked[1]) if picked else 0
+    if not picked:
+        violations.append("发布快照 commit 不在最近 3 个祖先里（当前 HEAD `%s`），提交包可能已过期" % head)
     else:
-        notes.append("当前 HEAD `%s` 出现在 %d 份文件" % (head, len(head_files)))
+        gap = heads.index(picked[0])
+        notes.append("发布快照 commit `%s` 出现在 %d 份文件（当前 HEAD `%s`，相差 %d 个同步提交）" %
+                     (picked[0], len(picked[1]), head, gap))
     other_hashes = {}
     for rel, t in texts.items():
         for h in re.findall(r"`([0-9a-f]{7})`", t):
-            if h != head:
+            if h not in heads:
                 other_hashes.setdefault(h, set()).add(rel)
     for h, files in sorted(other_hashes.items()):
         notes.append("历史引用 `%s` 出现在 %d 份文件（不判违规，人工确认是采样点即可）" %
@@ -251,6 +273,14 @@ def self_test():
                       "ok": got == expect})
 
     case("干净最小包必须 PASS（会说「是」）", lambda r: None, "PASS")
+    parent = release_heads()[1] if len(release_heads()) > 1 else None
+    if parent:
+        def use_parent(r):
+            for p in r.glob("*.md"):
+                p.write_text(p.read_text(encoding="utf-8").replace(head, parent),
+                             encoding="utf-8")
+        case("发布快照是 HEAD~1（同步交付物的 commit）→ PASS", use_parent, "PASS")
+
 
     def add_stale(r):
         p = r / "README.md"

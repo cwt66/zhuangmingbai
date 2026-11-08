@@ -15,13 +15,13 @@
       "occurrences 里的 {v} 会被替换成 value，用来抓「改了文档没改台账」和「改了代码没改文档」两个方向",
       "被撤回的结论不删：data/claim_history_v0.json 的指纹写在这里，删一条就会红"
     ],
-    "history_digest": "8ce8f414c8d6e9e13c0dc195853bdc49b1ea9a7e199c953647626e8364316dd8"
+    "history_digest": "3d4723411a3b0af13fc252b93e229ee0d74e4a230338915012c6fc1ceb4b48b9"
   },
   "claims": [
     {
       "id": "C01",
-      "text": "单元测试 284 个",
-      "value": "284",
+      "text": "单元测试 298 个",
+      "value": "298",
       "tier": "ran",
       "probe": "tests_count",
       "command": "python3 -m unittest discover -s tests",
@@ -127,8 +127,8 @@
     },
     {
       "id": "C08",
-      "text": "一键自检 17 步全绿",
-      "value": "17",
+      "text": "一键自检 18 步全绿",
+      "value": "18",
       "tier": "ran",
       "probe": "check_all_steps",
       "command": "grep -c '^echo \"== ' scripts/check_all.sh",
@@ -316,6 +316,21 @@
         }
       ],
       "note": "矩阵里每一行都被真的挂过一次；最硬的一条是 8 个依赖全置不可用时判定指纹逐字节不变。"
+    },
+    {
+      "id": "C21",
+      "text": "跨环境判定确定性 12 个变体全过（arm64 存档 ↔ x86_64 CI）",
+      "value": "PASS",
+      "tier": "ran",
+      "probe": "determinism_matrix",
+      "command": "python3 eval/determinism_matrix.py --self-test --json",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "12 个环境变体"
+        }
+      ],
+      "note": "哈希种子/时区/locale/编码/优化级别/可选依赖/无 site-packages 逐项扰动，判定指纹逐字节不变。arm64 采集存档与 x86_64 CI 的比对在 CI 上真发生；本机只算同架构复算。C18「鲲鹏实例未实测」不因这条升级。"
     }
   ]
 }

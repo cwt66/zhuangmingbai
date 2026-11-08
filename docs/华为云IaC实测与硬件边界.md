@@ -75,7 +75,7 @@ error creating server: POST https://ecs.cn-north-4.myhuaweicloud.com/v1.1/<proje
 ## 三、这对项目主链路意味着什么
 
 ECS 只是**公网入口**，不是判定依赖。`src/pipeline.py` 零第三方包、不联网，
-`/health` 与全部 284 个单测在本机就能跑完。所以：
+`/health` 与全部 298 个单测在本机就能跑完。所以：
 
 > ECS 没开起来 → 只影响「有没有一个能点开的在线 Demo」，
 > **不影响任何一条审计结论**。GitHub Pages 承担复验页与回放页，本地
@@ -87,14 +87,39 @@ ECS 只是**公网入口**，不是判定依赖。`src/pipeline.py` 零第三方
 
 ---
 
-## 四、硬件关联：三层，边界逐层收紧
+## 四、硬件关联：四层，边界逐层收紧
 
 | 层 | 状态 | 能说什么 | 不能说什么 |
 |---|---|---|---|
-| **ARM64 开发机** | ✅ 实测 | `macOS ... arm64`，284 测试 + 17 步自检全绿；判定引擎纯标准库，无 C 扩展轮子 | — |
+| **ARM64 开发机** | ✅ 实测 | `macOS ... arm64`，298 测试 + 18 步自检全绿；判定引擎纯标准库，无 C 扩展轮子 | — |
+| **跨环境确定性（新增）** | ✅ **可复算** | arm64 采集存档与 x86_64 CI（Python 3.10–3.13 空 venv）判定指纹逐字节一致；12 个环境变体 144 次字段比对 | ❌ 不等于「鲲鹏实例实测」，不等于 openEuler 兼容性认证，不是 reproducible build |
 | **华为云 x86 ECS（`s6.large.2`）** | 🟡 IaC 跑到 apply、实例未创建 | 「用华为云 provider 真实申请过 ECS，失败码 `Ecs.7000`」 | ❌ 不能说「已在 ECS 上部署」 |
-| **鲲鹏 ARM ECS** | ❌ **未实测** | 「同为 ARM64 指令集，理论上可直接运行」 | ❌ 不能说「已适配鲲鹏」「已在鲲鹏验证」 |
+| **鲲鹏 ARM ECS** | ❌ **未实测** | 「同为 ARM64 指令集，理论上可直接运行；**同指令集上的判定确定性已被跨架构比对验证**」 | ❌ 不能说「已适配鲲鹏」「已在鲲鹏验证」 |
 | **昇腾 NPU** | ❌ 未涉及 | 「模型调用全部走 API，不涉及本地推理芯片」 | ❌ 不能写任何 NPU 相关成果 |
+
+### 4.1 新增层到底证明了什么（2026-11-08）
+
+`eval/determinism_matrix.py` 把「同为 ARM64 理论上能跑」这句推论，
+收敛成一条能被第三方复算的证据：在 arm64 开发机采集判定指纹存档
+（`data/determinism_arm64_v0.json`，`digest=52bf7b635204fd96`），
+再让 GitHub Actions 的 **x86_64** runner 用 4 个 Python 版本、
+**不装任何第三方包**的空 venv 当场算出同一个指纹。
+
+方法来自 GitHub 上 `SOC_Replay` 的 reproducible-builds 与 MEP-51 的
+cross-target byte-equal differential gate；后者逐条列出了历史上真正导致
+跨架构分歧的原因（哈希种子、set 顺序、locale、时区、float 打印），
+我们把这些原因逐项注入成 12 个变体。
+
+**这条证据的边界必须一起读：**
+
+1. 它证明的是**判定结论在不同指令集 / Python 版本 / locale / 可选依赖下的确定性**，
+   不是构建产物字节相同，也不是「服务已在国产机器上跑起来」。
+2. 存档来自 **macOS arm64 开发机**，不是华为云 aarch64 实例；
+   比对用的是 **Linux x86_64 CI**。两边都不是鲲鹏 ECS。
+3. 所以台账里 **C18「鲲鹏实例未实测、昇腾 NPU 未涉及」仍是 ③ 档声明，
+   不因 C21 升级**。证据分档没有豁免权，包括对我们自己有利的时候。
+4. 存档自带 `declares` 三条边界声明，少一条判据直接 FAIL——
+   防止后来有人把这份报告当成适配认证去用。
 
 ### 鲲鹏预设（写清楚「只是预设」，不是成果）
 
@@ -123,13 +148,14 @@ flavor_id   = var.instance_flavor_name
 
 ```bash
 python3 -m pip install -r requirements.txt
-bash scripts/check_all.sh        # 期望 [ALL GREEN] 17 步
+bash scripts/check_all.sh        # 期望 [ALL GREEN] 18 步
+python3 eval/determinism_matrix.py --json   # 期望 cross_arch=true
 uname -m                         # 期望 aarch64
 ```
 
-把 `uname -m` 与 `[ALL GREEN]` 的完整输出贴进
+把 `uname -m`、跨架构比对输出与 `[ALL GREEN]` 的完整日志贴进
 `09_证据附录/运行存证/kunpeng_<date>.txt`，这条才从**推论**变成**证据**。
-在那之前，材料里只写「ARM64 已验证、鲲鹏未实测」。
+在那之前，材料里只写「ARM64 已验证、同指令集确定性已复算、鲲鹏未实测」。
 
 ---
 
@@ -158,5 +184,6 @@ grep -n 'Ecs.7000' .auto-deploy/deployment-test-report.md
 > 我们不是「接了华为云」就完事：Terraform 用 `huaweicloud` provider 1.90.0
 > 在 `cn-north-4` 真实建出了 VPC、子网、安全组和密钥对，
 > ECS 因 `Ecs.7000` 余额不足没建成；**失败点、影响面、恢复动作都能指到具体资源**。
-> 硬件上只有 ARM64 开发机是实测，**鲲鹏未实测、昇腾未涉及**——
-> 这两条边界主动交代，比多写一句「全面适配国产软硬件」值钱。
+> 硬件上只有 ARM64 开发机是实测；新增的跨环境确定性矩阵证明了
+> 「arm64 与 x86_64 判定指纹一致」，但**鲲鹏实例仍未实测、昇腾仍未涉及**——
+> 这两条边界不因新证据升级，比多写一句「全面适配国产软硬件」值钱。
