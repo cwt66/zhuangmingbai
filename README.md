@@ -7,7 +7,7 @@
 [![Gitee](https://img.shields.io/badge/Gitee-Cwt66%2Fzhuangmingbai-c71d23)](https://gitee.com/Cwt66/zhuangmingbai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](./requirements.txt)
-[![Tests](https://img.shields.io/badge/tests-278-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-284-brightgreen.svg)](./tests)
 [![Rules](https://img.shields.io/badge/rules-13-002FA7.svg)](./data/rules_v0.json)
 
 签合同之前，上传 2–4 家装修公司的报价单（照片 / PDF / Excel / CSV），输出一份**可核对、可溯源、可复现**的审计报告：
@@ -63,7 +63,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 | **分位金额** | ✅ `src/money.py`：Decimal 求和/求差；R8 仍保留 1 元容差，质量门额外报「精确到分」差额 |
 | **多 sheet Excel** | ✅ `.xlsx` 解析所有 worksheet，选非空行最多的一张，避免「主表在第二个 sheet」直接报空 |
 | 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**（合计 **614 行**原始表格数据）；两份完整黄金标注；注入实验 242 例 |
-| 单元测试 | ✅ **278 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / **红队与易混词 17** / **Skill 证据校验 16** / **规则活性 15** / **Web 交付门 4** / 优惠与负号 5 / 指纹一致性 3 / 主张台账 14 例 / Skills 规范 7 例 / 隐私扫描 4 例 / 干净 clone 保障 4 例 / 提交包数字 6 例） |
+| 单元测试 | ✅ **284 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / **红队与易混词 17** / **Skill 证据校验 16** / **规则活性 15** / **Web 交付门 4** / 优惠与负号 5 / 指纹一致性 3 / 主张台账 14 例 / Skills 规范 7 例 / 隐私扫描 4 例 / 干净 clone 保障 4 例 / 提交包数字 6 例 / 失效矩阵 6 例） |
 | 可打印报告 | ✅ `/demo`、`/real`（打印级 HTML，判定指纹上封面） |
 | **服务端 PDF** | ✅ `/demo.pdf`、`/real.pdf`、`scripts/make_report_pdf.py`（不依赖浏览器打印） |
 | **上传守门** | ✅ `src/doc_gate.py`：**解析前**就判 报价单/合同/无关（只看表头与原文），非报价单直接 400 并给合同词/列结构证据 |
@@ -83,7 +83,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 | 问询单 | ✅ 把结论变成可直接发给报价方的逐条问询（`src/inquiry.py`） |
 | 输入兼容 | ✅ UTF-8 / **GBK** / UTF-16、逗号 / **TAB**、表头别名 |
 | 审计历史 | ✅ `/history` + `/api/audits`（证明 RDS 真的在存业务数据） |
-| 一键自检 | ✅ `bash scripts/check_all.sh`（16 步：测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性 + **主张台账**） |
+| 一键自检 | ✅ `bash scripts/check_all.sh`（17 步：测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性 + **主张台账** + **华为云失效矩阵**） |
 | 在线 Demo | ✅ `python3 -m uvicorn main:app --port 8000` |
 | 离线演示包 | ✅ 干净目录可独立复现（含跨领域 demo） |
 | RenoPit 对照实验 | 🚧 协议已预注册，跑批进行中（我们已借鉴其文档分类/增项预测，但改为确定性实现） |
@@ -106,11 +106,11 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 ### 2.2 主张台账：材料里的数字，自己会说话
 
 前面所有门禁管的都是**引擎输出对不对**。还有一类东西从来没人管：
-**我们对外说的话对不对**。材料里写着「278 个测试」「119 概念 / 388 别名」
-「16 步自检」，代码一改就悄悄过期，评委不会去数，我们自己也不会。
+**我们对外说的话对不对**。材料里写着「284 个测试」「119 概念 / 388 别名」
+「17 步自检」，代码一改就悄悄过期，评委不会去数，我们自己也不会。
 
 所以加了第 16 步：**每条可量化主张都必须带一条产生它的命令**
-（`data/claims_v0.json`，19 条）。判定不认台账里写的 `value`，
+（`data/claims_v0.json`，20 条）。判定不认台账里写的 `value`，
 只认 `probe` 当场从源头重算出来的 `observed`；同时用 `{v}` 模板反查文档，
 「改了文档没改台账」和「改了代码没改文档」两个方向都会红。
 
@@ -119,7 +119,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 
 | 档 | 含义 | 条数 | 例子 |
 |---|---|---:|---|
-| ① 跑出过结果 | 校验器当场执行命令，从源头重算 | 13 | 测试数、本体重命名、614 行、16 步、红队 7/8、±1.01 元 |
+| ① 跑出过结果 | 校验器当场执行命令，从源头重算 | 14 | 测试数、本体重命名、614 行、17 步、红队 7/8、±1.01 元 |
 | ② 读过原文 | 值来自命令生成的产物，本次未独立重算 | 3 | 消融精确率、规则活性被杀数 |
 | ③ 只按元数据判 | 写不出命令的边界声明，**不计已验证** | 3 | n=2 只作存在性证明、鲲鹏未实测、Key 未开通 |
 
@@ -138,7 +138,7 @@ python3 scripts/claim_ledger.py               # 人读的表：out/claim_ledger.
 （[run 42372612688](https://github.com/cwt66/zhuangmingbai/actions/runs/42372612688)，`conclusion=failure`）。
 处理不是把探针改成永远返回 `arm64`，而是**把 C14 从 ① 降为 ②**
 （改读采集时写入的 `data/dev_environment_v0.json`），并在撤回档案记 H11 留案。
-档位因此从 ① 14 / ② 2 变成 **① 13 / ② 3**——数字变难看了，但它是对的。
+档位因此从 ① 14 / ② 2 降为 **① 13 / ② 3**（本轮 C20 又补回 ① 14 / ② 3）——数字变难看了，但它是对的。
 细节见 `docs/CLAIM-LEDGER.md`。
 
 **为什么这算一个创新点**：别人证明「我能干活」，我们证明「我说过的每句话都能被查」。
@@ -181,6 +181,38 @@ python3 scripts/verify_clean_clone.py    --json       # 真跑一次干净 clone
 两者都带双向断言，共 10 个单测锁住不退化。
 **不进 ① 档不是免责，是把它放在真能被复算的地方，而不是换一个假绿勾。**
 细节见 `docs/CLAIM-LEDGER.md` §5.1。
+
+### 2.5 华为云失效矩阵：每一行都被真的「挂过一次」（创新点 ⑥）
+
+`docs/华为云依赖与失效矩阵.md` 此前列了 8 个依赖挂掉会怎样，写得挺好，
+**但一条都没被执行过**——「每个依赖都有降级路径」只是文档里的一句话。
+
+`eval/cloud_failure_matrix.py` 把它做成 **9 个实验**：
+RDS / DCS / MaaS 文本 / MaaS 视觉 / 华为云 OCR / OBS / ECS / CodeArts 各注入一次，
+外加一次「8 个依赖同时不可用」的全挂验证。三条纪律逐条落断言：
+
+| 纪律 | 怎么验 |
+|---|---|
+| 降级要承认，`/health` 不撒谎 | 注入不可达地址 → `kind=sqlite` / `memory` 且 `degraded` 有原因；再注入「把 sqlite 撒成 postgres」必须被拒 |
+| 感知层不许返回空表 | 无凭据调 `perceive` 必须抛 `PerceptionError`；源码静态检查无 `return []`、且 `not subscribed` 与「签名失败」分开 |
+| 表达层失败要说来源 | 无 Key 时 HTML 必须写「规则模板生成」，不伪装成 AI 生成 |
+
+**最硬的一条**：把 8 个可选依赖同时置为不可用，再跑一次完整审计，
+判定指纹 `52bf7b635204fd96` 与核减金额逐字节不变。
+**云全挂了结论还是它，才配说「判定不依赖云」**——此前只是架构文档里的形容。
+
+方法不是自己想的，参照 GitHub 上的 `chaos_toolkit`（受控故障注入验证 fallback）、
+`qa-resilience`（deterministic fault injection 先于 staged chaos）、
+`resilience-pattern-engineer`（**每条声明的防御都要有一个 chaos test 证明它触发**）。
+接进自检第 17 步，台账 C20 锁住它；`--self-test` 另有 5 例双向断言。
+
+```bash
+python3 eval/cloud_failure_matrix.py            # 9 个实验的人读报告
+python3 eval/cloud_failure_matrix.py --self-test --json
+```
+
+> 边界：注入的是**本地不可达地址与空凭据**，不是真把华为云实例关掉；
+> 证明的是「代码在依赖不可用时的行为」，不是云服务的 SLA。
 
 ---
 
@@ -291,7 +323,7 @@ python3 eval/cohen_kappa.py --dir eval/annotator/回传
 git clone https://gitee.com/Cwt66/zhuangmingbai.git
 cd zhuangmingbai
 bash run_offline.sh                   # 合成三单 → out/audit_report.html
-bash scripts/check_all.sh             # 测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性 + 主张台账（16 步）
+bash scripts/check_all.sh             # 测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性 + 主张台账 + 华为云失效矩阵（17 步）
 ```
 
 ### 5.1.1 本地 OCR（macOS，可选）
@@ -410,7 +442,7 @@ data/coverage_v0.json   证据词 + 父类吸收表
 data/not_applicable_v0.json  负向知识库：13 条「不判」+ 理由 + 若判了的后果
 docs/RULE-BLIND-SPOTS.md 规则盲点清单：诊断，不是修复日志
 data/confusable_v0.json 易混词对：15 组只差一字但语义相反的词，fuzzy 匹配必须跳过
-data/claims_v0.json     主张台账：19 条公开主张 + 证据档位 + 文档出现位置
+data/claims_v0.json     主张台账：20 条公开主张 + 证据档位 + 文档出现位置
 data/claim_history_v0.json 撤回档案：10 条撤回/误报/已知未修 + 3 条预测 MISS
 data/real/              5 份真实单据（公开晒单/公开 PDF 的人工转录，无个人信息）
 eval/                   黄金标注评测 / 消融 / 注入 / 对照实验 / 冻结指纹 / 指标库

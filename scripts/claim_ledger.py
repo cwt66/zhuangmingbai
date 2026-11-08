@@ -201,6 +201,20 @@ def probe_platform_machine():
     return platform.machine(), "platform.machine()"
 
 
+def probe_cloud_failure_matrix():
+    """华为云失效矩阵 9 个实验是否全过（含 5 例双向断言）。"""
+    code, out = run([sys.executable, "eval/cloud_failure_matrix.py",
+                     "--self-test", "--json"])
+    try:
+        d = json.loads(out.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        return None, "cloud_failure_matrix.py 未输出可解析 JSON"
+    ok = (code == 0 and d.get("status") == "PASS"
+          and d.get("self_test") == "PASS" and not d.get("failed"))
+    return ("PASS" if ok else "FAIL"), "实验 %s 个 / 失败 %s / 双向断言 %s" % (
+        d.get("experiments"), d.get("failed"), d.get("self_test"))
+
+
 def probe_dev_arch_record():
     """读开发机架构记录 —— ② 档。
 
@@ -258,6 +272,7 @@ PROBES = {
     "skill_spec": probe_skill_spec,
     "platform_machine": probe_platform_machine,
     "dev_arch_record": probe_dev_arch_record,
+    "cloud_failure_matrix": probe_cloud_failure_matrix,
     "ablation_l2": probe_ablation_l2,
     "liveness_killed": probe_liveness_killed,
 }

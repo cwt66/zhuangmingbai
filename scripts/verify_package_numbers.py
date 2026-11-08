@@ -66,19 +66,21 @@ STALE_RULES = (
     ("steps", "自检步数", r"(?:15\s*步\s*自检|自检\s*15\s*步|（\s*15\s*步\s*）|"
      r"\(\s*15\s*步\s*\)|共\s*15\s*步|十五步|==\s*\d+/15\s)", "15 步", ("16 步",)),
     ("engine_lines", "引擎行数", r"1,198\s*行|1,248\s*行", "引擎行数", ("零第三方包",)),
-    ("tiers", "证据档位", r"①\s*14\s*/\s*②\s*2|①\s*14\s*条\s*/\s*②\s*2\s*条|"
-     r"\|\s*①\s*当场跑命令\s*\|\s*14\s*\||\|\s*②\s*读命令生成的产物\s*\|\s*2\s*\|",
-     "14/2/3 档位", ("① 13", "② 3")),
+    # 只认「历史档位组合」，不把表格里的当前计数写死 —— 每加一条 ① 档主张，
+    # 表格数字就会变，写死值必然误报（这轮就踩过一次）。
+    ("tiers", "证据档位", r"①\s*14\s*/\s*②\s*2|①\s*13\s*/\s*②\s*3|"
+     r"①\s*14\s*条\s*/\s*②\s*2\s*条|①\s*13\s*条\s*/\s*②\s*3\s*条",
+     "旧档位组合", ("① 14 / ② 3", "① 14 条 / ② 3 条")),
     ("history_count", "撤回档案条数", r"撤回档案\s*10\s*条|10\s*条撤回|10\s*条\s*/\s*3\s*条",
      "10 条撤回档案", ("11 条",)),
 )
 
 # (名称, 字面值, 至少出现在几份非豁免文件里)
 REQUIRED_RULES = (
-    ("当前测试数", "278", 3),
-    ("当前步数", "16 步", 3),
-    ("主张台账条数", "19 条", 2),
-    ("当前档位", "① 13 / ② 3", 1),
+    ("当前测试数", "284", 3),
+    ("当前步数", "17 步", 3),
+    ("主张台账条数", "20 条", 2),
+    ("当前档位", "① 14 / ② 3", 1),
     ("Skills 规范", "18/18", 1),
 )
 
@@ -213,17 +215,22 @@ def self_test():
     import tempfile
 
     head = short_head()
-    # 从规则表取当前值，避免「改了口径忘了改自测」造成假红
-    current_tests = next(r[1] for r in REQUIRED_RULES if r[0] == "当前测试数")
+    # 所有当前值都从规则表取，避免「改了口径忘了改自测」造成假红
+    def cur(name):
+        return next(r[1] for r in REQUIRED_RULES if r[0] == name)
+
+    current_tests = cur("当前测试数")
     cases = []
 
     def build(root):
         root = Path(root)
         (root / "06_开源与部署").mkdir(parents=True, exist_ok=True)
         (root / "09_证据附录").mkdir(parents=True, exist_ok=True)
-        common = ("当前 HEAD `%s`；%s 个单元测试；一键自检 16 步；"
-                  "主张台账 19 条；证据分档 ① 13 / ② 3 / ③ 3；"
-                  "撤回档案 11 条；华为云 Skills 规范 18/18 项。\n" % (head, current_tests))
+        common = ("当前 HEAD `%s`；%s 个单元测试；一键自检 %s；"
+                  "主张台账 %s；证据分档 %s / ③ 3；"
+                  "撤回档案 11 条；华为云 Skills 规范 18/18 项。\n" % (
+                      head, current_tests, cur("当前步数"),
+                      cur("主张台账条数"), cur("当前档位")))
         for name in ("README.md", "00_导航.md", "07_答辩.md"):
             (root / name).write_text(common, encoding="utf-8")
         (root / "09_证据附录" / "演示环境验证记录.md").write_text(
