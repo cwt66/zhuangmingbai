@@ -7,7 +7,7 @@
 [![Gitee](https://img.shields.io/badge/Gitee-Cwt66%2Fzhuangmingbai-c71d23)](https://gitee.com/Cwt66/zhuangmingbai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](./requirements.txt)
-[![Tests](https://img.shields.io/badge/tests-311-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-312-brightgreen.svg)](./tests)
 [![Rules](https://img.shields.io/badge/rules-13-002FA7.svg)](./data/rules_v0.json)
 
 签合同之前，上传 2–4 家装修公司的报价单（照片 / PDF / Excel / CSV），输出一份**可核对、可溯源、可复现**的审计报告：
@@ -63,7 +63,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 | **分位金额** | ✅ `src/money.py`：Decimal 求和/求差；R8 仍保留 1 元容差，质量门额外报「精确到分」差额 |
 | **多 sheet Excel** | ✅ `.xlsx` 解析所有 worksheet，选非空行最多的一张，避免「主表在第二个 sheet」直接报空 |
 | 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**（合计 **614 行**原始表格数据）；两份完整黄金标注；注入实验 242 例 |
-| 单元测试 | ✅ **311 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / **红队与易混词 17** / **Skill 证据校验 16** / **规则活性 15** / **Web 交付门 4** / 优惠与负号 5 / 指纹一致性 3 / 主张台账 14 例 / Skills 规范 7 例 / 隐私扫描 4 例 / 干净 clone 保障 4 例 / 提交包数字 6 例 / 失效矩阵 6 例） |
+| 单元测试 | ✅ **312 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / **红队与易混词 17** / **Skill 证据校验 16** / **规则活性 15** / **Web 交付门 4** / 优惠与负号 5 / 指纹一致性 3 / 主张台账 14 例 / Skills 规范 7 例 / 隐私扫描 4 例 / 干净 clone 保障 4 例 / 提交包数字 6 例 / 失效矩阵 6 例） |
 | 可打印报告 | ✅ `/demo`、`/real`（打印级 HTML，判定指纹上封面） |
 | **服务端 PDF** | ✅ `/demo.pdf`、`/real.pdf`、`scripts/make_report_pdf.py`（不依赖浏览器打印） |
 | **上传守门** | ✅ `src/doc_gate.py`：**解析前**就判 报价单/合同/无关（只看表头与原文），非报价单直接 400 并给合同词/列结构证据 |
@@ -106,7 +106,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 ### 2.2 主张台账：材料里的数字，自己会说话
 
 前面所有门禁管的都是**引擎输出对不对**。还有一类东西从来没人管：
-**我们对外说的话对不对**。材料里写着「311 个测试」「119 概念 / 388 别名」
+**我们对外说的话对不对**。材料里写着「312 个测试」「119 概念 / 388 别名」
 「19 步自检」，代码一改就悄悄过期，评委不会去数，我们自己也不会。
 
 所以加了第 16 步：**每条可量化主张都必须带一条产生它的命令**

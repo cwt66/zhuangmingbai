@@ -66,3 +66,10 @@ class TestGitAddressesNotPii(unittest.TestCase):
 
     def test_real_email_still_caught(self):
         self.assertTrue(_scan('联系：someone@example.com\n'))
+
+class TestHashDigitsNotBankCard(unittest.TestCase):
+    """sha256 里的连续数字不是银行卡号（2026-11-09 误报回归）。"""
+
+    def test_sha256_not_bank_card(self):
+        sha = 'cdf7d545c16947446268802542ea0b9bd572fc4d7539ed21e51447b960f7738e'
+        self.assertEqual(_scan('| `pkg.zip` | `%s` |\n' % sha), [])

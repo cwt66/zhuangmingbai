@@ -68,6 +68,12 @@ def scan_file(path):
                 if name == "email" and (val.startswith("git@")
                                         or val.endswith("@users.noreply.github.com")):
                     continue
+                # sha256 里的连续数字会被银行卡正则误伤（16-19 位）。
+                # 只在命中区间完全落在 64 位 hex 内时豁免，真实卡号仍会被抓。
+                if name == "bank_card":
+                    m64 = re.search(r"[0-9a-f]{64}", line)
+                    if m64 and m64.start() <= m.start() and m.end() <= m64.end():
+                        continue
                 hits.append((i, name, val, line.strip()[:120]))
         for m in privacy.NAME_CTX.finditer(line):
             if m.group(2) not in NAME_WHITELIST:
