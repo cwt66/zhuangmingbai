@@ -51,3 +51,18 @@ class PiiScanTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestGitAddressesNotPii(unittest.TestCase):
+    """git 远程地址与 GitHub noreply 不是个人信息（2026-11-09 误报回归）。"""
+
+    def test_git_remote_host_is_not_email(self):
+        hits = _scan('git push ssh://git@ssh.github.com:443/o/r.git\n')
+        self.assertEqual(hits, [])
+
+    def test_github_noreply_is_not_pii(self):
+        hits = _scan('-c user.email=cwt66@users.noreply.github.com\n')
+        self.assertEqual(hits, [])
+
+    def test_real_email_still_caught(self):
+        self.assertTrue(_scan('联系：someone@example.com\n'))

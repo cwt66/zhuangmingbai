@@ -62,6 +62,12 @@ def scan_file(path):
                 val = m.group(0)
                 if val in WHITELIST:
                     continue
+                # git 远程地址与 GitHub noreply 不是个人信息：
+                # 前者是主机名，后者是官方提供的隐私保护地址（2026-11-09
+                # publish_pages.py 首次进自检时被误判，修判据而不是改文案）。
+                if name == "email" and (val.startswith("git@")
+                                        or val.endswith("@users.noreply.github.com")):
+                    continue
                 hits.append((i, name, val, line.strip()[:120]))
         for m in privacy.NAME_CTX.finditer(line):
             if m.group(2) not in NAME_WHITELIST:

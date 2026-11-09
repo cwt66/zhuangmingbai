@@ -46,8 +46,8 @@
 ```json
 {
   "id": "C01",
-  "text": "单元测试 308 个",
-  "value": "308",
+  "text": "单元测试 311 个",
+  "value": "311",
   "tier": "ran",
   "probe": "tests_count",
   "command": "python3 -m unittest discover -s tests",
@@ -259,7 +259,7 @@ C14 宣称 arm64，实测 x86_64 —— 数字漂了
 而是把「从候选里挑发布快照」抽成纯函数 `select_release_head(heads, texts)`：
 `scan()` 照常读 git，双向断言则直接用构造好的候选列表，
 **判据不再隐含依赖仓库历史深度**。本地用 `git clone --depth 1` 复现后验证：
-浅克隆里仍是 7 例、308 tests OK。
+浅克隆里仍是 7 例、311 tests OK。
 一个只在「历史完整的机器上」才跑得全的判据，和「只在自己机器上绿」没有区别。
 
 ### 5.4 最后一环：评委第一眼看到的那一页
