@@ -14,7 +14,7 @@
      改用系统中文衬线（宋体）做大标题、黑体做正文，仍是明确的字体搭配，不是默认 system-ui。
   2) 不做花哨动效，只保留一次性错峰显现：这是「复验文档」，可读性 > 表演性。
 
-  所有数字来自 09_证据附录/评测数字总表.md；生成时点 2026-11-05，commit 见封面。
+  所有数字由 scripts/verify_showcase.py 与 data/claims_v0.json 逐条校验；不写死 commit hash，以仓库 git log -1 为准。
 -->
 <style>
 :root{
@@ -122,12 +122,12 @@ body.on-dark .deck-controls span:last-child{color:#888}
   <div class="cols c4 reveal">
     <div class="stat"><div class="big">119<small>概念</small></div><div class="l">388 别名 · 13 条规则</div></div>
     <div class="stat"><div class="big">5<small>份</small></div><div class="l">真实单据 · 603 行明细</div></div>
-    <div class="stat"><div class="big">243<small>测试</small></div><div class="l">15 步自检 · 门禁全绿</div></div>
+    <div class="stat"><div class="big">308<small>测试</small></div><div class="l">19 步自检 · 门禁全绿</div></div>
     <div class="stat"><div class="big">3<small>指纹</small></div><div class="l">冻结基线 · 离线可复算</div></div>
   </div>
   <div class="note reveal">边界先行：不判断贵不贵、不评价施工质量、不推断动机。只判漏没漏、重没重、算术与整单对不对得上。<br>
-  参赛主体、队伍信息与报名状态以作品信息收集表为准。｜ 生成时点 2026-11-05 ｜ 仓库 commit 见第 9 页</div>
-  <div class="foot"><span>评委复验页 · 单文件 HTML · 零依赖 · 可离线双击打开</span><span>01 / 10</span></div>
+  参赛主体、队伍信息与报名状态以作品信息收集表为准。｜ 口径由 <code>verify_showcase.py</code> 逐条校验 ｜ commit 以仓库 <code>git log -1</code> 为准</div>
+  <div class="foot"><span>评委复验页 · 单文件 HTML · 零依赖 · 可离线双击打开</span><span>01 / 11</span></div>
 </section>
 
 <!-- 02 问题与判定边界 -->
@@ -152,7 +152,7 @@ body.on-dark .deck-controls span:last-child{color:#888}
     </div>
   </div>
   <div class="note reveal">这一页对应官方「创新性」里最难讲清的部分：创新不在模型多大，而在把不可判定的命题挡在门外。</div>
-  <div class="foot"><span>赛题一 · 创新性（初赛 60%）</span><span>02 / 10</span></div>
+  <div class="foot"><span>赛题一 · 创新性（初赛 60%）</span><span>02 / 11</span></div>
 </section>
 
 <!-- 03 五环节：正面回应官方要求 -->
@@ -170,8 +170,8 @@ body.on-dark .deck-controls span:last-child{color:#888}
     <tr><td><b>⑤ 部署上线</b></td><td>systemd + Nginx + 云上快速部署清单</td><td>RDS / OBS 命令行；沙箱 + DevBridge 出 HTTPS</td></tr>
   </table>
   <div class="note reveal">诚实分工：码道做外围与本体（2 个作者 commit / 525 行 / 7 文件），人守判定与云原生。<br>
-  2026-11-01 新增的 store/cache/llm 是人工开发，没有算成「码道生成」。</div>
-  <div class="foot"><span>证据：05_CodeArts过程资产/ · raw/stage1–5</span><span>03 / 10</span></div>
+  2026-11-01 新增的 store/cache/llm 是人工开发，没有算成「码道生成」。<br>生态侧另有三条可复算证据：项目级 Skill 对齐华为云官方 Agent Skills 规范 <b>18/18</b>；Terraform <code>huaweicloud</code> provider 1.90.0 真实 apply（见第 10 页）；失效矩阵 9 个实验每次自检都跑。</div>
+  <div class="foot"><span>证据：05_CodeArts过程资产/ · raw/stage1–5</span><span>03 / 11</span></div>
 </section>
 
 <!-- 04 云上链路状态 -->
@@ -186,10 +186,10 @@ body.on-dark .deck-controls span:last-child{color:#888}
     <tr><td><b>DCS Redis</b></td><td><code>src/cache.py</code></td><td><span class="tag red">需控制台创建</span>无 CLI 接口</td><td>代码已接入，实例待开通</td></tr>
     <tr><td><b>MaaS 文本 / 视觉</b></td><td><code>src/llm.py</code></td><td>无 API Key；输出接地校验，失败退模板</td><td>当前解读标注「规则模板」</td></tr>
     <tr><td><b>OCR 表格识别</b></td><td><code>src/perception.py</code></td><td>额度受限（11/04 复测 4106）</td><td>用历史产物 / 本地 Vision</td></tr>
-    <tr><td><b>OBS / ECS</b></td><td>部署手册</td><td>OBS 已开通；ECS 受余额限制</td><td>公网走沙箱 + DevBridge</td></tr>
+    <tr><td><b>OBS / ECS</b></td><td>部署手册</td><td>OBS 的 AK 11-07 失效；ECS 停在 <code>Ecs.7000</code> 余额不足</td><td>静态展示走 GitHub Pages；判定链路不依赖 ECS</td></tr>
   </table>
-  <div class="note reveal"><b>红线</b>：不写「Redis 已开通」「MaaS 已跑通真实照片」「公网永久可用」；DevBridge 隧道 72h 失效，可 5 分钟重建。</div>
-  <div class="foot"><span>证据：09_证据附录/演示环境验证记录.md</span><span>04 / 10</span></div>
+  <div class="note reveal"><b>红线</b>：不写「Redis 已开通」「MaaS 已跑通真实照片」「公网永久可用」；DevBridge 隧道 72h 失效，可 5 分钟重建。<br><b>硬件四层</b>：arm64 开发机 ✅ 实测 / 跨环境确定性 ✅ 可复算 / 华为云 x86 ECS 🟡 IaC 跑到 apply / 鲲鹏 ❌ 未实测、昇腾 ❌ 未涉及（详见第 10 页）。</div>
+  <div class="foot"><span>证据：09_证据附录/演示环境验证记录.md</span><span>04 / 11</span></div>
 </section>
 
 <!-- 05 架构 -->
@@ -206,7 +206,7 @@ body.on-dark .deck-controls span:last-child{color:#888}
   </div>
   <div class="note reveal"><b>可迁移性已实测</b>：引擎零改动，只换本体 / 模板 / 覆盖率三份 JSON，同一套 13 条规则能审汽修维保单（漏 4 / 重 1 / 对账差 30），
   并由此抓出 2 处隐式领域耦合并修掉。见 <code>迁移实验_汽修维保_1101.md</code>。</div>
-  <div class="foot"><span>架构图：04_技术文档/装明白_技术架构图_4000x2500.png</span><span>05 / 10</span></div>
+  <div class="foot"><span>架构图：04_技术文档/装明白_技术架构图_4000x2500.png</span><span>05 / 11</span></div>
 </section>
 
 <!-- 06 真实数据 -->
@@ -225,7 +225,7 @@ body.on-dark .deck-controls span:last-child{color:#888}
   </table>
   <div class="note reveal">17 个缺陷由真实数据打穿（含：汇总行重复加总、OCR 错字丢列、分页序号重复、工艺包含对跨区误扣）。<br>
   <b>诚实边界</b>：n=5 只作存在性证明；黄金标注只有 2 份、单一标注者 A1，不报「总体召回率」。</div>
-  <div class="foot"><span>证据：09_证据附录/评测数字总表.md · 真实数据评测报告_v2.md</span><span>06 / 10</span></div>
+  <div class="foot"><span>证据：09_证据附录/评测数字总表.md · 真实数据评测报告_v2.md</span><span>06 / 11</span></div>
 </section>
 
 <!-- 07 评测 -->
@@ -249,7 +249,7 @@ body.on-dark .deck-controls span:last-child{color:#888}
     <div class="card"><div class="t">第二标注一致性：尚未完成</div>
       <div class="d">盲标页 + Cohen's κ 脚本已交付（30 分钟/份），但<b>还没有第二个人跑过</b>。在此之前，材料只写「单一标注者、结果可复算」，不写「标注可靠」。</div></div>
   </div>
-  <div class="foot"><span>红线：不说「召回率 100%」；不说「置信度校准过 / ECE」</span><span>07 / 10</span></div>
+  <div class="foot"><span>红线：不说「召回率 100%」；不说「置信度校准过 / ECE」</span><span>07 / 11</span></div>
 </section>
 
 <!-- 08 可复现证据 -->
@@ -265,7 +265,7 @@ body.on-dark .deck-controls span:last-child{color:#888}
   </div>
   <div class="note reveal">本地 OCR 闭环（同一套判定，只换输入）：原始 OCR 对齐 40.0%、明细合计少 68,892 元；人工校对后 82.9%、合计对得上。
   <b>先对账、再判漏项</b>是唯一能发现 OCR 丢钱的手段。</div>
-  <div class="foot"><span>scripts/make_bundle.py · snapshot_predictions.py · 感知层闭环验证_1101.md</span><span>08 / 10</span></div>
+  <div class="foot"><span>scripts/make_bundle.py · snapshot_predictions.py · 感知层闭环验证_1101.md</span><span>08 / 11</span></div>
 </section>
 
 <!-- 09 复验卡：核心页 -->
@@ -276,7 +276,7 @@ body.on-dark .deck-controls span:last-child{color:#888}
   <table class="reveal tight">
     <tr><th style="width:520px">命令</th><th>期望看到</th><th style="width:210px">对应主张</th></tr>
     <tr><td><code>git clone gitee.com/Cwt66/zhuangmingbai</code><br><code>或 github.com/cwt66/zhuangmingbai</code></td><td>双仓同一 commit；MIT；GitHub Actions CI 绿</td><td>开源 / 落地进展</td></tr>
-    <tr><td><code>bash scripts/check_all.sh</code></td><td>243 tests OK · 15 步 · <b>五份</b>指纹一致 · 规则活性 35/47 · <code>[ALL GREEN]</code></td><td>工程可信度</td></tr>
+    <tr><td><code>bash scripts/check_all.sh</code></td><td>308 tests OK · 19 步 · <b>五份</b>指纹一致 · 规则活性 35/47 · <code>[ALL GREEN]</code></td><td>工程可信度</td></tr>
     <tr><td><code>python3 scripts/gate_report.py</code></td><td>5 单全<b>可交付</b>；5 个故障注入 <b>5/5 全拦</b></td><td>报告会拒绝交付自己</td></tr>
     <tr><td><code>python3 eval/redteam.py</code></td><td>8 招攻击 <b>拦住 7</b>；得手那招有断言拦不住的测试</td><td>主动打自己</td></tr>
     <tr><td><code>python3 eval/golden_eval.py</code> + <code>injection_test.py</code></td><td>auto P/R 0.833（CI 0.552–0.953）；注入 242/242（下限，非召回率）</td><td>评测口径</td></tr>
@@ -288,19 +288,45 @@ body.on-dark .deck-controls span:last-child{color:#888}
     <tr><td><code>python3 scripts/audit_with.py ...</code>（汽修）</td><td>引擎零改动，漏 4 / 重 1 / 对账差 30</td><td>可迁移性</td></tr>
   </table>
   <div class="note reveal">改一行 CSV → <code>snapshot_predictions.py --check</code> 看指纹漂移 → <code>git checkout</code> 恢复。
-  在线 main <code>c56b706</code>；v0.5.0 快照 <code>2391a0a</code>（相差 19 个提交，判定口径未变）。</div>
-  <div class="foot"><span>完整命令见 09_证据附录/演示环境验证记录.md 第七节</span><span>09 / 10</span></div>
+  commit 以 <code>git log -1</code> 为准——本页刻意不写死 hash：hash 每次提交都变，写进展示页必然过期。<br>新增的四条华为关联判据见第 10 页；展示页自身的数字一致性由 <code>verify_showcase.py</code> 第 19 步守着。</div>
+  <div class="foot"><span>完整命令见 09_证据附录/演示环境验证记录.md 第七节</span><span>09 / 11</span></div>
 </section>
 
-<!-- 10 边界与待办 -->
+<!-- 10 华为关联 · 可复算证据 -->
+<section class="slide">
+  <div class="kicker reveal"><span class="no">10</span> 华为关联 · 可复算证据</div>
+  <h2 class="reveal">不列服务名，列评委能当场跑的证据</h2>
+  <div class="lead reveal">硬件边界逐层收紧；每条「挂了会怎样 / 换台机器还一样」的承诺，都有命令。</div>
+  <div class="hair reveal"></div>
+  <table class="reveal tight">
+    <tr><th style="width:330px">层</th><th style="width:250px">状态</th><th>能说什么 / 不能说什么</th></tr>
+    <tr><td><b>ARM64 开发机</b></td><td>✅ 实测</td><td>308 测试 / 19 步自检全绿；判定引擎零第三方包、无 C 扩展轮子</td></tr>
+    <tr><td><b>跨环境确定性</b></td><td>✅ 可复算</td><td>arm64 采集存档 ↔ x86_64 CI（Python 3.10–3.13 空 venv）判定指纹逐字节一致</td></tr>
+    <tr><td><b>华为云 x86 ECS</b></td><td>🟡 IaC 跑到 apply</td><td>Terraform <code>huaweicloud</code> provider 1.90.0 真建出 VPC / 子网 / 安全组 / 密钥对；ECS 停在 <code>Ecs.7000</code>，<b>不能说「已部署」</b></td></tr>
+    <tr><td><b>鲲鹏 ARM / 昇腾</b></td><td>❌ 未实测 / 未涉及</td><td>同为 ARM64 指令集，同指令集上的判定确定性已被验证；<b>仍不写「已适配鲲鹏」</b>、不写任何 NPU 成果</td></tr>
+  </table>
+  <table class="reveal tight">
+    <tr><th style="width:900px">命令（评委可当场跑）</th><th>期望看到</th></tr>
+    <tr><td><code>python3 scripts/verify_skill_spec.py --json</code></td><td>华为云官方 Agent Skills 规范 <b>18/18</b> 项</td></tr>
+    <tr><td><code>python3 eval/cloud_failure_matrix.py --self-test --json</code></td><td><b>9 个实验</b>；8 个依赖全挂时判定指纹不变</td></tr>
+    <tr><td><code>python3 eval/determinism_matrix.py --self-test --json</code></td><td><b>12 变体 / 144 次比对</b>；跨指令集那一半由 x86_64 CI 证明</td></tr>
+    <tr><td><code>python3 scripts/claim_ledger.py --json</code></td><td><b>22 条主张 / 0 违规</b>；证据分档 ① 16 / ② 3 / ③ 3，③ 档 3 条不计已验证</td></tr>
+  </table>
+  <div class="note reveal"><b>判据不给自己发豁免</b>：C18「鲲鹏实例未实测、昇腾未涉及」仍是 ③ 档声明；
+  arm64 存档少一条边界声明，确定性矩阵直接 FAIL。<br>
+  ECS 失败码是余额问题不是代码问题；注入的是本地不可达地址与空凭据，证明的是代码行为，不是云服务 SLA。</div>
+  <div class="foot"><span>证据：docs/华为云IaC实测与硬件边界.md · docs/华为云依赖与失效矩阵.md · docs/CLAIM-LEDGER.md</span><span>10 / 11</span></div>
+</section>
+
+<!-- 11 边界与待办 -->
 <section class="slide dark">
-  <div class="kicker reveal"><span class="no">10</span> 诚实边界 · 下一步</div>
+  <div class="kicker reveal"><span class="no">11</span> 诚实边界 · 下一步</div>
   <h2 class="reveal">能跑的系统、能查的数字、能承认的边界</h2>
   <div class="cols c2 reveal" style="margin-top:20px">
     <div class="card"><div class="t" style="color:#F0A9A0">还不能说「已完成」</div>
       <div class="d">· 0 个真实家庭试点（应用价值唯一硬证据）<br>· MaaS 无 Key，云端 OCR 额度受限<br>
       · Redis 实例需控制台创建<br>· <b>红队 8 招有 1 招得手</b>（㎡ 写成 m，见负向库 NA13）<br>
-      · 鲲鹏实例未实测，不写「已适配」<br>· 3 分钟演示视频未录<br>· 报名与队伍信息未填（11/30 截止）</div></div>
+      · arm64↔x86_64 判定确定性已复算，但<b>鲲鹏实例 / openEuler 仍未实测</b>，不写「已适配」<br>· ③ 档 3 条声明写不出复算命令，不计已验证<br>· 3 分钟演示视频未录<br>· 报名与队伍信息未填（11/30 截止）</div></div>
     <div class="card"><div class="t" style="color:#A9C0F5">按性价比排的下一步</div>
       <div class="d"><b>P0</b> 报名 + 队伍信息（逾期 = 弃赛）<br><b>P0</b> 2–3 个真实家庭试点（签合同前介入）<br>
       <b>P1</b> 收 1–2 对「报价 + 结算」，验证漏项是否真变成加钱<br><b>P1</b> 视频 + Redis 控制台 + 云上固定地址<br>
@@ -309,19 +335,19 @@ body.on-dark .deck-controls span:last-child{color:#888}
   <div class="rule reveal" style="background:#FAFAF8"></div>
   <div class="cols c3 reveal">
     <div><div class="big" style="font-size:76px">MIT</div><div class="stat l">开源许可</div></div>
-    <div><div class="big" style="font-size:76px">243</div><div class="stat l">单元测试全绿</div></div>
+    <div><div class="big" style="font-size:76px">308</div><div class="stat l">单元测试全绿</div></div>
     <div><div class="big" style="font-size:76px">0</div><div class="stat l">编造的真实用户数</div></div>
   </div>
   <div class="note reveal" style="font-size:25px">仓库 <code>https://gitee.com/Cwt66/zhuangmingbai</code> ｜ 唯一对外数字口径 <code>09_证据附录/评测数字总表.md</code><br>
-  评委对「诚实 + 有证据」的容忍度，远高于「完美 + 被戳穿」。</div>
-  <div class="foot"><span>装明白 · 装修报价可计算审计</span><span>10 / 10</span></div>
+  评委对「诚实 + 有证据」的容忍度，远高于「完美 + 被戳穿」。<br>本页每句数字与仓库 <code>data/claims_v0.json</code> 逐条绑定，改了台账没改这一页，自检第 19 步就会红。</div>
+  <div class="foot"><span>装明白 · 装修报价可计算审计</span><span>11 / 11</span></div>
 </section>
 
 </div>
 </div>
 <div class="deck-controls">
   <button id="prev" aria-label="上一页">←</button>
-  <span class="pg" id="pg">01 / 10</span>
+  <span class="pg" id="pg">01 / 11</span>
   <button id="next" aria-label="下一页">→</button>
   <span style="color:#9A9A92">← → 翻页 · 空格下一页 · P 打印</span>
 </div>
