@@ -93,3 +93,21 @@ jobs:
           name: determinism-${{ matrix.python-version }}
           path: out/determinism_matrix.md
           if-no-files-found: ignore
+
+  # 第四个 job：原生 Linux aarch64。runs-on ubuntu-24.04-arm 是 GitHub 托管的
+  # 真 aarch64 Linux（4C/16G，公开仓免费），不是 QEMU。
+  # macOS arm64 → Linux aarch64，是把「鲲鹏同指令集」推进到「鲲鹏同 OS 家族」。
+  # 边界：仍不是鲲鹏物理机 / openEuler 发行版，台账 C18 不升级。
+  aarch64-linux:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Native aarch64 evidence
+        run: |
+          uname -m
+          python3 -c "import platform;print(platform.system(), platform.machine(), platform.libc_ver())"
+          python3 scripts/audit_one.py data/real/feitai_budget.csv --json | python3 -c "import sys,json;d=json.load(sys.stdin);print('digest',d['digest'],'verdict',d['verdict'])"
+          python3 eval/determinism_matrix.py --self-test --json --no-report

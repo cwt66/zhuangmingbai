@@ -82,8 +82,17 @@ ARCHIVE_SCHEMA = "zmb-determinism-arm64/v1"
 REQUIRED_DECLARES = ("鲲鹏实例未实测", "openEuler 未实测", "昇腾 NPU 未涉及")
 
 
+def norm_machine(m):
+    """aarch64 与 arm64 是同一指令集的不同叫法（Linux vs macOS 惯例）。
+    不归一化会把 Linux arm64 runner 误报成「跨指令集」，这是 2026-11-09 的发现。"""
+    return {"aarch64": "arm64", "arm64": "arm64"}.get(m.lower(), m.lower())
+
+
 def current_env():
-    return {"machine": platform.machine(), "platform": platform.platform(),
+    return {"machine": norm_machine(platform.machine()),
+            "raw_machine": platform.machine(),
+            "system": platform.system(),
+            "platform": platform.platform(),
             "python": platform.python_version()}
 
 
@@ -284,7 +293,7 @@ def render(rep, records, archive, selftest=None):
          selftest["status"] if selftest else "未跑"), "",
         "## 本次环境 vs ARM64 采集存档", "",
         "| | 本次 | 存档（采集于 arm64 开发机） |", "|---|---|---|",
-        "| 指令集 | `%s` | `%s` |" % (env["machine"], ref.get("machine", "?")),
+        "| 指令集 | `%s`（%s） | `%s` |" % (env["machine"], env.get("system","?"), ref.get("machine", "?")),
         "| Python | `%s` | `%s` |" % (env["python"], ref.get("python", "?")),
         "| 判定指纹 | `%s` | `%s` |" %
         (records.get("baseline", {}).get("digest", "—"), archive.get("digest", "?")),
