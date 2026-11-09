@@ -24,7 +24,9 @@ DEFAULT_OUT = os.path.join(os.path.dirname(ROOT), "装明白_校赛材料", "装
 
 # 不进包：太大了或与"能跑起来"无关
 # 预测快照要进包：评委可以拿它比对指纹，验证结论没被事后改过
-EXCLUDE_PREFIX = (".git/", ".auto-deploy/", "__pycache__/")
+# deliverables/ 是发布产物（含 20MB+ 提交包 zip）。打进来会递归包含：
+# 离线包 1.1MB → 25MB → 74MB，提交包再跟着涨到 92MB。2026-11-09 真踩过。
+EXCLUDE_PREFIX = (".git/", ".auto-deploy/", "__pycache__/", "deliverables/")
 
 
 def tracked_files():
