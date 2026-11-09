@@ -3,7 +3,7 @@
 
 规范符合性最容易变成一句没人核过的宣传语：写一份看起来像官方模板的
 SKILL.md，然后宣称「对齐了」。这个测试要求：
-1. 18 项验收逐条有结果；
+1. 20 项验收逐条有结果（结构 + 文档 + 功能层）；
 2. 干净包必须全绿，六种故障必须全红（双向断言）；
 3. 偏离要被声明，不许靠伪造 CLI/IAM 文档混过去。
 """
@@ -25,8 +25,8 @@ class SkillSpecTests(unittest.TestCase):
         rep = VS.evaluate(self.skill)
         self.assertEqual(rep["status"], "PASS",
                          [c for c in rep["checks"] if not c["ok"]])
-        self.assertEqual(rep["total"], 18)
-        self.assertEqual(rep["passed"], 18)
+        self.assertEqual(rep["total"], 20)
+        self.assertEqual(rep["passed"], 20)
 
     def test_required_reference_docs_exist(self):
         paths = {f["path"] for f in self.skill["files"]}
@@ -49,7 +49,7 @@ class SkillSpecTests(unittest.TestCase):
         fn(m)
         return m
 
-    def test_six_fault_injections_all_fail(self):
+    def test_fault_injections_all_fail(self):
         mutations = [
             lambda m: m["frontmatter"].update({"version": "1.0.0"}),
             lambda m: m["frontmatter"].update({"name": "wrong-name"}),
@@ -58,6 +58,10 @@ class SkillSpecTests(unittest.TestCase):
             lambda m: m.update({"all_text": m["all_text"] +
                                 "\nAK = ABCDEFGHIJKLMNOP123456\n"}),
             lambda m: m.update({"text": m["text"].replace("偏离声明", "（删掉了）")}),
+            lambda m: m.update({"all_text": m["all_text"] +
+                                "\npython3 scripts/not_exist_tool.py --json\n"}),
+            lambda m: m.update({"all_text": m["all_text"] +
+                                "\n详见 docs/不存在的文档.md\n"}),
             lambda m: m.update({"lines": VS.MAX_LINES + 1}),
         ]
         for fn in mutations:

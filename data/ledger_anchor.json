@@ -1,9 +1,9 @@
 {
   "schema": "zmb-ledger-anchor/v1",
   "seq": 6,
-  "head": "361c8845a3aadf9a64285339c481be4fb683f1a9d3032ab4871c67908dab9a48",
-  "anchored_at": "2026-11-09T19:08:54+08:00",
-  "git_commit": "0bb2b56",
+  "head": "a9aa80b19bd29c5b242c3ad8a0237f72c147bd1cc616993feabc2d555fa7132c",
+  "anchored_at": "2026-11-09T20:49:03+08:00",
+  "git_commit": "9de6ec2",
   "mirrors": {
     "rds_table": {
       "status": "not_run",

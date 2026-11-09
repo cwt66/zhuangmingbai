@@ -102,7 +102,11 @@ hash = sha256( canonical(seq, ts, kind, payload) + "|" + prev )
 | **L1-c 链内自洽** | 重算 `ledger.jsonl`，链头必须等于锚点快照，本包必须是链上第 N 条 | 改一条、删一条、换序、截尾、整条重写链 |
 | **L2（需仓库）** | entry hash 去 `data/ledger.jsonl` 同 seq、`anchor.json` head、git 历史三处对照 | **链 + 锚点一起重写** |
 
-L2 是工具：`python3 scripts/verify_bundle.py --zip x.zmb.zip --run-l1`
+L2 是工具：`python3 scripts/verify_bundle.py --zip x.zmb.zip --run-l1`，
+加 `--anchor-url https://cwt66.github.io/zhuangmingbai/verify/anchor.json`
+可再对照**公开锚点**（链头 + 6 条摘要，由 `publish_pages.py` 发布到 gh-pages）。
+公开锚点不是信任根——能改仓库的人也能改它；但它把「对照」从
+「clone 仓库」降到「curl 一个 URL」，且改动需要一次可见的 push。
 
 ---
 

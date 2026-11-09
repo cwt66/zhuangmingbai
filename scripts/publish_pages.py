@@ -43,6 +43,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REMOTE = os.environ.get("GH_PAGES_REMOTE",
                         "ssh://git@ssh.github.com:443/cwt66/zhuangmingbai.git")
 LIVE_URL = "https://cwt66.github.io/zhuangmingbai/verify/"
+ANCHOR_URL = LIVE_URL + "anchor.json"
 FETCH_REF = "refs/remotes/gh/gh-pages"
 
 # (仓库内当前版, gh-pages 上的路径)
@@ -51,9 +52,47 @@ TARGETS = (
     ("deliverables/装明白_评委复验页_11页.pdf", "verify/装明白_评委复验页_11页.pdf"),
 )
 
+sys.path.insert(0, str(ROOT / "src"))
+import ledger as L  # noqa: E402
+
 
 def sha256_bytes(b):
     return hashlib.sha256(b).hexdigest()
+
+
+def build_public_anchor():
+    """生成公开锚点文档：链头 + 每条摘要，发布到 gh-pages。
+
+    为什么要有它：L2 本来要 clone 仓库才能对照账本；把链头和条目摘要
+    发布成一个公开 URL 后，任何人（包括只拿到审计包的评委）都能
+    `curl` 一下就完成 L2 的前两步对照。第三步（git 历史）仍需仓库。
+    """
+    anchor_p = ROOT / "data" / "ledger_anchor.json"
+    ledger_p = ROOT / "data" / "ledger.jsonl"
+    if not anchor_p.is_file() or not ledger_p.is_file():
+        return None
+    anchor = json.loads(anchor_p.read_text(encoding="utf-8"))
+    entries = L.load(str(ledger_p))
+    return {
+        "schema": "zmb-ledger-public-anchor/v1",
+        "seq": anchor["seq"],
+        "head": anchor["head"],
+        "anchored_at": anchor.get("anchored_at"),
+        "git_commit": anchor.get("git_commit"),
+        "entries": len(entries),
+        "entry_summaries": [
+            {"seq": e["seq"],
+             "label": (e.get("payload") or {}).get("label"),
+             "result_digest": (e.get("payload") or {}).get("result_digest"),
+             "hash": e["hash"]}
+            for e in entries
+        ],
+        "verify": ("python3 scripts/verify_bundle.py --zip <审计包>  "
+                   "会自动对照本 URL（--no-net 可跳过）"),
+        "note": ("公开锚点是「包外的第三个对照点」，不是信任根——"
+                 "信任根仍是 git 历史与两个远端。谁能改仓库谁就能改这个文件，"
+                 "但改它需要一次可见的 push，与悄悄改审计包不同。"),
+    }
 
 
 def git(args, cwd=ROOT, check=True):
@@ -65,16 +104,35 @@ def git(args, cwd=ROOT, check=True):
 
 
 def check_live():
-    """只读：拉线上 verify 页，与本地当前版比 sha256。"""
+    """只读：拉线上 verify 页与公开锚点，与本地当前版比对。"""
     local = (ROOT / TARGETS[0][0]).read_bytes()
     req = urllib.request.Request(LIVE_URL + "?cb=%d" % os.getpid(),
                                 headers={"Cache-Control": "no-cache"})
     with urllib.request.urlopen(req, timeout=30) as resp:
         live = resp.read()
     a, b = sha256_bytes(local), sha256_bytes(live)
-    return {"status": "PASS" if a == b else "FAIL",
-            "live_url": LIVE_URL, "local_sha256": a, "live_sha256": b,
-            "local_bytes": len(local), "live_bytes": len(live)}
+    rep = {"live_url": LIVE_URL, "local_sha256": a, "live_sha256": b,
+           "local_bytes": len(local), "live_bytes": len(live)}
+    doc = build_public_anchor()
+    if doc is not None:
+        try:
+            req2 = urllib.request.Request(ANCHOR_URL + "?cb=%d" % os.getpid(),
+                                          headers={"Cache-Control": "no-cache"})
+            with urllib.request.urlopen(req2, timeout=30) as resp2:
+                live_anchor = json.loads(resp2.read().decode("utf-8"))
+            anchor_ok = (live_anchor.get("seq") == doc["seq"]
+                         and live_anchor.get("head") == doc["head"]
+                         and live_anchor.get("entries") == doc["entries"])
+            rep["anchor_url"] = ANCHOR_URL
+            rep["anchor_seq"] = doc["seq"]
+            rep["anchor_ok"] = anchor_ok
+        except Exception as e:  # noqa: BLE001
+            rep["anchor_ok"] = False
+            rep["anchor_error"] = str(e)[:120]
+    else:
+        rep["anchor_ok"] = None  # 仓库没有账本时不判
+    rep["status"] = "PASS" if (a == b and rep["anchor_ok"] is not False) else "FAIL"
+    return rep
 
 
 def remote_file_sha(rel):
@@ -107,6 +165,13 @@ def sync(dry_run=False):
         if old.is_file():
             old.unlink()
             changed.append("删除 verify/装明白_评委复验页_10页.pdf")
+        # 公开锚点：链头 + 条目摘要，评委 / verify_bundle 无需 clone 即可对照
+        doc = build_public_anchor()
+        if doc is not None:
+            (wt / "verify" / "anchor.json").write_text(
+                json.dumps(doc, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8")
+            changed.append("verify/anchor.json（公开锚点 seq=%d）" % doc["seq"])
         git(["add", "-A"], cwd=wt)
         diff = git(["status", "--short"], cwd=wt).stdout.strip()
         if not diff:
@@ -148,6 +213,14 @@ def self_test():
     cases.append({"name": "gh-pages 已 fetch 时可比对",
                   "ok": remote_sha is None or len(remote_sha) == 64,
                   "note": "未 fetch 不算失败"})
+    doc = build_public_anchor()
+    if doc is not None:
+        cases.append({"name": "公开锚点可生成（seq=%d / %d 条摘要）"
+                              % (doc["seq"], doc["entries"]),
+                      "ok": doc["seq"] == doc["entries"] and len(doc["head"]) == 64})
+        cases.append({"name": "每条摘要都带 hash 与 result_digest",
+                      "ok": all(s.get("hash") and s.get("result_digest")
+                                for s in doc["entry_summaries"])})
     return {"status": "PASS" if all(c["ok"] for c in cases) else "FAIL",
             "cases": cases, "local_sha256": local_sha, "remote_sha256": remote_sha}
 

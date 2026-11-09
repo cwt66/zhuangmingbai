@@ -35,6 +35,9 @@ import ledger as L  # noqa: E402
 
 LEDGER = os.path.join(ROOT, "data", "ledger.jsonl")
 ANCHOR = os.path.join(ROOT, "data", "ledger_anchor.json")
+# 公开锚点：由 publish_pages.py 发布到 gh-pages。默认不联网——
+# 只在显式传 --anchor-url 时才对照，CI / 单测不受网络影响。
+PUBLIC_ANCHOR_URL = "https://cwt66.github.io/zhuangmingbai/verify/anchor.json"
 
 
 def load_json(path):
@@ -42,7 +45,16 @@ def load_json(path):
         return json.load(f)
 
 
-def check_bundle(zip_path, ledger_path=LEDGER, anchor_path=ANCHOR, run_l1=False):
+def fetch_public_anchor(url):
+    import urllib.request
+    req = urllib.request.Request(url + "?cb=%d" % os.getpid(),
+                                 headers={"Cache-Control": "no-cache"})
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def check_bundle(zip_path, ledger_path=LEDGER, anchor_path=ANCHOR, run_l1=False,
+                 anchor_url=None):
     v = []
     checks = 0
     tmp = tempfile.mkdtemp(prefix="zmb_l2_")
@@ -89,9 +101,29 @@ def check_bundle(zip_path, ledger_path=LEDGER, anchor_path=ANCHOR, run_l1=False)
             if r.returncode != 0:
                 v.append("离线 L1 未通过")
 
+        # L2-c：公开锚点对照。不需要 clone 仓库，curl 一个 URL 即可；
+        # 网络失败如实报 FAIL——「打不开」不能当成「对得上」。
+        if anchor_url:
+            checks += 1
+            try:
+                pub = fetch_public_anchor(anchor_url)
+                sums = {s["seq"]: s for s in pub.get("entry_summaries") or []}
+                if seq not in sums:
+                    v.append("公开锚点没有第 %s 条摘要（公开账本 %d 条，可能整条被重写）"
+                             % (seq, pub.get("entries", 0)))
+                else:
+                    if sums[seq].get("hash") != entry.get("hash"):
+                        v.append("公开锚点第 %s 条 hash 与包内不一致（整条可能被重写）" % seq)
+                    if (sums[seq].get("result_digest")
+                            != (entry.get("payload") or {}).get("result_digest")):
+                        v.append("公开锚点第 %s 条 result_digest 与包内不一致" % seq)
+            except Exception as e:  # noqa: BLE001
+                v.append("公开锚点不可达（%s）——L2-c 无法完成，不算通过" % str(e)[:80])
+
         return {"status": "PASS" if not v else "FAIL", "checks": checks,
                 "violations": v, "seq": seq, "entry_hash": entry.get("hash"),
-                "repo_entries": len(repo), "l1": l1}
+                "repo_entries": len(repo), "l1": l1,
+                "public_anchor": anchor_url or None}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -102,11 +134,14 @@ def main():
     ap.add_argument("--ledger", default=LEDGER)
     ap.add_argument("--anchor-file", default=ANCHOR)
     ap.add_argument("--run-l1", action="store_true", help="同时跑包内离线校验")
+    ap.add_argument("--anchor-url", default=None,
+                    help="公开锚点 URL（如 %s）；显式传入才联网对照" % PUBLIC_ANCHOR_URL)
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
     rep = check_bundle(os.path.abspath(args.zip), args.ledger,
-                       args.anchor_file, run_l1=args.run_l1)
+                       args.anchor_file, run_l1=args.run_l1,
+                       anchor_url=args.anchor_url)
     if args.json:
         print(json.dumps(rep, ensure_ascii=False))
     else:

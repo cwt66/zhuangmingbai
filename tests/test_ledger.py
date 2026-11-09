@@ -99,6 +99,19 @@ class TestChain(unittest.TestCase):
         self.assertFalse(ok)
         self.assertTrue(any("落后" in x for x in v))
 
+    def test_tamper_dedupe_key_detected(self):
+        """2026-11-09 的真实缺陷回归：dedupe_key 曾游离在哈希之外，
+        改身份链照样绿。修复后必须在哈希覆盖内。"""
+        es = self._entries()
+        # setUp 里 append 没传 dedupe_key → 先造一条带身份的
+        L.append(self.lp, "audit", {"label": "with-id", "result_digest": "z"},
+                 "t", dedupe_key="ID-1")
+        es = self._entries()
+        es[-1]["dedupe_key"] = "FORGED-IDENTITY"
+        ok, v = L.verify(es)
+        self.assertFalse(ok, "改 dedupe_key 必须被链发现")
+        self.assertTrue(any("被改" in x for x in v))
+
     def test_canonical_is_order_independent(self):
         a = L.canonical({"b": 1, "a": [2, {"d": 3, "c": 4}]})
         b = L.canonical({"a": [2, {"c": 4, "d": 3}], "b": 1})

@@ -91,9 +91,11 @@ def canonical(obj):
     return json.dumps(obj, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
 
 
-def ehash(seq, ts, kind, payload, prev):
-    body = canonical({"seq": seq, "ts": ts, "kind": kind, "payload": payload})
-    return hashlib.sha256((body + "|" + prev).encode("utf-8")).hexdigest()
+def ehash(seq, ts, kind, payload, prev, dedupe_key=None):
+    body = {"seq": seq, "ts": ts, "kind": kind, "payload": payload}
+    if dedupe_key is not None:
+        body["dk"] = dedupe_key
+    return hashlib.sha256((canonical(body) + "|" + prev).encode("utf-8")).hexdigest()
 
 
 def check_map(rec, key, base, fails):
@@ -138,7 +140,8 @@ def verify_chain(entries, fails):
         want_prev = GENESIS if i == 0 else entries[i - 1]["hash"]
         if e.get("prev") != want_prev:
             fails.append("账本第 %d 条 prev 断链" % want_seq)
-        got = ehash(e["seq"], e["ts"], e["kind"], e["payload"], e["prev"])
+        got = ehash(e["seq"], e["ts"], e["kind"], e["payload"], e["prev"],
+                    e.get("dedupe_key"))
         if got != e["hash"]:
             fails.append("账本第 %d 条内容被改" % want_seq)
 

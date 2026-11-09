@@ -151,6 +151,34 @@ def run_checks(skill):
     add("DEV-02", "验收项在 acceptance-criteria.md 里逐条可核对",
         "AC-01" in skill["all_text"] and "AC-17" in skill["all_text"],
         "规范符合性本身也要能被第三方复算")
+
+    # ---- 功能层（2026-11-09 新增，对照官方四层验收的「功能」层）----
+    # 官方 huaweicloud-skills 的验收分结构 / 注册 / 功能 / 结果四层；
+    # 我们此前只覆盖了结构 + 文档。「文档里写着一条命令、仓库里没有这个文件」
+    # 是 Skill 最常见的腐烂方式——它看起来像规范，跑起来是空头支票。
+    def _referenced(skill):
+        cmds, docs = set(), set()
+        for m in re.finditer(
+                r"(?:python3|bash)\s+((?:scripts|eval|src)/[\w\-./]+\.(?:py|sh))",
+                skill["all_text"]):
+            cmds.add(m.group(1))
+        for m in re.finditer(
+                r"\b((?:docs|data|eval)/[\w\-./]+\.(?:md|json|csv))",
+                skill["all_text"]):
+            p = m.group(1)
+            if "*" not in p and "<" not in p and "{" not in p:
+                docs.add(p)
+        return sorted(cmds), sorted(docs)
+
+    cmds, docs = _referenced(skill)
+    missing_cmds = [c for c in cmds if not (ROOT / c).is_file()]
+    add("AC-18", "SKILL/references 引用的每条命令目标都存在（%d 条）" % len(cmds),
+        bool(cmds) and not missing_cmds,
+        "缺：%s" % ",".join(missing_cmds) or "全部存在：%s" % ",".join(cmds[:4]) + "…")
+    missing_docs = [d for d in docs if not (ROOT / d).is_file()]
+    add("AC-19", "引用的仓库内文档 / 数据都存在（%d 条）" % len(docs),
+        bool(docs) and not missing_docs,
+        "缺：%s" % ",".join(missing_docs) or "全部存在")
     return out
 
 
@@ -199,6 +227,15 @@ def self_test(skill):
     m = copy.deepcopy(skill)
     m["lines"] = MAX_LINES + 1
     case("SKILL.md 超 500 行 → FAIL", m, "FAIL")
+
+    # 功能层（2026-11-09 新增）
+    m = copy.deepcopy(skill)
+    m["all_text"] += "\npython3 scripts/not_exist_tool.py --json\n"
+    case("引用不存在的命令 → FAIL", m, "FAIL")
+
+    m = copy.deepcopy(skill)
+    m["all_text"] += "\n详见 docs/不存在的文档.md\n"
+    case("引用不存在的文档 → FAIL", m, "FAIL")
 
     return {"status": "PASS" if all(c["ok"] for c in cases) else "FAIL",
             "cases": cases}

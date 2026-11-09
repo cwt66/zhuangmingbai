@@ -55,14 +55,26 @@ def canonical(obj):
                       separators=(",", ":"))
 
 
-def entry_hash(seq, ts, kind, payload, prev):
-    body = canonical({"seq": seq, "ts": ts, "kind": kind, "payload": payload})
-    return hashlib.sha256((body + "|" + prev).encode("utf-8")).hexdigest()
+def entry_hash(seq, ts, kind, payload, prev, dedupe_key=None):
+    """哈希覆盖条目的**全部**字段。
+
+    2026-11-09 修的一个洞：dedupe_key 原来加在 hash 之后，
+    篡改它链照样绿（实测确认）。它是「这条记录的身份」，
+    身份可以被悄悄改掉，防篡改就是半成品——所以它必须进哈希。
+    """
+    body = {"seq": seq, "ts": ts, "kind": kind, "payload": payload}
+    if dedupe_key is not None:
+        body["dk"] = dedupe_key
+    return hashlib.sha256((canonical(body) + "|" + prev).encode("utf-8")).hexdigest()
 
 
-def make_entry(seq, ts, kind, payload, prev):
-    return {"seq": seq, "ts": ts, "kind": kind, "payload": payload,
-            "prev": prev, "hash": entry_hash(seq, ts, kind, payload, prev)}
+def make_entry(seq, ts, kind, payload, prev, dedupe_key=None):
+    e = {"seq": seq, "ts": ts, "kind": kind, "payload": payload,
+         "prev": prev, "hash": entry_hash(seq, ts, kind, payload, prev,
+                                          dedupe_key)}
+    if dedupe_key is not None:
+        e["dedupe_key"] = dedupe_key
+    return e
 
 
 def load(path):
@@ -107,9 +119,8 @@ def append(path, kind, payload, ts, dedupe_key=None, force=False):
             if prev_key == key:
                 return e, False
     prev = entries[-1]["hash"] if entries else GENESIS
-    e = make_entry(len(entries) + 1, ts, kind, payload, prev)
-    if dedupe_key is not None:
-        e["dedupe_key"] = dedupe_key
+    # dedupe_key 必须在 make_entry 里进哈希——事后补写在链外，等于没保护
+    e = make_entry(len(entries) + 1, ts, kind, payload, prev, dedupe_key)
     d = os.path.dirname(os.path.abspath(path))
     if d and not os.path.isdir(d):
         os.makedirs(d)
@@ -141,7 +152,8 @@ def verify(entries):
         if e["prev"] != want_prev:
             v.append("第 %d 条 prev 断链（记录 %s…，应为 %s…）"
                      % (want_seq, str(e["prev"])[:12], want_prev[:12]))
-        got = entry_hash(e["seq"], e["ts"], e["kind"], e["payload"], e["prev"])
+        got = entry_hash(e["seq"], e["ts"], e["kind"], e["payload"], e["prev"],
+                         e.get("dedupe_key"))
         if got != e["hash"]:
             v.append("第 %d 条内容被改（hash 记录 %s…，重算 %s…）"
                      % (want_seq, str(e["hash"])[:12], got[:12]))

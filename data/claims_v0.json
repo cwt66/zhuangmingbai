@@ -20,19 +20,19 @@
   "claims": [
     {
       "id": "C01",
-      "text": "单元测试 330 个",
-      "value": "330",
+      "text": "单元测试 331 个",
+      "value": "331",
       "tier": "ran",
       "probe": "tests_count",
       "command": "python3 -m unittest discover -s tests",
       "occurrences": [
         {
           "file": "README.md",
-          "pattern": "tests-330-brightgreen"
+          "pattern": "tests-331-brightgreen"
         },
         {
           "file": "README.md",
-          "pattern": "**330 个**"
+          "pattern": "**331 个**"
         }
       ],
       "note": "刻意再跑一次，不复用自检第 2 步的输出——证据必须由产生它的命令当场跑出来。"
