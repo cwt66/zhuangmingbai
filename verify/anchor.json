@@ -1,0 +1,48 @@
+{
+  "schema": "zmb-ledger-public-anchor/v1",
+  "seq": 6,
+  "head": "a9aa80b19bd29c5b242c3ad8a0237f72c147bd1cc616993feabc2d555fa7132c",
+  "anchored_at": "2026-11-09T20:49:03+08:00",
+  "git_commit": "9de6ec2",
+  "entries": 6,
+  "entry_summaries": [
+    {
+      "seq": 1,
+      "label": "feitai_budget",
+      "result_digest": "52bf7b635204fd96",
+      "hash": "6b0d59824411b6a83ddcbe063f4b3bc4326bf77c1f189a6673ffc5510f8780cf"
+    },
+    {
+      "seq": 2,
+      "label": "feitai_budget_ocr",
+      "result_digest": "80cdf4b7f21f834d",
+      "hash": "40afbd50442b1c47e56d4bc5b43b43a3ecfe1d31e21633c7d6dbcc50b08fc3e1"
+    },
+    {
+      "seq": 3,
+      "label": "guijiao_124_basic",
+      "result_digest": "e52f0a424ecebf61",
+      "hash": "7a56d2259d665f5c317cce8e368227ba5f12fd1329522c05bf271f727215d22a"
+    },
+    {
+      "seq": 4,
+      "label": "huaxibeian_newhouse",
+      "result_digest": "eb50018cdff11107",
+      "hash": "4327dfc789c63f8c23d67d13d2dcbeefeb532e8b3386cf74619721f79fee05cc"
+    },
+    {
+      "seq": 5,
+      "label": "sh_zhuoguan_halfpack",
+      "result_digest": "988a9ea8259b974e",
+      "hash": "7c10c2137cdbd1fdd5c10050cd54d4b47f1f765b9d60e5902f1e67b04a0f6cce"
+    },
+    {
+      "seq": 6,
+      "label": "szxinxin_clinic_pdf",
+      "result_digest": "88ef015fc68025af",
+      "hash": "a9aa80b19bd29c5b242c3ad8a0237f72c147bd1cc616993feabc2d555fa7132c"
+    }
+  ],
+  "verify": "python3 scripts/verify_bundle.py --zip <审计包>  会自动对照本 URL（--no-net 可跳过）",
+  "note": "公开锚点是「包外的第三个对照点」，不是信任根——信任根仍是 git 历史与两个远端。谁能改仓库谁就能改这个文件，但改它需要一次可见的 push，与悄悄改审计包不同。"
+}
