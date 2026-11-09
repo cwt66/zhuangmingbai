@@ -220,6 +220,16 @@ def probe_determinism_matrix():
         d.get("variants", 0), d.get("checks", 0), d.get("self_test", "未跑"))
 
 
+def probe_showcase_consistency():
+    """评委复验页是否与当前台账一致（含双向断言）。"""
+    d, code = run_json([sys.executable, "scripts/verify_showcase.py",
+                        "--self-test", "--json", "--no-report"])
+    if not d or code != 0:
+        return None, "verify_showcase.py 未输出可解析 JSON"
+    return str(d.get("status", "FAIL")), "%d 页 / %d 项检查 / 双向断言 %s" % (
+        d.get("pages", 0), d.get("checks", 0), d.get("self_test", "未跑"))
+
+
 def probe_platform_machine():
     """当前进程所在机器的架构（CI 用；不代表开发机）。"""
     return platform.machine(), "platform.machine()"
@@ -296,6 +306,7 @@ PROBES = {
     "dev_arch_record": probe_dev_arch_record,
     "cloud_failure_matrix": probe_cloud_failure_matrix,
     "determinism_matrix": probe_determinism_matrix,
+    "showcase_consistency": probe_showcase_consistency,
     "ablation_l2": probe_ablation_l2,
     "liveness_killed": probe_liveness_killed,
 }

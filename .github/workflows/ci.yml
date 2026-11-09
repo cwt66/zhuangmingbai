@@ -34,6 +34,7 @@ jobs:
             out/golden_eval.md
             out/ablation.md
             out/claim_ledger.md
+            out/showcase_consistency.md
           if-no-files-found: ignore
 
   # 第二个 job：从 HEAD 建一个干净 clone，在里面跑完整 check_all。

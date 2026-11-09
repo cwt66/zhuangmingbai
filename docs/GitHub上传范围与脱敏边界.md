@@ -23,7 +23,7 @@
 
 | 条目 | 大小 | 处置 | 理由 |
 |---|---:|---|---|
-| `zhuangmingbai/`（代码仓） | 108 MB | ✅ **全部推送** | 本轮 18 步自检、跨环境矩阵、台账、CI、文档全在这里 |
+| `zhuangmingbai/`（代码仓） | 108 MB | ✅ **全部推送** | 本轮 19 步自检、跨环境矩阵、台账、CI、文档全在这里 |
 | `国奖提交包/` | 27 MB | ✅ **打包进 `deliverables/`** | 评委交付物的最终 zip；文本层已做 PII 扫描，报名信息为占位符 |
 | `装明白_国奖提交包_2026-11-07.zip` | 21.4 MB | ✅ 进 `deliverables/` | 同上，最新一份 |
 | `装明白_离线演示包.zip`（校赛材料内） | 1.1 MB | ✅ 进 `deliverables/` | 纯代码快照，可离线复算 |
@@ -47,8 +47,10 @@
 | 文件 | 内容 | 复算命令 |
 |---|---|---|
 | `装明白_国奖提交包_2026-11-07.zip` | 11 分区完整提交包 | `shasum -a 256 deliverables/*.zip` 与 `deliverables/README.md` 比对 |
-| `装明白_离线演示包.zip` | 纯代码离线快照（含 18 步自检可复算文件） | 同上；生成方式 `python3 scripts/build_offline_zip.py` |
-| `README.md` | 两个 zip 的 sha256、生成时点、与仓库 commit 的对应关系 | 本文件 |
+| `装明白_离线演示包.zip` | 纯代码离线快照（含 19 步自检可复算文件） | 同上；生成方式 `python3 scripts/build_offline_zip.py` |
+| `README.md` | 交付物 sha256、生成时点、复算命令 | 本文件 |
+| `装明白_评委复验页.html` | **当前版 11 页**，单文件零依赖；数字与台账绑定 | `python3 scripts/verify_showcase.py --self-test --json` |
+| `装明白_评委复验页_11页.pdf` | 同一份 HTML 逐页渲染，11 张截图互不相同才落盘 | `python3 render_verify_pdf.py`（提交包 02 目录） |
 
 **为什么允许「发布快照 commit ≠ 最终 HEAD」**：提交包是在某个 commit 上生成的；
 之后为了把 zip 本身放进仓库，必然再产生一个同步 commit。

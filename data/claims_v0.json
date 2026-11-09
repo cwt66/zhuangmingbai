@@ -15,13 +15,13 @@
       "occurrences 里的 {v} 会被替换成 value，用来抓「改了文档没改台账」和「改了代码没改文档」两个方向",
       "被撤回的结论不删：data/claim_history_v0.json 的指纹写在这里，删一条就会红"
     ],
-    "history_digest": "3d4723411a3b0af13fc252b93e229ee0d74e4a230338915012c6fc1ceb4b48b9"
+    "history_digest": "f7b360224fe4dbea8c36b17b7399e9e897c9bac934c7d683b47b363eea9d0782"
   },
   "claims": [
     {
       "id": "C01",
-      "text": "单元测试 298 个",
-      "value": "298",
+      "text": "单元测试 308 个",
+      "value": "308",
       "tier": "ran",
       "probe": "tests_count",
       "command": "python3 -m unittest discover -s tests",
@@ -127,8 +127,8 @@
     },
     {
       "id": "C08",
-      "text": "一键自检 18 步全绿",
-      "value": "18",
+      "text": "一键自检 19 步全绿",
+      "value": "19",
       "tier": "ran",
       "probe": "check_all_steps",
       "command": "grep -c '^echo \"== ' scripts/check_all.sh",
@@ -331,6 +331,21 @@
         }
       ],
       "note": "哈希种子/时区/locale/编码/优化级别/可选依赖/无 site-packages 逐项扰动，判定指纹逐字节不变。arm64 采集存档与 x86_64 CI 的比对在 CI 上真发生；本机只算同架构复算。C18「鲲鹏实例未实测」不因这条升级。"
+    },
+    {
+      "id": "C22",
+      "text": "评委复验页 11 页与主张台账逐条一致",
+      "value": "PASS",
+      "tier": "ran",
+      "probe": "showcase_consistency",
+      "command": "python3 scripts/verify_showcase.py --self-test --json",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "展示面一致性"
+        }
+      ],
+      "note": "评委第一眼看到的展示页是前四轮唯一没被管住的一层。当前版不再写死 commit hash（hash 每次提交都变），数字全部从台账读；旧值残留 / 删华为关联页 / 抹诚实边界 / 页码不符都 FAIL。"
     }
   ]
 }

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>装明白 · 评委复验页（第十一届华为 ICT 大赛创新赛 赛题一）</title>
+<!--
+  设计来源：本地 skills/frontend-slides（zarazhangrui/frontend-slides，MIT）的
+  「固定 16:9 舞台 / 零依赖单文件 / visible 切页 / 渐进显现 / Swiss 网格」规范，
+  viewport-base.css 全文内联如下。用了 MIT 的设计思想，没有复制 AGPL 项目的代码。
+
+  两处刻意的偏离，理由写在明处：
+  1) 不用外部 Web Font：提交包会被评委离线双击打开，任何 CDN 请求都是失败点。
+     改用系统中文衬线（宋体）做大标题、黑体做正文，仍是明确的字体搭配，不是默认 system-ui。
+  2) 不做花哨动效，只保留一次性错峰显现：这是「复验文档」，可读性 > 表演性。
+
+  所有数字由 scripts/verify_showcase.py 与 data/claims_v0.json 逐条校验；不写死 commit hash，以仓库 git log -1 为准。
+-->
+<style>
+:root{
+  --paper:#FAFAF8; --ink:#0A0A0A; --ink2:#4A4A46; --muted:#7B7B74;
+  --ikb:#002FA7; --line:#DCDCD4; --rule:#C9C9C0; --warn:#B33A2B;
+  --stage-bg:#E8E8E2; --slide-bg:var(--paper);
+  --font-display:"Songti SC","STSong","Noto Serif CJK SC",serif;
+  --font-body:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --font-mono:"SF Mono",Menlo,Consolas,monospace;
+  --slide-padding:110px; --ease:cubic-bezier(.16,1,.3,1);
+}
+/* ============ viewport-base.css（frontend-slides skill 要求全文内联） ============ */
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--stage-bg,#000)}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:var(--stage-bg,#000)}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;
+  transform-origin:0 0;background:var(--slide-bg,#fff)}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;display:block;
+  visibility:hidden;opacity:0;pointer-events:none;background:var(--slide-bg,#fff)}
+.slide.active,.slide.visible{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+img,video,canvas,svg{max-width:100%;max-height:100%}
+.deck-controls{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:1000}
+@media print{
+  html,body{width:1920px;height:auto;overflow:visible;background:#fff}
+  .deck-viewport{position:static;overflow:visible;background:#fff}
+  .deck-stage{position:static;width:auto;height:auto;transform:none!important;background:none}
+  .slide{position:relative;display:block!important;visibility:visible!important;opacity:1!important;
+    pointer-events:auto!important;width:1920px;height:1080px;break-after:page;page-break-after:always}
+  .slide:last-child{break-after:auto;page-break-after:auto}
+  .deck-controls{display:none!important}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.2s!important}
+}
+/* ============================================================================ */
+*{box-sizing:border-box}
+body{font-family:var(--font-body);color:var(--ink);-webkit-font-smoothing:antialiased}
+.slide{padding:var(--slide-padding) 130px 120px}
+/* 可见网格：Swiss 的骨架，不是装饰 */
+.grid-lines{position:absolute;inset:0;pointer-events:none;opacity:.5}
+.grid-lines i{position:absolute;top:0;bottom:0;width:1px;background:#EAEAE4}
+.kicker{font-size:22px;letter-spacing:.22em;color:var(--ikb);font-weight:600;margin-bottom:26px}
+.kicker .no{display:inline-block;min-width:64px;color:var(--ink)}
+h1{font-family:var(--font-display);font-weight:400;font-size:118px;line-height:1.06;letter-spacing:-.02em;margin:0 0 26px}
+h2{font-family:var(--font-display);font-weight:400;font-size:76px;line-height:1.12;letter-spacing:-.01em;margin:0 0 18px}
+.lead{font-size:29px;line-height:1.6;color:var(--ink2);max-width:1500px}
+.rule{height:3px;background:var(--ink);width:100%;margin:34px 0}
+.hair{height:1px;background:var(--rule);width:100%;margin:22px 0}
+.cols{display:grid;gap:44px}
+.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:repeat(3,1fr)}.c4{grid-template-columns:repeat(4,1fr)}
+.card{border-top:2px solid var(--ink);padding-top:20px}
+.card .t{font-size:24px;font-weight:700;letter-spacing:.02em;margin-bottom:12px}
+.card .d{font-size:26px;line-height:1.62;color:var(--ink2)}
+.card .ev{font-family:var(--font-mono);font-size:19px;color:var(--ikb);margin-top:12px;word-break:break-all}
+.big{font-family:var(--font-display);font-size:104px;font-weight:400;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.big small{font-size:30px;font-family:var(--font-body);color:var(--muted);margin-left:10px}
+.stat .l{font-size:23px;color:var(--muted);margin-top:12px;letter-spacing:.03em}
+table{width:100%;border-collapse:collapse;font-size:23px}
+th{text-align:left;font-weight:700;border-bottom:2px solid var(--ink);padding:10px 12px 10px 0;font-size:21px;letter-spacing:.04em}
+td{border-bottom:1px solid var(--line);padding:10px 12px 10px 0;vertical-align:top;line-height:1.4}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+table.tight td,table.tight th{padding-top:4px;padding-bottom:4px}
+table.tight{font-size:20px}
+code{font-family:var(--font-mono);font-size:.86em;background:#F0F0EA;padding:3px 7px;border-radius:2px;color:var(--ikb)}
+.tag{display:inline-block;font-size:20px;padding:4px 12px;border:1px solid var(--ink);border-radius:2px;margin-right:8px}
+.tag.blue{background:var(--ikb);color:#fff;border-color:var(--ikb)}
+.tag.red{color:var(--warn);border-color:var(--warn)}
+.note{font-size:21px;color:var(--muted);line-height:1.55;margin-top:14px}
+.dark{background:var(--ink);color:#FAFAF8}
+.dark .kicker{color:#8FA9F0}.dark h2,.dark h1{color:#FAFAF8}
+.dark .lead,.dark .card .d,.dark .note{color:#B9B9B2}
+.dark .card{border-top-color:#FAFAF8}.dark th{border-bottom-color:#FAFAF8}.dark td{border-bottom-color:#3A3A38}
+.dark code{background:#22222A;color:#A9BDF5}
+.foot{position:absolute;left:130px;right:130px;bottom:52px;display:flex;justify-content:space-between;
+  font-size:20px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+.dark .foot{color:#888;border-top-color:#3A3A38}
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .55s var(--ease),transform .55s var(--ease)}
+.slide.visible .reveal{opacity:1;transform:none}
+.slide.visible .reveal:nth-child(2){transition-delay:.07s}
+.slide.visible .reveal:nth-child(3){transition-delay:.14s}
+.slide.visible .reveal:nth-child(4){transition-delay:.21s}
+.slide.visible .reveal:nth-child(5){transition-delay:.28s}
+.deck-controls{display:flex;align-items:center;gap:16px;background:rgba(250,250,248,.94);
+  border:1px solid var(--line);padding:9px 18px;font-size:19px;color:var(--ink2);font-family:var(--font-body)}
+.deck-controls button{font:inherit;border:0;background:none;cursor:pointer;color:var(--ikb);font-size:23px;padding:2px 8px}
+.deck-controls .pg{font-variant-numeric:tabular-nums;min-width:78px;text-align:center}
+body.on-dark .deck-controls{background:rgba(20,20,22,.92);color:#B9B9B2;border-color:#3A3A38}
+body.on-dark .deck-controls button{color:#A9C0F5}
+body.on-dark .deck-controls span:last-child{color:#888}
+.bar{position:fixed;left:0;top:0;height:3px;background:var(--ikb);z-index:1001;transition:width .3s var(--ease)}
+</style>
+</head>
+<body>
+<div class="bar" id="bar"></div>
+<div class="deck-viewport">
+<div class="deck-stage" id="stage">
+
+<!-- 01 封面 -->
+<section class="slide active">
+  <div class="grid-lines"><i style="left:130px"></i><i style="left:830px"></i><i style="left:1530px"></i></div>
+  <div class="kicker reveal">第十一届华为 ICT 大赛 · 中国创新赛 · 赛题一</div>
+  <h1 class="reveal">装明白<br>装修报价可计算审计</h1>
+  <div class="lead reveal" style="max-width:1400px">把现实里数百种模糊叫法，映射到 119 个标准工序组成的坐标轴；<br>
+  判断交给可解释的规则，每条结论带行号、基准、公式与判定指纹。</div>
+  <div class="rule reveal"></div>
+  <div class="cols c4 reveal">
+    <div class="stat"><div class="big">119<small>概念</small></div><div class="l">388 别名 · 13 条规则</div></div>
+    <div class="stat"><div class="big">5<small>份</small></div><div class="l">真实单据 · 603 行明细</div></div>
+    <div class="stat"><div class="big">308<small>测试</small></div><div class="l">19 步自检 · 门禁全绿</div></div>
+    <div class="stat"><div class="big">3<small>指纹</small></div><div class="l">冻结基线 · 离线可复算</div></div>
+  </div>
+  <div class="note reveal">边界先行：不判断贵不贵、不评价施工质量、不推断动机。只判漏没漏、重没重、算术与整单对不对得上。<br>
+  参赛主体、队伍信息与报名状态以作品信息收集表为准。｜ 口径由 <code>verify_showcase.py</code> 逐条校验 ｜ commit 以仓库 <code>git log -1</code> 为准</div>
+  <div class="foot"><span>评委复验页 · 单文件 HTML · 零依赖 · 可离线双击打开</span><span>01 / 11</span></div>
+</section>
+
+<!-- 02 问题与判定边界 -->
+<section class="slide">
+  <div class="kicker reveal"><span class="no">02</span> 问题与边界</div>
+  <h2 class="reveal">装修报价缺的不是「看不懂」，是坐标系</h2>
+  <div class="lead reveal">同一道工序五种叫法、三种单位；业主拿 2–4 份报价，无法逐项比对。<br>
+  我们把「能不能判」划清楚——判得少、判得准，比判得多、判得虚值钱。</div>
+  <div class="rule reveal"></div>
+  <div class="cols c2 reveal">
+    <div>
+      <div class="card"><div class="t">只判这五类（都能被算术与文本裁决）</div>
+        <div class="d">① 漏项：模板集合差 + 文本证据词<br>② 重复：同概念/工艺包含对（限同分区）<br>
+        ③ 单行算术：数量 × 单价 ≠ 合价<br>④ 整单对账：明细 + 取费 ≠ 印刷合计<br>
+        ⑤ 口径风险：按实结算 / 暂定 / 另计</div></div>
+    </div>
+    <div>
+      <div class="card" style="border-top-color:var(--warn)"><div class="t" style="color:var(--warn)">一律不判（写了就是编）</div>
+        <div class="d">× 贵不贵（不做虚高 / 最低价断言）<br>× 活儿好不好（不评价施工质量）<br>
+        × 值不值（不推断动机、不指控造假）<br>× 最终结算价（没有决算数据就不预测）</div>
+        <div class="ev">低置信度结论不进核减金额，只进待确认清单</div></div>
+    </div>
+  </div>
+  <div class="note reveal">这一页对应官方「创新性」里最难讲清的部分：创新不在模型多大，而在把不可判定的命题挡在门外。</div>
+  <div class="foot"><span>赛题一 · 创新性（初赛 60%）</span><span>02 / 11</span></div>
+</section>
+
+<!-- 03 五环节：正面回应官方要求 -->
+<section class="slide">
+  <div class="kicker reveal"><span class="no">03</span> 华为云平台使用价值 · 五环节</div>
+  <h2 class="reveal">「想法到应用」不是口号，每一步有可复核产出</h2>
+  <div class="lead reveal">官方原文要求：体现华为云产品在需求理解、代码生成、项目构建、问题修复、部署上线各环节的使用价值。</div>
+  <div class="hair reveal"></div>
+  <table class="reveal">
+    <tr><th style="width:170px">环节</th><th>码道做了什么</th><th style="width:430px">可复核产出 / 证据</th></tr>
+    <tr><td><b>① 需求理解</b></td><td>把「三类审计」写成可验收条款，逼出判据</td><td><code>raw/stage1_requirement.txt</code></td></tr>
+    <tr><td><b>② 代码生成</b></td><td>只读数据补本体 18 个概念，不改判定代码</td><td>对齐覆盖率 53.3% → 83.3%（<code>git revert</code> 可回退复现）</td></tr>
+    <tr><td><b>③ 项目构建</b></td><td>Dockerfile + .dockerignore + compose</td><td>人修掉 <code>curl</code> 健康检查 → 标准库探活</td></tr>
+    <tr><td><b>④ 问题修复</b></td><td>空 CSV 从 500 改成分类返回 400</td><td><code>EmptyRowsError</code> + 实测记录</td></tr>
+    <tr><td><b>⑤ 部署上线</b></td><td>systemd + Nginx + 云上快速部署清单</td><td>RDS / OBS 命令行；沙箱 + DevBridge 出 HTTPS</td></tr>
+  </table>
+  <div class="note reveal">诚实分工：码道做外围与本体（2 个作者 commit / 525 行 / 7 文件），人守判定与云原生。<br>
+  2026-11-01 新增的 store/cache/llm 是人工开发，没有算成「码道生成」。<br>生态侧另有三条可复算证据：项目级 Skill 对齐华为云官方 Agent Skills 规范 <b>18/18</b>；Terraform <code>huaweicloud</code> provider 1.90.0 真实 apply（见第 10 页）；失效矩阵 9 个实验每次自检都跑。</div>
+  <div class="foot"><span>证据：05_CodeArts过程资产/ · raw/stage1–5</span><span>03 / 11</span></div>
+</section>
+
+<!-- 04 云上链路状态 -->
+<section class="slide">
+  <div class="kicker reveal"><span class="no">04</span> 云上部署 · 关联服务</div>
+  <h2 class="reveal">每个服务都在链路里有位置，状态如实写</h2>
+  <div class="lead reveal">官方要求「云上部署 + 可视化 Demo 页面」；15 条路由本地与沙箱均全 200。</div>
+  <div class="hair reveal"></div>
+  <table class="reveal">
+    <tr><th style="width:250px">服务</th><th style="width:270px">代码位置</th><th>实例 / 额度状态</th><th style="width:230px">材料怎么写</th></tr>
+    <tr><td><b>RDS PostgreSQL</b></td><td><code>src/store.py</code></td><td>已开通；连不上自动降级 SQLite</td><td>已接入并落库，/history 可查</td></tr>
+    <tr><td><b>DCS Redis</b></td><td><code>src/cache.py</code></td><td><span class="tag red">需控制台创建</span>无 CLI 接口</td><td>代码已接入，实例待开通</td></tr>
+    <tr><td><b>MaaS 文本 / 视觉</b></td><td><code>src/llm.py</code></td><td>无 API Key；输出接地校验，失败退模板</td><td>当前解读标注「规则模板」</td></tr>
+    <tr><td><b>OCR 表格识别</b></td><td><code>src/perception.py</code></td><td>额度受限（11/04 复测 4106）</td><td>用历史产物 / 本地 Vision</td></tr>
+    <tr><td><b>OBS / ECS</b></td><td>部署手册</td><td>OBS 的 AK 11-07 失效；ECS 停在 <code>Ecs.7000</code> 余额不足</td><td>静态展示走 GitHub Pages；判定链路不依赖 ECS</td></tr>
+  </table>
+  <div class="note reveal"><b>红线</b>：不写「Redis 已开通」「MaaS 已跑通真实照片」「公网永久可用」；DevBridge 隧道 72h 失效，可 5 分钟重建。<br><b>硬件四层</b>：arm64 开发机 ✅ 实测 / 跨环境确定性 ✅ 可复算 / 华为云 x86 ECS 🟡 IaC 跑到 apply / 鲲鹏 ❌ 未实测、昇腾 ❌ 未涉及（详见第 10 页）。</div>
+  <div class="foot"><span>证据：09_证据附录/演示环境验证记录.md</span><span>04 / 11</span></div>
+</section>
+
+<!-- 05 架构 -->
+<section class="slide">
+  <div class="kicker reveal"><span class="no">05</span> 技术架构 · AI 在哪</div>
+  <h2 class="reveal">判断力不在代码里，在三份 JSON 里</h2>
+  <div class="lead reveal">大模型只做「理解与表达」，裁决交给可解释的规则——这样结论才能被复算、被质疑、被复现。</div>
+  <div class="rule reveal"></div>
+  <div class="cols c4 reveal">
+    <div class="card"><div class="t">① 感知层</div><div class="d">照片 / PDF / Excel → 行项 JSON<br>逐行算术自校验<br><b>不判断对错</b></div><div class="ev">perception.py · vision_ocr.py</div></div>
+    <div class="card"><div class="t">② 坐标系层</div><div class="d">「批荡 / 刮腻子 / 批嵌」<br>落到同一工序节点<br><b>不做结论</b></div><div class="ev">ontology · templates · coverage</div></div>
+    <div class="card"><div class="t">③ 判断层</div><div class="d">13 条规则跑漏 / 重 / 算术 / 对账<br>每条带行号+基准+公式<br><b>不写文案</b></div><div class="ev">pipeline.py（零第三方依赖）</div></div>
+    <div class="card"><div class="t">④ 表达层</div><div class="d">报告 / 问询单 / 审计包 / 校对台<br>可打印、可导出 Excel/PDF<br><b>不改判定</b></div><div class="ev">inquiry.py · xlsx.py · make_bundle.py</div></div>
+  </div>
+  <div class="note reveal"><b>可迁移性已实测</b>：引擎零改动，只换本体 / 模板 / 覆盖率三份 JSON，同一套 13 条规则能审汽修维保单（漏 4 / 重 1 / 对账差 30），
+  并由此抓出 2 处隐式领域耦合并修掉。见 <code>迁移实验_汽修维保_1101.md</code>。</div>
+  <div class="foot"><span>架构图：04_技术文档/装明白_技术架构图_4000x2500.png</span><span>05 / 11</span></div>
+</section>
+
+<!-- 06 真实数据 -->
+<section class="slide">
+  <div class="kicker reveal"><span class="no">06</span> 真实数据 · 不是合成 demo</div>
+  <h2 class="reveal">5 份真实单据，603 行工序明细</h2>
+  <div class="lead reveal">四份家装照片转录 + 一份工装公开 PDF 坐标解析；汇总行单独分层，不进工序明细（否则总价翻倍）。</div>
+  <div class="hair reveal"></div>
+  <table class="reveal">
+    <tr><th>单据</th><th class="num">工序行</th><th class="num">对齐率</th><th>判定要点</th><th style="width:180px">冻结指纹</th></tr>
+    <tr><td>上海卓观 · 两房半包</td><td class="num">127</td><td class="num">87.4%</td><td>21 组变体排除后 0 重复</td><td><code>2ab9413a</code></td></tr>
+    <tr><td>花溪北岸 · 5 页施工报价</td><td class="num">120</td><td class="num">87.5%</td><td>口径风险聚合 12 → 3 条</td><td><code>456e1bd9</code></td></tr>
+    <tr><td>深圳新新 · 诊所装饰（工装）</td><td class="num">168</td><td class="num">67.3%</td><td>文本版 PDF 坐标分列</td><td><code>3d33c49c</code></td></tr>
+    <tr><td>上海翡翠台 · 老房全案</td><td class="num">123</td><td class="num">82.9%</td><td>对账抓出 11,711 元差额</td><td>黄金标注 8/8 召回</td></tr>
+    <tr><td>124㎡ · 基础报价单</td><td class="num">65</td><td class="num">95.4%</td><td>范围裁剪后精确率 0.22 → 0.67</td><td>范围内 4/4</td></tr>
+  </table>
+  <div class="note reveal">17 个缺陷由真实数据打穿（含：汇总行重复加总、OCR 错字丢列、分页序号重复、工艺包含对跨区误扣）。<br>
+  <b>诚实边界</b>：n=5 只作存在性证明；黄金标注只有 2 份、单一标注者 A1，不报「总体召回率」。</div>
+  <div class="foot"><span>证据：09_证据附录/评测数字总表.md · 真实数据评测报告_v2.md</span><span>06 / 11</span></div>
+</section>
+
+<!-- 07 评测 -->
+<section class="slide">
+  <div class="kicker reveal"><span class="no">07</span> 评测 · 两档并报，不选择性展示</div>
+  <h2 class="reveal">样本小，所以每个数字都给区间和出处</h2>
+  <div class="cols c2 reveal" style="margin-top:26px">
+    <div class="card"><div class="t">黄金标注（n=2，Wilson 95% CI）</div>
+      <div class="big" style="font-size:88px">0.833</div>
+      <div class="d">auto 档精确率 / 召回率，CI 0.552–0.953<br>all 档召回 1.000（含待确认档），精确率 0.750</div>
+      <div class="ev">python3 eval/golden_eval.py</div></div>
+    <div class="card"><div class="t">消融 L0 → L3（逐级证明组件贡献）</div>
+      <div class="big" style="font-size:88px">0.267 <small>→</small> 0.800</div>
+      <div class="d">feitai auto 精确率；124㎡ auto 预测 28 → 19 → 9 → 3，补项金额 25,624 → 259</div>
+      <div class="ev">python3 eval/ablation.py</div></div>
+  </div>
+  <div class="rule reveal"></div>
+  <div class="cols c2 reveal">
+    <div class="card"><div class="t">注入实验 242 / 242</div>
+      <div class="d"><span class="tag red">下限校验</span><b>不是召回率</b>。给 5 份真实单据埋程序已知答案的缺陷（删整项 / 复制行 / 改金额 / 数量归零 / 加「另计」），测规则能否抓到并指对行。</div></div>
+    <div class="card"><div class="t">第二标注一致性：尚未完成</div>
+      <div class="d">盲标页 + Cohen's κ 脚本已交付（30 分钟/份），但<b>还没有第二个人跑过</b>。在此之前，材料只写「单一标注者、结果可复算」，不写「标注可靠」。</div></div>
+  </div>
+  <div class="foot"><span>红线：不说「召回率 100%」；不说「置信度校准过 / ECE」</span><span>07 / 11</span></div>
+</section>
+
+<!-- 08 可复现证据 -->
+<section class="slide dark">
+  <div class="kicker reveal"><span class="no">08</span> 可复现 · 差异化最强的一页</div>
+  <h2 class="reveal">「可复现」不是口号，是可以交给评委的包</h2>
+  <div class="lead reveal">同样输入 + 同样标准 + 同样代码 → 同样结论；改一个数字，立刻对不上。</div>
+  <div class="rule reveal" style="background:#FAFAF8"></div>
+  <div class="cols c3 reveal">
+    <div class="card"><div class="t">审计包 + 离线校验器</div><div class="d">59KB 的 zip：输入 CSV + 六份标准 + 当时代码 + 判定摘要。<br><code>python3 verify.py</code> → PASS；把 280 改成 281 → FAIL（输入 sha256 不符）。</div></div>
+    <div class="card"><div class="t">判定指纹</div><div class="d">三份冻结预测：<code>2ab9413a</code> / <code>456e1bd9</code> / <code>3d33c49c</code>。<br>改任何规则或本体导致漂移，必须解释原因；报告封面带报告编号与指纹。</div></div>
+    <div class="card"><div class="t">报告编号 + 证据链</div><div class="d">每条结论带原表行号、对照基准、计算公式、证据强度分与三档处置（自动通过 / 建议复核 / 转人工）。</div></div>
+  </div>
+  <div class="note reveal">本地 OCR 闭环（同一套判定，只换输入）：原始 OCR 对齐 40.0%、明细合计少 68,892 元；人工校对后 82.9%、合计对得上。
+  <b>先对账、再判漏项</b>是唯一能发现 OCR 丢钱的手段。</div>
+  <div class="foot"><span>scripts/make_bundle.py · snapshot_predictions.py · 感知层闭环验证_1101.md</span><span>08 / 11</span></div>
+</section>
+
+<!-- 09 复验卡：核心页 -->
+<section class="slide">
+  <div class="kicker reveal"><span class="no">09</span> 评委 5 分钟复验卡</div>
+  <h2 class="reveal">每一句主张，都给一条能当场跑的命令</h2>
+  <div class="hair reveal"></div>
+  <table class="reveal tight">
+    <tr><th style="width:520px">命令</th><th>期望看到</th><th style="width:210px">对应主张</th></tr>
+    <tr><td><code>git clone gitee.com/Cwt66/zhuangmingbai</code><br><code>或 github.com/cwt66/zhuangmingbai</code></td><td>双仓同一 commit；MIT；GitHub Actions CI 绿</td><td>开源 / 落地进展</td></tr>
+    <tr><td><code>bash scripts/check_all.sh</code></td><td>308 tests OK · 19 步 · <b>五份</b>指纹一致 · 规则活性 35/47 · <code>[ALL GREEN]</code></td><td>工程可信度</td></tr>
+    <tr><td><code>python3 scripts/gate_report.py</code></td><td>5 单全<b>可交付</b>；5 个故障注入 <b>5/5 全拦</b></td><td>报告会拒绝交付自己</td></tr>
+    <tr><td><code>python3 eval/redteam.py</code></td><td>8 招攻击 <b>拦住 7</b>；得手那招有断言拦不住的测试</td><td>主动打自己</td></tr>
+    <tr><td><code>python3 eval/golden_eval.py</code> + <code>injection_test.py</code></td><td>auto P/R 0.833（CI 0.552–0.953）；注入 242/242（下限，非召回率）</td><td>评测口径</td></tr>
+    <tr><td><code>make_bundle.py ...</code> → <code>verify.py</code></td><td>PASS；改一个数字 → FAIL</td><td>可复现</td></tr>
+    <tr><td><code>python3 scripts/audit_one.py 报价单.csv</code></td><td>一条命令出结果；非报价单返回 400 并说明理由</td><td>码道 Skill 的入口</td></tr>
+    <tr><td><code>python3 scripts/diff_quotes.py a.csv b.csv</code></td><td>差额 +664.00；增350 − 减98 + 调整412，差 <b>0.00</b></td><td>两版对比</td></tr>
+    <tr><td><code>python3 eval/rule_liveness.py</code></td><td>47 个变异被杀 35；判定字段存活 <b>0</b>（首次 17）</td><td>规则真的在起作用</td></tr>
+    <tr><td>打开 <code>Pages /replay/</code></td><td>5 单 / 86 条结论；点一条结论高亮它指向的原表行</td><td>可点回放</td></tr>
+    <tr><td><code>python3 scripts/audit_with.py ...</code>（汽修）</td><td>引擎零改动，漏 4 / 重 1 / 对账差 30</td><td>可迁移性</td></tr>
+  </table>
+  <div class="note reveal">改一行 CSV → <code>snapshot_predictions.py --check</code> 看指纹漂移 → <code>git checkout</code> 恢复。
+  commit 以 <code>git log -1</code> 为准——本页刻意不写死 hash：hash 每次提交都变，写进展示页必然过期。<br>新增的四条华为关联判据见第 10 页；展示页自身的数字一致性由 <code>verify_showcase.py</code> 第 19 步守着。</div>
+  <div class="foot"><span>完整命令见 09_证据附录/演示环境验证记录.md 第七节</span><span>09 / 11</span></div>
+</section>
+
+<!-- 10 华为关联 · 可复算证据 -->
+<section class="slide">
+  <div class="kicker reveal"><span class="no">10</span> 华为关联 · 可复算证据</div>
+  <h2 class="reveal">不列服务名，列评委能当场跑的证据</h2>
+  <div class="lead reveal">硬件边界逐层收紧；每条「挂了会怎样 / 换台机器还一样」的承诺，都有命令。</div>
+  <div class="hair reveal"></div>
+  <table class="reveal tight">
+    <tr><th style="width:330px">层</th><th style="width:250px">状态</th><th>能说什么 / 不能说什么</th></tr>
+    <tr><td><b>ARM64 开发机</b></td><td>✅ 实测</td><td>308 测试 / 19 步自检全绿；判定引擎零第三方包、无 C 扩展轮子</td></tr>
+    <tr><td><b>跨环境确定性</b></td><td>✅ 可复算</td><td>arm64 采集存档 ↔ x86_64 CI（Python 3.10–3.13 空 venv）判定指纹逐字节一致</td></tr>
+    <tr><td><b>华为云 x86 ECS</b></td><td>🟡 IaC 跑到 apply</td><td>Terraform <code>huaweicloud</code> provider 1.90.0 真建出 VPC / 子网 / 安全组 / 密钥对；ECS 停在 <code>Ecs.7000</code>，<b>不能说「已部署」</b></td></tr>
+    <tr><td><b>鲲鹏 ARM / 昇腾</b></td><td>❌ 未实测 / 未涉及</td><td>同为 ARM64 指令集，同指令集上的判定确定性已被验证；<b>仍不写「已适配鲲鹏」</b>、不写任何 NPU 成果</td></tr>
+  </table>
+  <table class="reveal tight">
+    <tr><th style="width:900px">命令（评委可当场跑）</th><th>期望看到</th></tr>
+    <tr><td><code>python3 scripts/verify_skill_spec.py --json</code></td><td>华为云官方 Agent Skills 规范 <b>18/18</b> 项</td></tr>
+    <tr><td><code>python3 eval/cloud_failure_matrix.py --self-test --json</code></td><td><b>9 个实验</b>；8 个依赖全挂时判定指纹不变</td></tr>
+    <tr><td><code>python3 eval/determinism_matrix.py --self-test --json</code></td><td><b>12 变体 / 144 次比对</b>；跨指令集那一半由 x86_64 CI 证明</td></tr>
+    <tr><td><code>python3 scripts/claim_ledger.py --json</code></td><td><b>22 条主张 / 0 违规</b>；证据分档 ① 16 / ② 3 / ③ 3，③ 档 3 条不计已验证</td></tr>
+  </table>
+  <div class="note reveal"><b>判据不给自己发豁免</b>：C18「鲲鹏实例未实测、昇腾未涉及」仍是 ③ 档声明；
+  arm64 存档少一条边界声明，确定性矩阵直接 FAIL。<br>
+  ECS 失败码是余额问题不是代码问题；注入的是本地不可达地址与空凭据，证明的是代码行为，不是云服务 SLA。</div>
+  <div class="foot"><span>证据：docs/华为云IaC实测与硬件边界.md · docs/华为云依赖与失效矩阵.md · docs/CLAIM-LEDGER.md</span><span>10 / 11</span></div>
+</section>
+
+<!-- 11 边界与待办 -->
+<section class="slide dark">
+  <div class="kicker reveal"><span class="no">11</span> 诚实边界 · 下一步</div>
+  <h2 class="reveal">能跑的系统、能查的数字、能承认的边界</h2>
+  <div class="cols c2 reveal" style="margin-top:20px">
+    <div class="card"><div class="t" style="color:#F0A9A0">还不能说「已完成」</div>
+      <div class="d">· 0 个真实家庭试点（应用价值唯一硬证据）<br>· MaaS 无 Key，云端 OCR 额度受限<br>
+      · Redis 实例需控制台创建<br>· <b>红队 8 招有 1 招得手</b>（㎡ 写成 m，见负向库 NA13）<br>
+      · arm64↔x86_64 判定确定性已复算，但<b>鲲鹏实例 / openEuler 仍未实测</b>，不写「已适配」<br>· ③ 档 3 条声明写不出复算命令，不计已验证<br>· 3 分钟演示视频未录<br>· 报名与队伍信息未填（11/30 截止）</div></div>
+    <div class="card"><div class="t" style="color:#A9C0F5">按性价比排的下一步</div>
+      <div class="d"><b>P0</b> 报名 + 队伍信息（逾期 = 弃赛）<br><b>P0</b> 2–3 个真实家庭试点（签合同前介入）<br>
+      <b>P1</b> 收 1–2 对「报价 + 结算」，验证漏项是否真变成加钱<br><b>P1</b> 视频 + Redis 控制台 + 云上固定地址<br>
+      <b>P2</b> 第二标注者跑盲标，算 Cohen's κ</div></div>
+  </div>
+  <div class="rule reveal" style="background:#FAFAF8"></div>
+  <div class="cols c3 reveal">
+    <div><div class="big" style="font-size:76px">MIT</div><div class="stat l">开源许可</div></div>
+    <div><div class="big" style="font-size:76px">308</div><div class="stat l">单元测试全绿</div></div>
+    <div><div class="big" style="font-size:76px">0</div><div class="stat l">编造的真实用户数</div></div>
+  </div>
+  <div class="note reveal" style="font-size:25px">仓库 <code>https://gitee.com/Cwt66/zhuangmingbai</code> ｜ 唯一对外数字口径 <code>09_证据附录/评测数字总表.md</code><br>
+  评委对「诚实 + 有证据」的容忍度，远高于「完美 + 被戳穿」。<br>本页每句数字与仓库 <code>data/claims_v0.json</code> 逐条绑定，改了台账没改这一页，自检第 19 步就会红。</div>
+  <div class="foot"><span>装明白 · 装修报价可计算审计</span><span>11 / 11</span></div>
+</section>
+
+</div>
+</div>
+<div class="deck-controls">
+  <button id="prev" aria-label="上一页">←</button>
+  <span class="pg" id="pg">01 / 11</span>
+  <button id="next" aria-label="下一页">→</button>
+  <span style="color:#9A9A92">← → 翻页 · 空格下一页 · P 打印</span>
+</div>
+<script>
+(function(){
+  var stage=document.getElementById('stage');
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var i=0, total=slides.length;
+  function fit(){
+    var s=Math.min(window.innerWidth/1920, window.innerHeight/1080);
+    var x=(window.innerWidth-1920*s)/2, y=(window.innerHeight-1080*s)/2;
+    stage.style.transform='translate('+x+'px,'+y+'px) scale('+s+')';
+  }
+  function show(n){
+    i=Math.max(0,Math.min(total-1,n));
+    slides.forEach(function(el,k){
+      el.classList.toggle('active',k===i);
+      el.classList.toggle('visible',k===i);
+    });
+    document.getElementById('pg').textContent=String(i+1).padStart(2,'0')+' / '+total;
+    document.getElementById('bar').style.width=((i+1)/total*100)+'%';
+    document.body.classList.toggle('on-dark', slides[i].classList.contains('dark'));
+  }
+  document.getElementById('prev').addEventListener('click',function(){show(i-1)});
+  document.getElementById('next').addEventListener('click',function(){show(i+1)});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();show(i+1)}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();show(i-1)}
+    else if(e.key==='Home'){show(0)} else if(e.key==='End'){show(total-1)}
+    else if(e.key==='p'||e.key==='P'){window.print()}
+  });
+  document.querySelector('.deck-viewport').addEventListener('click',function(e){
+    if(e.target.closest('.deck-controls'))return;
+    show(e.clientX>window.innerWidth*0.5?i+1:i-1);
+  });
+  window.addEventListener('resize',fit);
+  fit();show(0);
+})();
+</script>
+</body>
+</html>
