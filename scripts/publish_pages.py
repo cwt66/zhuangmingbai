@@ -90,7 +90,8 @@ def sync(dry_run=False):
     git(["fetch", "-q", REMOTE, "refs/heads/gh-pages:%s" % FETCH_REF])
     tmp = Path(tempfile.mkdtemp(prefix="zmb_pages_"))
     wt = tmp / "wt"
-    branch = "pages-sync"
+    # 固定分支名会被残留 worktree 占住（2026-11-09 实跑第一次就踩到）
+    branch = "pages-sync-%d" % os.getpid()
     try:
         git(["worktree", "add", "-q", str(wt), "-B", branch, FETCH_REF])
         changed = []
@@ -121,9 +122,9 @@ def sync(dry_run=False):
         git(["-c", "user.name=cwt66",
              "-c", "user.email=cwt66@users.noreply.github.com",
              "commit", "-q", "-m", msg], cwd=wt)
-        git(["push", REMOTE, "%s:gh-pages" % branch], cwd=wt)
+        git(["push", REMOTE, "HEAD:gh-pages"], cwd=wt)
         head = git(["rev-parse", "--short", "HEAD"], cwd=wt).stdout.strip()
-        print("已推送 %s:gh-pages（%s）" % (branch, head))
+        print("已推送 HEAD:gh-pages（%s）" % head)
         return {"status": "PASS", "changed": changed, "pushed": True, "head": head}
     finally:
         git(["worktree", "remove", "--force", str(wt)], check=False)
