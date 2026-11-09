@@ -296,12 +296,12 @@ body.on-dark .deck-controls span:last-child{color:#888}
 <section class="slide">
   <div class="kicker reveal"><span class="no">10</span> 华为关联 · 可复算证据</div>
   <h2 class="reveal">不列服务名，列评委能当场跑的证据</h2>
-  <div class="lead reveal">硬件边界逐层收紧；每条「挂了会怎样 / 换台机器还一样」的承诺，都有命令。</div>
+  <div class="lead reveal">硬件边界逐层收紧：从 macOS arm64 到 <b>Linux aarch64 原生</b>，再到 x86_64；每条承诺都有命令。</div>
   <div class="hair reveal"></div>
   <table class="reveal tight">
     <tr><th style="width:330px">层</th><th style="width:250px">状态</th><th>能说什么 / 不能说什么</th></tr>
     <tr><td><b>ARM64 开发机</b></td><td>✅ 实测</td><td>312 测试 / 19 步自检全绿；判定引擎零第三方包、无 C 扩展轮子</td></tr>
-    <tr><td><b>跨环境确定性</b></td><td>✅ 可复算</td><td>arm64 采集存档 ↔ x86_64 CI（Python 3.10–3.13 空 venv）判定指纹逐字节一致</td></tr>
+    <tr><td><b>跨环境确定性</b></td><td>✅ 可复算</td><td>macOS arm64、<b>Linux aarch64 原生</b>（GitHub `ubuntu-24.04-arm`，glibc 2.39）、x86_64 CI 三边判定指纹逐字节一致</td></tr>
     <tr><td><b>华为云 x86 ECS</b></td><td>🟡 IaC 跑到 apply</td><td>Terraform <code>huaweicloud</code> provider 1.90.0 真建出 VPC / 子网 / 安全组 / 密钥对；ECS 停在 <code>Ecs.7000</code>，<b>不能说「已部署」</b></td></tr>
     <tr><td><b>鲲鹏 ARM / 昇腾</b></td><td>❌ 未实测 / 未涉及</td><td>同为 ARM64 指令集，同指令集上的判定确定性已被验证；<b>仍不写「已适配鲲鹏」</b>、不写任何 NPU 成果</td></tr>
   </table>
@@ -310,11 +310,11 @@ body.on-dark .deck-controls span:last-child{color:#888}
     <tr><td><code>python3 scripts/verify_skill_spec.py --json</code></td><td>华为云官方 Agent Skills 规范 <b>18/18</b> 项</td></tr>
     <tr><td><code>python3 eval/cloud_failure_matrix.py --self-test --json</code></td><td><b>9 个实验</b>；8 个依赖全挂时判定指纹不变</td></tr>
     <tr><td><code>python3 eval/determinism_matrix.py --self-test --json</code></td><td><b>12 变体 / 144 次比对</b>；跨指令集那一半由 x86_64 CI 证明</td></tr>
-    <tr><td><code>python3 scripts/claim_ledger.py --json</code></td><td><b>22 条主张 / 0 违规</b>；证据分档 ① 16 / ② 3 / ③ 3，③ 档 3 条不计已验证</td></tr>
+    <tr><td><code>python3 scripts/verify_aarch64.py --check --json</code></td><td>Linux aarch64 原生 run（glibc 2.39，digest 与 macOS 一致）</td></tr>
+    <tr><td><code>python3 scripts/claim_ledger.py --json</code></td><td><b>23 条主张 / 0 违规</b>；证据分档 ① 16 / ② 4 / ③ 3，③ 档 3 条不计已验证</td></tr>
   </table>
-  <div class="note reveal"><b>判据不给自己发豁免</b>：C18「鲲鹏实例未实测、昇腾未涉及」仍是 ③ 档声明；
-  arm64 存档少一条边界声明，确定性矩阵直接 FAIL。<br>
-  ECS 失败码是余额问题不是代码问题；注入的是本地不可达地址与空凭据，证明的是代码行为，不是云服务 SLA。</div>
+  <div class="note reveal"><b>判据不给自己发豁免</b>：C18「鲲鹏实例未实测、昇腾未涉及」仍是 ③ 档声明；arm64 存档少一条边界声明，确定性矩阵直接 FAIL。<br>
+  Linux aarch64 是<b>原生 runner 实测</b>，但仍不是鲲鹏物理机、不是 openEuler 发行版——这条也写进台账 C23 的边界声明。</div>
   <div class="foot"><span>证据：docs/华为云IaC实测与硬件边界.md · docs/华为云依赖与失效矩阵.md · docs/CLAIM-LEDGER.md</span><span>10 / 11</span></div>
 </section>
 
@@ -326,7 +326,7 @@ body.on-dark .deck-controls span:last-child{color:#888}
     <div class="card"><div class="t" style="color:#F0A9A0">还不能说「已完成」</div>
       <div class="d">· 0 个真实家庭试点（应用价值唯一硬证据）<br>· MaaS 无 Key，云端 OCR 额度受限<br>
       · Redis 实例需控制台创建<br>· <b>红队 8 招有 1 招得手</b>（㎡ 写成 m，见负向库 NA13）<br>
-      · arm64↔x86_64 判定确定性已复算，但<b>鲲鹏实例 / openEuler 仍未实测</b>，不写「已适配」<br>· ③ 档 3 条声明写不出复算命令，不计已验证<br>· 3 分钟演示视频未录<br>· 报名与队伍信息未填（11/30 截止）</div></div>
+      · macOS arm64 / Linux aarch64 / x86_64 判定确定性已复算，但<b>鲲鹏物理机 / openEuler 发行版仍未实测</b>，不写「已适配」<br>· ③ 档 3 条声明写不出复算命令，不计已验证<br>· 3 分钟演示视频未录<br>· 报名与队伍信息未填（11/30 截止）</div></div>
     <div class="card"><div class="t" style="color:#A9C0F5">按性价比排的下一步</div>
       <div class="d"><b>P0</b> 报名 + 队伍信息（逾期 = 弃赛）<br><b>P0</b> 2–3 个真实家庭试点（签合同前介入）<br>
       <b>P1</b> 收 1–2 对「报价 + 结算」，验证漏项是否真变成加钱<br><b>P1</b> 视频 + Redis 控制台 + 云上固定地址<br>
