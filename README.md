@@ -7,7 +7,7 @@
 [![Gitee](https://img.shields.io/badge/Gitee-Cwt66%2Fzhuangmingbai-c71d23)](https://gitee.com/Cwt66/zhuangmingbai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](./requirements.txt)
-[![Tests](https://img.shields.io/badge/tests-312-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-330-brightgreen.svg)](./tests)
 [![Rules](https://img.shields.io/badge/rules-13-002FA7.svg)](./data/rules_v0.json)
 
 签合同之前，上传 2–4 家装修公司的报价单（照片 / PDF / Excel / CSV），输出一份**可核对、可溯源、可复现**的审计报告：
@@ -63,7 +63,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 | **分位金额** | ✅ `src/money.py`：Decimal 求和/求差；R8 仍保留 1 元容差，质量门额外报「精确到分」差额 |
 | **多 sheet Excel** | ✅ `.xlsx` 解析所有 worksheet，选非空行最多的一张，避免「主表在第二个 sheet」直接报空 |
 | 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**（合计 **614 行**原始表格数据）；两份完整黄金标注；注入实验 242 例 |
-| 单元测试 | ✅ **312 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / **红队与易混词 17** / **Skill 证据校验 16** / **规则活性 15** / **Web 交付门 4** / 优惠与负号 5 / 指纹一致性 3 / 主张台账 14 例 / Skills 规范 7 例 / 隐私扫描 4 例 / 干净 clone 保障 4 例 / 提交包数字 6 例 / 失效矩阵 6 例） |
+| 单元测试 | ✅ **330 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / **红队与易混词 17** / **Skill 证据校验 16** / **规则活性 15** / **Web 交付门 4** / 优惠与负号 5 / 指纹一致性 3 / 主张台账 14 例 / Skills 规范 7 例 / 隐私扫描 4 例 / 干净 clone 保障 4 例 / 提交包数字 6 例 / 失效矩阵 6 例） |
 | 可打印报告 | ✅ `/demo`、`/real`（打印级 HTML，判定指纹上封面） |
 | **服务端 PDF** | ✅ `/demo.pdf`、`/real.pdf`、`scripts/make_report_pdf.py`（不依赖浏览器打印） |
 | **上传守门** | ✅ `src/doc_gate.py`：**解析前**就判 报价单/合同/无关（只看表头与原文），非报价单直接 400 并给合同词/列结构证据 |
@@ -83,7 +83,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 | 问询单 | ✅ 把结论变成可直接发给报价方的逐条问询（`src/inquiry.py`） |
 | 输入兼容 | ✅ UTF-8 / **GBK** / UTF-16、逗号 / **TAB**、表头别名 |
 | 审计历史 | ✅ `/history` + `/api/audits`（证明 RDS 真的在存业务数据） |
-| 一键自检 | ✅ `bash scripts/check_all.sh`（19 步：测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性 + **主张台账** + **华为云失效矩阵**） |
+| 一键自检 | ✅ `bash scripts/check_all.sh`（20 步：测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性 + **主张台账** + **华为云失效矩阵**） |
 | 在线 Demo | ✅ `python3 -m uvicorn main:app --port 8000` |
 | 离线演示包 | ✅ 干净目录可独立复现（含跨领域 demo） |
 | RenoPit 对照实验 | 🚧 协议已预注册，跑批进行中（我们已借鉴其文档分类/增项预测，但改为确定性实现） |
@@ -106,11 +106,11 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 ### 2.2 主张台账：材料里的数字，自己会说话
 
 前面所有门禁管的都是**引擎输出对不对**。还有一类东西从来没人管：
-**我们对外说的话对不对**。材料里写着「312 个测试」「119 概念 / 388 别名」
-「19 步自检」，代码一改就悄悄过期，评委不会去数，我们自己也不会。
+**我们对外说的话对不对**。材料里写着「330 个测试」「119 概念 / 388 别名」
+「20 步自检」，代码一改就悄悄过期，评委不会去数，我们自己也不会。
 
 所以加了第 16 步：**每条可量化主张都必须带一条产生它的命令**
-（`data/claims_v0.json`，23 条）。判定不认台账里写的 `value`，
+（`data/claims_v0.json`，24 条）。判定不认台账里写的 `value`，
 只认 `probe` 当场从源头重算出来的 `observed`；同时用 `{v}` 模板反查文档，
 「改了文档没改台账」和「改了代码没改文档」两个方向都会红。
 
@@ -119,7 +119,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 
 | 档 | 含义 | 条数 | 例子 |
 |---|---|---:|---|
-| ① 跑出过结果 | 校验器当场执行命令，从源头重算 | 16 | 测试数、本体重命名、614 行、17 步、红队 7/8、±1.01 元 |
+| ① 跑出过结果 | 校验器当场执行命令，从源头重算 | 17 | 测试数、本体重命名、614 行、17 步、红队 7/8、±1.01 元 |
 | ② 读过原文 | 值来自命令生成的产物，本次未独立重算 | 4 | 消融精确率、规则活性被杀数 |
 | ③ 只按元数据判 | 写不出命令的边界声明，**不计已验证** | 3 | n=2 只作存在性证明、鲲鹏未实测、Key 未开通 |
 
@@ -339,6 +339,44 @@ python3 scripts/verify_aarch64.py --archive --json  # 离线只校验存档（CI
 > 就在同一仓库，只是本地从未 fetch。**「没查清」不该写成「管不了」**——
 > 这条误判进了撤回档案 H12。
 
+### 2.9 哈希链账本：结论被事后改写，要留下痕迹
+
+③ 一直说「判定指纹可离线复算」，但 2026-11-09 我把攻击真跑了一遍：
+
+```
+从 templates_v0.json 删掉 3 个必做项 → 漏项 12 掉到 10
+用包里的引擎重算新 digest → 写回 result.json
+python3 verify.py → [PASS] 复算结论与包内记录一致：0c8e2a741819f593
+```
+
+**上一版 `verify.py` 只校验输入哈希**，`result.json` 里记的
+`standards_sha256` / `code_sha256` 从来没被用过。这是「文档写了、代码没做」。
+
+修法不是补一个 `if`，是把「记录真相的东西」从被审的容器里拿出来：
+
+- `data/ledger.jsonl`：6 份真实单据串成一条哈希链，
+  `hash = sha256(canonical(seq, ts, kind, payload) + "|" + prev)`；
+- `data/ledger_anchor.json`：链头落在链外，随 git 提交、被台账 C24 反查；
+- 审计包里现在带 `ledger.jsonl` + `ledger_entry.json` + `anchor_snapshot.json`，
+  `verify.py` 升成三层：**文件完整性 → 结论一致 → 链内自洽**；
+- `scripts/verify_bundle.py` 是 L2：拿包里的 entry hash 去仓库账本、
+  锚点、git 历史三处对照。
+
+```bash
+python3 scripts/ledger.py seed && python3 scripts/ledger.py anchor
+python3 eval/ledger_chain.py --json   # 链级 8 招 + 包级 3 招
+python3 scripts/verify_bundle.py --zip /tmp/x.zmb.zip --run-l1
+```
+
+**链级 8 招拦住 7 招，包级 3 招全拦住**；第 8 招（把链和锚点一起重写）
+离线拦不住，只有 L2 能发现。**这一招留在报告里，不删**——
+删掉它，这份材料就变成「我们什么都防住了」，那才是真的不可信。
+
+> **边界**：账本现在是本地 JSONL + 仓库锚点。RDS 的 append-only 表结构
+> 与 OBS 对象锁的代码/DDL 都已写好，但实例与 AK 都不可用，
+> 所以状态是 `not_run`——材料里不写「账本已落库到 RDS」。
+> 详见 `docs/HASH-CHAIN-LEDGER.md` 第六节。
+
 ---
 
 ## 3. 真实单据评测（不是 demo，是逐条回原文核实过的）
@@ -448,7 +486,7 @@ python3 eval/cohen_kappa.py --dir eval/annotator/回传
 git clone https://gitee.com/Cwt66/zhuangmingbai.git
 cd zhuangmingbai
 bash run_offline.sh                   # 合成三单 → out/audit_report.html
-bash scripts/check_all.sh             # 测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性 + 主张台账 + 华为云失效矩阵（19 步）
+bash scripts/check_all.sh             # 测试 + 评测 + 注入 + 指纹 + 隐私 + 交付门 + 检测下限 + 负向库 + 红队 + 证据校验 + 规则活性 + 主张台账 + 华为云失效矩阵（20 步）
 ```
 
 ### 5.1.1 本地 OCR（macOS，可选）
@@ -567,7 +605,7 @@ data/coverage_v0.json   证据词 + 父类吸收表
 data/not_applicable_v0.json  负向知识库：13 条「不判」+ 理由 + 若判了的后果
 docs/RULE-BLIND-SPOTS.md 规则盲点清单：诊断，不是修复日志
 data/confusable_v0.json 易混词对：15 组只差一字但语义相反的词，fuzzy 匹配必须跳过
-data/claims_v0.json     主张台账：23 条公开主张 + 证据档位 + 文档出现位置
+data/claims_v0.json     主张台账：24 条公开主张 + 证据档位 + 文档出现位置
 data/claim_history_v0.json 撤回档案：10 条撤回/误报/已知未修 + 3 条预测 MISS
 data/real/              5 份真实单据（公开晒单/公开 PDF 的人工转录，无个人信息）
 eval/                   黄金标注评测 / 消融 / 注入 / 对照实验 / 冻结指纹 / 指标库

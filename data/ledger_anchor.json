@@ -1,0 +1,19 @@
+{
+  "schema": "zmb-ledger-anchor/v1",
+  "seq": 6,
+  "head": "361c8845a3aadf9a64285339c481be4fb683f1a9d3032ab4871c67908dab9a48",
+  "anchored_at": "2026-11-09T19:08:54+08:00",
+  "git_commit": "0bb2b56",
+  "mirrors": {
+    "rds_table": {
+      "status": "not_run",
+      "ddl": "src/ledger.py:RDS_DDL",
+      "why": "实例未开通；表结构已就绪，写入路径复用同一 canonical 序列化"
+    },
+    "obs_object_lock": {
+      "status": "not_run",
+      "why": "OBS AK 于 2026-11-07 失效；锚点当前落仓库文件 + git 历史"
+    }
+  },
+  "note": "锚点只保证「第 seq 条 hash 等于 head」。整条链是否被重写，要比对仓库 data/ledger.jsonl 与 git 历史；离线包内只能做到自洽 + 本锚点快照。"
+}

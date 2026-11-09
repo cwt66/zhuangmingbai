@@ -239,6 +239,17 @@ def probe_aarch64_linux():
     return str(d.get("status", "FAIL")), "run %s / 离线校验存档字段与指纹" % d.get("run_id")
 
 
+def probe_ledger_chain():
+    """哈希链账本是否自洽、锚点是否一致、攻击是否全被拦。"""
+    d, code = run_json([sys.executable, "eval/ledger_chain.py",
+                        "--json", "--no-report"])
+    if not d or code != 0:
+        return None, "ledger_chain.py 未通过（链断/锚点不符/攻击得手）"
+    return str(d.get("status", "FAIL")), "%d 条 / 链级拦 %d/%d / 包级拦 %d/%d" % (
+        d.get("entries", 0), d.get("blocked", 0), d.get("attacks", 0),
+        d.get("bundle_blocked", 0), d.get("bundle_attacks", 0))
+
+
 def probe_platform_machine():
     """当前进程所在机器的架构（CI 用；不代表开发机）。"""
     return platform.machine(), "platform.machine()"
@@ -317,6 +328,7 @@ PROBES = {
     "determinism_matrix": probe_determinism_matrix,
     "showcase_consistency": probe_showcase_consistency,
     "aarch64_linux": probe_aarch64_linux,
+    "ledger_chain": probe_ledger_chain,
     "ablation_l2": probe_ablation_l2,
     "liveness_killed": probe_liveness_killed,
 }

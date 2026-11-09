@@ -58,7 +58,7 @@ class TestScan(unittest.TestCase):
 class TestWiring(unittest.TestCase):
     def test_check_all_has_step_19(self):
         sh = (ROOT / "scripts" / "check_all.sh").read_text(encoding="utf-8")
-        self.assertIn("19/19 评委复验页一致性", sh)
+        self.assertIn("19/20 评委复验页一致性", sh)
         self.assertIn("verify_showcase.py", sh)
 
     def test_ci_uploads_report(self):

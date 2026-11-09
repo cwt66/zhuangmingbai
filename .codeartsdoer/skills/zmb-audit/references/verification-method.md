@@ -16,8 +16,9 @@ python3 scripts/audit_one.py data/samples/company_a.csv --label A
 ## 完整复验（约 1 分钟）
 
 ```bash
-bash scripts/check_all.sh                  # 19 步：测试 / 评测 / 交付门 / 红队 / 台账 / 规范
+bash scripts/check_all.sh                  # 20 步：测试 / 评测 / 交付门 / 红队 / 台账 / 规范
 python3 scripts/claim_ledger.py --json     # 材料里每句数字是否与代码一致
+python3 eval/ledger_chain.py --json        # 哈希链账本 + 攻击套件
 python3 scripts/verify_skill_spec.py --json
 python3 scripts/verify_clean_clone.py --self-test   # 干净 clone 保障还在不在
 python3 scripts/verify_clean_clone.py --json        # 真跑一次干净 clone（约 1 分钟）
@@ -41,7 +42,7 @@ python3 scripts/verify_package_numbers.py           # 提交包数字一致性�
 
 | 档 | 含义 | 本 Skill 里的例子 |
 |---|---|---|
-| ① 跑出过结果 | 命令当场跑出的值 | 判定指纹、对齐率、13 条规则、19 步自检 |
+| ① 跑出过结果 | 命令当场跑出的值 | 判定指纹、对齐率、13 条规则、20 步自检 |
 | ② 读过原文 | 值来自某个产物文件，有产生它的命令 | `out/ablation.md` 的精确率、`out/rule_liveness.md` 的被杀数 |
 | ③ 只按元数据判 | 写不出命令，只能声明 | 「n=2 只作存在性证明」「鲲鹏未实测」「MaaS Key 未开通」 |
 

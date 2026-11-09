@@ -93,7 +93,7 @@ class TestArchiveAndWiring(unittest.TestCase):
 
     def test_check_all_has_step_18(self):
         sh = (ROOT / "scripts" / "check_all.sh").read_text(encoding="utf-8")
-        self.assertIn("18/19 跨环境判定确定性", sh)
+        self.assertIn("18/20 跨环境判定确定性", sh)
         self.assertIn("determinism_matrix.py", sh)
 
     def test_ci_has_python_version_matrix_in_empty_venv(self):

@@ -15,24 +15,24 @@
       "occurrences 里的 {v} 会被替换成 value，用来抓「改了文档没改台账」和「改了代码没改文档」两个方向",
       "被撤回的结论不删：data/claim_history_v0.json 的指纹写在这里，删一条就会红"
     ],
-    "history_digest": "d5170b9d430895fbba8fb4dc8a7ff7cea6b336f2b935bd2e271395daa7b01d83"
+    "history_digest": "cd458ff5d1407d30561af9a447db0654e0edc224a8fbecad343840fc5de2f210"
   },
   "claims": [
     {
       "id": "C01",
-      "text": "单元测试 312 个",
-      "value": "312",
+      "text": "单元测试 330 个",
+      "value": "330",
       "tier": "ran",
       "probe": "tests_count",
       "command": "python3 -m unittest discover -s tests",
       "occurrences": [
         {
           "file": "README.md",
-          "pattern": "tests-{v}-brightgreen"
+          "pattern": "tests-330-brightgreen"
         },
         {
           "file": "README.md",
-          "pattern": "**{v} 个**"
+          "pattern": "**330 个**"
         }
       ],
       "note": "刻意再跑一次，不复用自检第 2 步的输出——证据必须由产生它的命令当场跑出来。"
@@ -127,15 +127,15 @@
     },
     {
       "id": "C08",
-      "text": "一键自检 19 步全绿",
-      "value": "19",
+      "text": "一键自检 20 步全绿",
+      "value": "20",
       "tier": "ran",
       "probe": "check_all_steps",
       "command": "grep -c '^echo \"== ' scripts/check_all.sh",
       "occurrences": [
         {
           "file": "README.md",
-          "pattern": "（{v} 步："
+          "pattern": "（20 步："
         }
       ]
     },
@@ -361,6 +361,21 @@
         }
       ],
       "note": "GitHub 托管 ubuntu-24.04-arm（原生 aarch64 Linux，非 QEMU，glibc 2.39）跑 audit_one，digest=52bf7b635204fd96 与 macOS arm64 存档逐字节一致。记录的是某次 run，不是鲲鹏物理机、不是 openEuler 发行版、不涉及昇腾；C18 仍为 ③ 档声明。"
+    },
+    {
+      "id": "C24",
+      "text": "哈希链账本 6 条 + 外部锚点一致，链级 7/7、包级 3/3 攻击被拦",
+      "value": "PASS",
+      "tier": "ran",
+      "probe": "ledger_chain",
+      "command": "python3 eval/ledger_chain.py --json",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "哈希链账本"
+        }
+      ],
+      "note": "账本 6 条真实单据；区块级 8 招拦住 7 招、第 8 招（链+锚点一起重写）离线拦不住，靠 L2 对照仓库账本与 git 历史；包级 3 招全部拦住。C18 鲲鹏未实测不因此升级。"
     }
   ]
 }

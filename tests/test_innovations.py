@@ -202,10 +202,15 @@ class TestBundleDigest(unittest.TestCase):
         tmp = tempfile.mkdtemp(prefix="zmb_test_bundle_")
         try:
             zp = os.path.join(tmp, "b.zip")
+            # 单测必须用自己的临时账本：默认账本是生产链，
+            # 让单测往里写测试数据，等于自己污染自己的防篡改日志。
+            # 2026-11-09 真踩过——124㎡ 这条测试记录混进了 seq=7。
             r = subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "make_bundle.py"),
                                 "--csv", os.path.join(REAL, "guijiao_124_basic.csv"),
                                 "--label", "124㎡", "--template", "new_house",
-                                "--scope", "base", "--out", zp],
+                                "--scope", "base", "--out", zp,
+                                "--ledger", os.path.join(tmp, "ledger.jsonl"),
+                                "--anchor-file", os.path.join(tmp, "anchor.json")],
                                capture_output=True, text=True)
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertTrue(zipfile.is_zipfile(zp))

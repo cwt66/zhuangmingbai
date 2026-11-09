@@ -75,7 +75,7 @@ error creating server: POST https://ecs.cn-north-4.myhuaweicloud.com/v1.1/<proje
 ## 三、这对项目主链路意味着什么
 
 ECS 只是**公网入口**，不是判定依赖。`src/pipeline.py` 零第三方包、不联网，
-`/health` 与全部 312 个单测在本机就能跑完。所以：
+`/health` 与全部 330 个单测在本机就能跑完。所以：
 
 > ECS 没开起来 → 只影响「有没有一个能点开的在线 Demo」，
 > **不影响任何一条审计结论**。GitHub Pages 承担复验页与回放页，本地
@@ -91,7 +91,7 @@ ECS 只是**公网入口**，不是判定依赖。`src/pipeline.py` 零第三方
 
 | 层 | 状态 | 能说什么 | 不能说什么 |
 |---|---|---|---|
-| **ARM64 开发机** | ✅ 实测 | `macOS ... arm64`，312 测试 + 19 步自检全绿；判定引擎纯标准库，无 C 扩展轮子 | — |
+| **ARM64 开发机** | ✅ 实测 | `macOS ... arm64`，330 测试 + 20 步自检全绿；判定引擎纯标准库，无 C 扩展轮子 | — |
 | **Linux aarch64 原生（2026-11-09 新增）** | ✅ **实测** | GitHub 托管 `ubuntu-24.04-arm`（原生 aarch64 Linux，glibc 2.39）跑通判定链路，digest `52bf7b635204fd96` 与 macOS 一致 | ❌ 不是鲲鹏物理机，不是 openEuler 发行版，不涉及昇腾 |
 | **跨环境确定性** | ✅ **可复算** | macOS arm64 / Linux aarch64 / x86_64 三边判定指纹逐字节一致；12 个环境变体 144 次字段比对 | ❌ 不等于「鲲鹏实例实测」，不是 reproducible build |
 | **华为云 x86 ECS（`s6.large.2`）** | 🟡 IaC 跑到 apply、实例未创建 | 「用华为云 provider 真实申请过 ECS，失败码 `Ecs.7000`」 | ❌ 不能说「已在 ECS 上部署」 |
@@ -167,7 +167,7 @@ flavor_id   = var.instance_flavor_name
 
 ```bash
 python3 -m pip install -r requirements.txt
-bash scripts/check_all.sh        # 期望 [ALL GREEN] 19 步
+bash scripts/check_all.sh        # 期望 [ALL GREEN] 20 步
 python3 eval/determinism_matrix.py --json   # 期望 cross_arch=true
 uname -m                         # 期望 aarch64
 ```
