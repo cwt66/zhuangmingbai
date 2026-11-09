@@ -346,6 +346,21 @@
         }
       ],
       "note": "评委第一眼看到的展示页是前四轮唯一没被管住的一层。当前版不再写死 commit hash（hash 每次提交都变），数字全部从台账读；旧值残留 / 删华为关联页 / 抹诚实边界 / 页码不符都 FAIL。"
+    },
+    {
+      "id": "C23",
+      "text": "Linux aarch64 原生 runner 上判定链路跑通，指纹与 macOS 一致",
+      "value": "PASS",
+      "tier": "read",
+      "probe": "aarch64_linux",
+      "command": "python3 scripts/verify_aarch64.py --check --json（联网核对 run；--archive 离线校验）",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "pattern": "Linux aarch64 原生"
+        }
+      ],
+      "note": "GitHub 托管 ubuntu-24.04-arm（原生 aarch64 Linux，非 QEMU，glibc 2.39）跑 audit_one，digest=52bf7b635204fd96 与 macOS arm64 存档逐字节一致。记录的是某次 run，不是鲲鹏物理机、不是 openEuler 发行版、不涉及昇腾；C18 仍为 ③ 档声明。"
     }
   ]
 }

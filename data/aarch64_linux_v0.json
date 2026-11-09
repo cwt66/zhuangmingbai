@@ -1,0 +1,25 @@
+{
+  "schema": "zmb-aarch64-linux/v1",
+  "captured_at": "2026-11-09",
+  "runner": "ubuntu-24.04-arm",
+  "workflow": "ci",
+  "job": "aarch64-linux",
+  "run_id": 42601765005,
+  "check_run_id": 129107714254,
+  "head_sha": "7e955d3",
+  "conclusion": "success",
+  "arch": "aarch64",
+  "system": "Linux",
+  "libc": "glibc 2.39",
+  "python": "3.12.16",
+  "digest": "52bf7b635204fd96",
+  "verdict": "pass",
+  "missing_cost": 618.4,
+  "evidence": "GitHub job annotation title=aarch64-evidence（公开只读）",
+  "declares": [
+    "鲲鹏实例未实测",
+    "openEuler 未实测",
+    "昇腾 NPU 未涉及"
+  ],
+  "note": "原生 aarch64 Linux（非 QEMU）上跑 audit_one，判定指纹 52bf7b635204fd96 与 macOS arm64 存档逐字节一致。记录的是某一次 run 在原生 aarch64 Linux 上跑通，不是鲲鹏物理机、不是 openEuler 发行版，也不涉及昇腾 NPU。"
+}

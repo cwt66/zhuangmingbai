@@ -60,7 +60,7 @@ def load(path):
         return None
 
 
-def evaluate(doc, run, macos):
+def evaluate(doc, run, macos, require_run=True):
     """纯函数：给存档、GitHub run 记录、macOS 存档，判 PASS / FAIL。"""
     v = []
     checks = 0
@@ -90,6 +90,10 @@ def evaluate(doc, run, macos):
         if doc.get("digest") != macos.get("digest"):
             v.append("aarch64 判定指纹与 macOS 存档不一致：%r ≠ %r" %
                      (doc.get("digest"), macos.get("digest")))
+    if run is None and not require_run:
+        # 离线模式：只校验存档自身的字段完整性；run 事实由 --check 联网核。
+        return {"status": "FAIL" if v else "PASS", "violations": v,
+                "checks": checks, "offline": True}
     if run is None:
         v.append("没有拿到 GitHub run 记录（网络失败或 run_id 无效）")
         return {"status": "FAIL", "violations": v, "checks": checks}
@@ -216,14 +220,18 @@ def main():
     ap.add_argument("--no-report", action="store_true")
     ap.add_argument("--capture", action="store_true",
                     help="在 Linux aarch64 上采集证据并写 annotation")
+    ap.add_argument("--archive", action="store_true",
+                    help="离线模式：只校验存档字段，不查 GitHub API（CI/台账用）")
     args = ap.parse_args()
     if args.capture:
         return capture()
 
     st = self_test() if args.self_test else None
     doc = load(ARCHIVE)
-    run = fetch_run(doc["run_id"]) if doc and isinstance(doc.get("run_id"), int) else None
-    rep = evaluate(doc, run, load(MACOS_ARCHIVE))
+    run = (fetch_run(doc["run_id"])
+           if (doc and isinstance(doc.get("run_id"), int) and not args.archive)
+           else None)
+    rep = evaluate(doc, run, load(MACOS_ARCHIVE), require_run=not args.archive)
     if st:
         rep["self_test"] = st["status"]
     if not args.no_report and not args.self_test:

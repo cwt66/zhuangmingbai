@@ -180,7 +180,7 @@ def main():
         check("单元测试全部通过", bool(m) and bool(re.search(r"^OK", out, re.M)),
               ("Ran %s tests / OK" % m.group(1)) if m else "没找到 Ran N tests")
         check("第 16 步主张台账执行", "16/19 主张台账" in out, "")
-        check("台账零违规", re.search(r"主张 22 条 / 违规 0", out) is not None, "")
+        check("台账零违规", re.search(r"主张 23 条 / 违规 0", out) is not None, "")
     except (subprocess.TimeoutExpired, RuntimeError, OSError) as exc:
         elapsed = time.time() - t0
         check("执行过程无异常", False, str(exc)[:300])

@@ -110,7 +110,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 「19 步自检」，代码一改就悄悄过期，评委不会去数，我们自己也不会。
 
 所以加了第 16 步：**每条可量化主张都必须带一条产生它的命令**
-（`data/claims_v0.json`，22 条）。判定不认台账里写的 `value`，
+（`data/claims_v0.json`，23 条）。判定不认台账里写的 `value`，
 只认 `probe` 当场从源头重算出来的 `observed`；同时用 `{v}` 模板反查文档，
 「改了文档没改台账」和「改了代码没改文档」两个方向都会红。
 
@@ -120,7 +120,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 | 档 | 含义 | 条数 | 例子 |
 |---|---|---:|---|
 | ① 跑出过结果 | 校验器当场执行命令，从源头重算 | 16 | 测试数、本体重命名、614 行、17 步、红队 7/8、±1.01 元 |
-| ② 读过原文 | 值来自命令生成的产物，本次未独立重算 | 3 | 消融精确率、规则活性被杀数 |
+| ② 读过原文 | 值来自命令生成的产物，本次未独立重算 | 4 | 消融精确率、规则活性被杀数 |
 | ③ 只按元数据判 | 写不出命令的边界声明，**不计已验证** | 3 | n=2 只作存在性证明、鲲鹏未实测、Key 未开通 |
 
 ```bash
@@ -299,6 +299,35 @@ README、台账、提交包、CI 全绿，**只有评委手里那一份悄悄过
 python3 scripts/verify_showcase.py                    # 人读报告
 python3 scripts/verify_showcase.py --self-test --json  # 7 例双向断言
 ```
+
+### 2.8 Linux aarch64 原生实测：从「同指令集」到「同 OS 家族」
+
+⑦ 证明的是「macOS arm64 与 x86_64 Linux 判定一致」。但鲲鹏跑的是
+**Linux + glibc**，openEuler 也是——macOS 的 arm64 不是它的运行时环境。
+
+GitHub 从 2026-10 起对公开仓库免费提供**原生 arm64 Linux runner**
+（`ubuntu-24.04-arm`，4C/16G，不是 QEMU）。所以加了一个 job
+`aarch64-linux`，在真的 aarch64 Linux 上跑完判定链路：
+
+```
+arch=aarch64  system=Linux  libc=glibc_2.39  python=3.12.16
+digest=52bf7b635204fd96  verdict=pass  missing_cost=618.4
+```
+
+**与 macOS arm64 存档逐字节一致**。这条证据写在 job annotation 里
+（`check-runs/<id>/annotations` 公开只读，不需要登录），
+存档在 `data/aarch64_linux_v0.json`，台账 **C23**（② 档读档）。
+
+```bash
+python3 scripts/verify_aarch64.py --check --json    # 联网核对 run（本地）
+python3 scripts/verify_aarch64.py --archive --json  # 离线只校验存档（CI/台账）
+```
+
+> **边界必须一起读**：这是 GitHub 的 aarch64 Linux runner，
+> **不是鲲鹏物理机，不是 openEuler 发行版，也不涉及昇腾**。
+> 台账 C18 仍是 ③ 档声明，没有因为这条升级。
+> 它做到的是把「同为 ARM64 理论上能跑」变成「Linux aarch64 + glibc 上真的跑过，
+> 且结论与 macOS 一致」——距离鲲鹏更近一步，但不是鲲鹏。
 
 > **边界**：判据只读仓库内文件、不联网（CI 上不依赖网络）。
 > 线上 Pages 由**本仓库的 `gh-pages` 分支**发布，逐字节比对交给
@@ -538,7 +567,7 @@ data/coverage_v0.json   证据词 + 父类吸收表
 data/not_applicable_v0.json  负向知识库：13 条「不判」+ 理由 + 若判了的后果
 docs/RULE-BLIND-SPOTS.md 规则盲点清单：诊断，不是修复日志
 data/confusable_v0.json 易混词对：15 组只差一字但语义相反的词，fuzzy 匹配必须跳过
-data/claims_v0.json     主张台账：22 条公开主张 + 证据档位 + 文档出现位置
+data/claims_v0.json     主张台账：23 条公开主张 + 证据档位 + 文档出现位置
 data/claim_history_v0.json 撤回档案：10 条撤回/误报/已知未修 + 3 条预测 MISS
 data/real/              5 份真实单据（公开晒单/公开 PDF 的人工转录，无个人信息）
 eval/                   黄金标注评测 / 消融 / 注入 / 对照实验 / 冻结指纹 / 指标库

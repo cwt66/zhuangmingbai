@@ -230,6 +230,15 @@ def probe_showcase_consistency():
         d.get("pages", 0), d.get("checks", 0), d.get("self_test", "未跑"))
 
 
+def probe_aarch64_linux():
+    """Linux aarch64 原生 run 的存档是否完整、指纹是否与 macOS 一致（离线）。"""
+    d, code = run_json([sys.executable, "scripts/verify_aarch64.py",
+                        "--archive", "--json", "--no-report"])
+    if not d or code != 0:
+        return None, "verify_aarch64.py --archive 未通过"
+    return str(d.get("status", "FAIL")), "run %s / 离线校验存档字段与指纹" % d.get("run_id")
+
+
 def probe_platform_machine():
     """当前进程所在机器的架构（CI 用；不代表开发机）。"""
     return platform.machine(), "platform.machine()"
@@ -307,6 +316,7 @@ PROBES = {
     "cloud_failure_matrix": probe_cloud_failure_matrix,
     "determinism_matrix": probe_determinism_matrix,
     "showcase_consistency": probe_showcase_consistency,
+    "aarch64_linux": probe_aarch64_linux,
     "ablation_l2": probe_ablation_l2,
     "liveness_killed": probe_liveness_killed,
 }
