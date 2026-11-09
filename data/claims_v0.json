@@ -15,7 +15,7 @@
       "occurrences 里的 {v} 会被替换成 value，用来抓「改了文档没改台账」和「改了代码没改文档」两个方向",
       "被撤回的结论不删：data/claim_history_v0.json 的指纹写在这里，删一条就会红"
     ],
-    "history_digest": "f7b360224fe4dbea8c36b17b7399e9e897c9bac934c7d683b47b363eea9d0782"
+    "history_digest": "cec71e4ab236dcb2a56ffa66d0065f22ce30801e2d61bdc623b240221f79ae0b"
   },
   "claims": [
     {

@@ -48,7 +48,7 @@ class ClaimLedgerTests(unittest.TestCase):
         self.assertTrue(all(c["status"] in
                             ("verified", "read_verified", "declared")
                             for c in rep["claims"]))
-        self.assertEqual(rep["history_entries"], 11)
+        self.assertEqual(rep["history_entries"], 12)
         self.assertEqual(rep["misses"], 3)
 
     def test_three_tiers_are_present_and_declared_not_counted(self):

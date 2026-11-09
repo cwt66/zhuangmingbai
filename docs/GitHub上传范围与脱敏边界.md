@@ -52,6 +52,10 @@
 | `装明白_评委复验页.html` | **当前版 11 页**，单文件零依赖；数字与台账绑定 | `python3 scripts/verify_showcase.py --self-test --json` |
 | `装明白_评委复验页_11页.pdf` | 同一份 HTML 逐页渲染，11 张截图互不相同才落盘 | `python3 render_verify_pdf.py`（提交包 02 目录） |
 
+> `gh-pages` 分支也在本仓库：`verify/index.html` 与 11 页 PDF 从这里发布，
+> 2026-11-09 已同步到当前版（线上 sha256 `290bbd38…` 与本地一致）。
+> 发布动作由 `scripts/publish_pages.py` 固化，`--check` 可只读比对。
+
 **为什么允许「发布快照 commit ≠ 最终 HEAD」**：提交包是在某个 commit 上生成的；
 之后为了把 zip 本身放进仓库，必然再产生一个同步 commit。
 `scripts/verify_package_numbers.py` 因此接受快照 hash 落在最近 3 个祖先里，

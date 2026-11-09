@@ -128,7 +128,7 @@ python3 scripts/claim_ledger.py --self-test   # 干净必须 PASS / 6 种故障�
 python3 scripts/claim_ledger.py               # 人读的表：out/claim_ledger.md
 ```
 
-`data/claim_history_v0.json` 是**撤回档案**：11 条被撤回结论、误报、假发现、
+`data/claim_history_v0.json` 是**撤回档案**：12 条被撤回结论、误报、假发现、
 已知未修，加 3 条**预测 MISS 永久保留**；指纹锁在台账里，删一条自检即红。
 第一次规则活性只杀 18/47、红队有一招得手、冻结基线曾「本地绿 / clone 红」——
 这些不好看的记录一条都没删。
@@ -300,10 +300,15 @@ python3 scripts/verify_showcase.py                    # 人读报告
 python3 scripts/verify_showcase.py --self-test --json  # 7 例双向断言
 ```
 
-> **边界**：这个判据管的是仓库内当前版，**管不了线上 Pages**——
-> 部署源不在本仓库（Pages API 404），无法随代码覆盖更新。
-> 评委请用 `deliverables/` 里的当前版，或本地双击 HTML；
-> 线上入口是 11-07 上传的 10 页旧快照，这一点写在提交包使用说明里，不藏。
+> **边界**：判据只读仓库内文件、不联网（CI 上不依赖网络）。
+> 线上 Pages 由**本仓库的 `gh-pages` 分支**发布，逐字节比对交给
+> `python3 scripts/publish_pages.py --check`（本地 ② 档工具）。
+> 2026-11-09 已同步：线上与本地 sha256 一致（`290bbd38…`）。
+>
+> **这里有过一次误判，留案**：上一版写「部署源不在本仓库、无法覆盖」，
+> 依据是 `git branch -a` 只显示 main、Pages API 返回 404。实际 `gh-pages`
+> 就在同一仓库，只是本地从未 fetch。**「没查清」不该写成「管不了」**——
+> 这条误判进了撤回档案 H12。
 
 ---
 

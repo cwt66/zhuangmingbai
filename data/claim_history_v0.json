@@ -108,6 +108,15 @@
       "now": "降为 ② 读档（data/dev_environment_v0.json）；CI runner 是 x86_64，跑不出 arm64",
       "why": "① 档要求「当场跑出结果」，但被主张的对象是另一台机器。用自己的架构去复算别人的架构，等于拿错的证据盖对的章。推送后 GitHub Actions run 42372612688（3438a5d）conclusion=failure，第 16 步报「C14 宣称 arm64，实测 x86_64」。",
       "kept_because": "误报留案：这是主张台账上线当天被自己的 CI 抓到的第一个口径错误，有可核对的 run URL。降级不是把报告改好看，而是把「跑不出来」如实说出来。"
+    },
+    {
+      "id": "H12",
+      "kind": "false_positive",
+      "date": "2026-11-09",
+      "was": "判断「GitHub Pages 部署源不在本仓库，无法覆盖更新」，据此把线上旧页当成不可修的边界写进 README / 方法论 / 答辩口径 / 使用说明",
+      "now": "实际 gh-pages 分支就在同一仓库。fetch 后替换 verify/index.html 与 11 页 PDF，push 后线上 sha256 与本地逐字节一致（290bbd38…），308 测试 / 19 步 / 11 页全部生效",
+      "why": "git branch -a 只显示 main（本地从未 fetch 远端 gh-pages），GET /repos/.../pages 对未认证请求返回 404；两个信号叠加，把「本地没看到」当成「远端不存在」",
+      "kept_because": "误判留案：把「没查清」写成「管不了」，会让一条本可修的缺口被当成边界写进材料，还会让评委以为线上永远是旧的。修正后用 scripts/publish_pages.py 固化路径，--check 可只读比对；这条比「多修一个页面」更值得留。"
     }
   ],
   "predictions": [
