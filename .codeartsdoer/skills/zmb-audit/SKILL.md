@@ -2,6 +2,11 @@
 name: zmb-audit
 description: 审计装修报价单，判出漏项、重复计价、算术与对账问题，每条结论带原表行号与计算公式。当用户上传或提到装修报价单、报价表、装修预算、要核对报价、检查漏项/重复收费/隐形增项，或者问「这份报价有没有问题」「最低价是不是划算」时使用。不适用于装修合同、施工图、验收单。
 tags: [huawei-cloud, codearts, audit, quotation, deterministic]
+license: MIT
+compatibility: "零第三方依赖（纯标准库 + 同仓模块）；macOS arm64、Linux x86_64、Linux aarch64 均可运行；判定链路不需要网络与云凭据；可选依赖缺失时降级并在 /health 如实显示。"
+metadata:
+  repository: "https://github.com/cwt66/zhuangmingbai"
+  evidence: "19 步自检 / 主张台账 / 跨环境确定性 / Linux aarch64 原生 CI"
 ---
 
 # 装明白 · 报价单审计

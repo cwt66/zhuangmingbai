@@ -105,10 +105,13 @@ def run_checks(skill):
     fm = skill["frontmatter"]
     add("AC-01a", "SKILL.md 有 YAML frontmatter",
         bool(fm), "解析到字段：%s" % ",".join(sorted(fm)))
-    add("AC-01b", "含 name / description / tags，且无 version",
-        all(k in fm and fm[k] for k in ("name", "description", "tags"))
+    # 2026-11-09 对照华为云帮助中心最新字段规范：license / compatibility
+    # 已从「可选」变成「建议填」；不新增检查项，合并进 AC-01b，避免项数虚高。
+    add("AC-01b", "含 name / description / tags / license / compatibility，且无 version",
+        all(k in fm and fm[k] for k in ("name", "description", "tags",
+                                        "license", "compatibility"))
         and "version" not in fm,
-        "version 字段必须交给包管理器，不写在 Skill 里")
+        "version 必须交给包管理器；license/compatibility 按官方 2026 字段规范补")
     tags = re.findall(r"[\w-]+", fm.get("tags", "").strip("[] "))
     add("AC-01c", "tags ≤ 5 个", 0 < len(tags) <= 5, "tags=%d" % len(tags))
     add("AC-02", "frontmatter.name == 目录名",
@@ -172,6 +175,10 @@ def self_test(skill):
     m = copy.deepcopy(skill)
     m["frontmatter"]["version"] = "1.0.0"
     case("frontmatter 加 version → FAIL", m, "FAIL")
+
+    m = copy.deepcopy(skill)
+    m["frontmatter"].pop("compatibility", None)
+    case("删掉 compatibility → FAIL", m, "FAIL")
 
     m = copy.deepcopy(skill)
     m["frontmatter"]["name"] = "not-the-dir"
