@@ -81,6 +81,10 @@ CLAIM_JSON="$("$PY" scripts/claim_ledger.py --self-test --json)"
 printf '%s\n' "$CLAIM_JSON" | "$PY" -c \
   "import sys,json;d=json.load(sys.stdin);print('  主张 %d 条 / 违规 %d / 欠账 %d / 撤回档案 %d 条 / 双向断言 %s' % (d['claims'],len(d['violations']),d['debts'],d['history_entries'],d.get('self_test','未跑')))"
 "$PY" scripts/verify_skill_spec.py --self-test > /dev/null
+# 复验证据判据：退出码 0 不算证据，主张必须逐行映射；这里只跑双向断言自测，
+# 真实证据由服务器侧 `--build` 生成、`--verify` 复算（见 docs/服务器复验证据.md）。
+"$PY" scripts/verify_server_attestation.py --self-test --json | "$PY" -c \
+  "import sys,json;d=json.load(sys.stdin);print('  复验证据双向断言 %s（注入 %d 招拦 %d）' % (d['self_test'],d['injections'],d['caught']));sys.exit(0 if d['self_test']=='PASS' else 1)"
 
 # 华为云依赖失效矩阵：矩阵里每一行都被真的「挂过一次」。
 # 前 17 步管「结论对不对 / 我们说的话对不对 / 云挂了会怎样」，这一步管

@@ -7,9 +7,23 @@
 ## 0. 前提
 
 - 服务器有 Python 3.10+（3.10/3.11/3.12/3.13 都验过）、git、网络。
-- 判定引擎零第三方包；`check_all.sh` 的 20 步里只有 Playwright 渲染
-  （评委复验页 PDF）需要额外依赖，且**不在自检里**——PDF 是单独渲的。
-- 如果要重渲 PDF，另装 Playwright + Chromium；不重渲就不装。
+- **判定引擎零第三方包**（`src/` 与裁决逻辑只用标准库），但
+  `check_all.sh` 第 2 步的 unittest 里有 `tests/test_web_gate.py`，
+  它的 `setUpClass` 无条件 `import main`，而 `main.py` 依赖
+  `fastapi` + `python-multipart`。
+  2026-11-10 在全新 x86_64 服务器实测：不装依赖会在第 2 步直接中止
+  （`ModuleNotFoundError: No module named 'fastapi'`，340 tests + 1 error）。
+  **所以干净环境跑自检前必须先装 `requirements.txt`。**
+  > 这一条原来写成「20 步只有 Playwright 需要额外依赖」，被实测证伪后按原文更正；
+  > 更正过程记在 `docs/服务器复验证据.md` 第六节。
+- Playwright 渲染（评委复验页 PDF）是另一件事，**不在 20 步自检里**，单独渲才需要。
+- 服务器若是 PEP 668 托管环境且缺 `python3.12-venv`，
+  `pip install --user` 与 `python3 -m venv` 都会失败；用隔离目录：
+  ```bash
+  python3 -m pip install --target ~/zmb-tasks/pydeps -r requirements.txt
+  export PYTHONPATH=~/zmb-tasks/pydeps
+  ```
+  不写系统 `site-packages`、不需要 sudo。
 
 ## 1. 拉代码（干净 clone，别用本地工作区）
 
@@ -94,3 +108,25 @@ python3 scripts/publish_pages.py --check --json
 
 > 边界：GitHub Actions 的 7 个 job 是云端 CI，不算「本地跑」；
 > 推送后它会自动复验 20 步、干净 clone、4 个 Python 版本、aarch64。
+
+## 7. 生成服务器复验证据（2026-11-10 起）
+
+「日志里出现 `[ALL GREEN]`」不再算复验完成。生成可复算证据：
+
+```bash
+python3 scripts/verify_server_attestation.py --build \
+  --log  ~/zmb-tasks/results/T002_check_all.txt \
+  --out  ~/zmb-tasks/results/server_attestation.json \
+  --commit "$(git rev-parse HEAD)" \
+  --builder "cwt:$(hostname):$(uname -m)" \
+  --deps ~/zmb-tasks/pydeps
+
+python3 scripts/verify_server_attestation.py --verify \
+  --attestation ~/zmb-tasks/results/server_attestation.json \
+  --log ~/zmb-tasks/results/T002_check_all.txt
+```
+
+它把 5 条主张逐行映射到日志、用 sha256 绑定日志字节、记录 builder 与依赖清单，
+并自带 7 招双向断言（已挂进 `check_all.sh` 第 16 步）。
+结构与边界见 `docs/服务器复验证据.md`——**注意这不是签名、不是 SLSA L3，
+builder 是自建 x86_64 服务器，不能拿来支撑国产化硬件主张**。
