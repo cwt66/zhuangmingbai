@@ -25,6 +25,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 import audit_record as AR  # noqa: E402
 import ledger as L  # noqa: E402
+import merkle as MK  # noqa: E402
 
 LEDGER = os.path.join(ROOT, "data", "ledger.jsonl")
 ANCHOR = os.path.join(ROOT, "data", "ledger_anchor.json")
@@ -47,6 +48,7 @@ def write_anchor(entries, path=ANCHOR, git_commit=None):
         "schema": "zmb-ledger-anchor/v1",
         "seq": head["seq"],
         "head": head["hash"],
+        "merkle_root": MK.root_hex([e["hash"] for e in entries]),
         "anchored_at": now(),
         "git_commit": git_commit or AR.git_commit(),
         # 云端镜像：代码与 DDL 就绪，实例未开通。这里如实写 not_run，

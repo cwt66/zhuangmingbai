@@ -107,9 +107,9 @@ echo "== 19/20 评委复验页一致性（11 页 + 台账绑定 + 双向断言�
 # 这一步管的是前面 19 步都管不到的一件事——**结论被事后改写**。
 # 链级 8 招 + 包级 3 招，其中 1 招离线拦不住、必须靠外部锚点，
 # 那一招写进报告里，不删。
-echo "== 20/20 哈希链账本（链级 8 招 + 包级 3 招 + 双向断言）"
+echo "== 20/20 哈希链 + Merkle 包含证明（链 8 招 + 包 4 招 + Merkle 12 招）"
 "$PY" eval/ledger_chain.py --json | "$PY" -c \
-  "import sys,json;d=json.load(sys.stdin);print('  账本 %d 条 / 链 %s / 锚点 %s / 链级拦 %d/%d / 包级拦 %d/%d%s' % (d['entries'],'OK' if d['chain_ok'] else 'FAIL','OK' if d['anchor_ok'] else 'FAIL',d['blocked'],d['attacks'],d['bundle_blocked'],d['bundle_attacks'],'' if d['status']=='PASS' else ' / 已知盲点 %d' % d['known_gaps']))"
+  "import sys,json;d=json.load(sys.stdin);print('  账本 %d 条 / 链 %s / 锚点 %s / 链 %d/%d / 包 %d/%d / Merkle %d/%d%s' % (d['entries'],'OK' if d['chain_ok'] else 'FAIL','OK' if d['anchor_ok'] else 'FAIL',d['blocked'],d['attacks'],d['bundle_blocked'],d['bundle_attacks'],d['merkle_blocked'],d['merkle_attacks'],'' if d['status']=='PASS' else ' / 已知盲点 %d' % d['known_gaps']))"
 
 echo
 echo "[ALL GREEN] 全部检查通过。"

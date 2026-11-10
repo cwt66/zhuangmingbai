@@ -54,6 +54,7 @@ TARGETS = (
 
 sys.path.insert(0, str(ROOT / "src"))
 import ledger as L  # noqa: E402
+import merkle as M  # noqa: E402
 
 
 def sha256_bytes(b):
@@ -80,6 +81,7 @@ def build_public_anchor():
         "anchored_at": anchor.get("anchored_at"),
         "git_commit": anchor.get("git_commit"),
         "entries": len(entries),
+        "merkle_root": M.root_hex([e["hash"] for e in entries]),
         "entry_summaries": [
             {"seq": e["seq"],
              "label": (e.get("payload") or {}).get("label"),
@@ -120,12 +122,18 @@ def check_live():
                                           headers={"Cache-Control": "no-cache"})
             with urllib.request.urlopen(req2, timeout=30) as resp2:
                 live_anchor = json.loads(resp2.read().decode("utf-8"))
-            anchor_ok = (live_anchor.get("seq") == doc["seq"]
-                         and live_anchor.get("head") == doc["head"]
-                         and live_anchor.get("entries") == doc["entries"])
+            # 2026-11-10：只比 seq/head/entries 会漏掉「摘要表被改」——
+            # head 没变、6 条摘要里换一条，旧逻辑照样 PASS。实测复现过。
+            same = (live_anchor.get("seq") == doc["seq"]
+                    and live_anchor.get("head") == doc["head"]
+                    and live_anchor.get("entries") == doc["entries"]
+                    and live_anchor.get("merkle_root") == doc["merkle_root"]
+                    and live_anchor.get("entry_summaries") == doc["entry_summaries"])
+            self_ok, self_errs = M.validate_public_anchor(live_anchor)
+            rep["anchor_self_check"] = self_errs
             rep["anchor_url"] = ANCHOR_URL
             rep["anchor_seq"] = doc["seq"]
-            rep["anchor_ok"] = anchor_ok
+            rep["anchor_ok"] = bool(same and self_ok)
         except Exception as e:  # noqa: BLE001
             rep["anchor_ok"] = False
             rep["anchor_error"] = str(e)[:120]

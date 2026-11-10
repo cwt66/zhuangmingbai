@@ -1,6 +1,6 @@
 # 哈希链审计账本：让「事后改结论」留下痕迹
 
-> 口径：2026-11-09 ｜ 账本 6 条（6 份真实单据）｜ 链级 8 招拦 7 招、包级 3 招全拦
+> 口径：2026-11-09 ｜ 账本 6 条（6 份真实单据）｜ 链级 8 招拦 7 招、包级 4 招全拦
 > 复现：`python3 eval/ledger_chain.py` ｜ `python3 scripts/make_bundle.py --csv ...`
 
 ---
@@ -102,7 +102,10 @@ hash = sha256( canonical(seq, ts, kind, payload) + "|" + prev )
 | **L1-c 链内自洽** | 重算 `ledger.jsonl`，链头必须等于锚点快照，本包必须是链上第 N 条 | 改一条、删一条、换序、截尾、整条重写链 |
 | **L2（需仓库）** | entry hash 去 `data/ledger.jsonl` 同 seq、`anchor.json` head、git 历史三处对照 | **链 + 锚点一起重写** |
 
-L2 是工具：`python3 scripts/verify_bundle.py --zip x.zmb.zip --run-l1`，
+L2 是工具：`python3 scripts/verify_bundle.py --zip x.zmb.zip --run-l1`
+
+账本规模变大后，「下载整本摘要」不经济也不好审计；`docs/MERKLE-INCLUSION.md` 说明如何用 RFC 6962 的 Merkle 根 +
+对数长度包含证明把 L2 降到只需一个 32 字节根。，
 加 `--anchor-url https://cwt66.github.io/zhuangmingbai/verify/anchor.json`
 可再对照**公开锚点**（链头 + 6 条摘要，由 `publish_pages.py` 发布到 gh-pages）。
 公开锚点不是信任根——能改仓库的人也能改它；但它把「对照」从

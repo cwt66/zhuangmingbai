@@ -250,6 +250,26 @@ def probe_ledger_chain():
         d.get("bundle_blocked", 0), d.get("bundle_attacks", 0))
 
 
+def probe_merkle_inclusion():
+    """真实账本的 Merkle 根是否与锚点一致、包含证明能否验通（① 档当场重算）。"""
+    code = ("import sys,json;sys.path.insert(0,'src');"
+            "import merkle as M,ledger as L;"
+            "e=L.load('data/ledger.jsonl');"
+            "a=json.load(open('data/ledger_anchor.json',encoding='utf-8'));"
+            "h=[x['hash'] for x in e];"
+            "p=M.make_proof(h,0);"
+            "ok,why=M.verify_proof(p,expect_root=a['merkle_root'],"
+            "expect_tree_size=a['seq']);"
+            "print('PASS' if ok and a['merkle_root']==M.root_hex(h)"
+            " and a['seq']==len(h) else 'FAIL')")
+    r = subprocess.run([sys.executable, "-c", code], cwd=str(ROOT),
+                       capture_output=True, text=True)
+    val = r.stdout.strip().splitlines()[-1] if r.stdout.strip() else None
+    if val != "PASS" or r.returncode != 0:
+        return None, "Merkle 根或包含证明未通过：%s" % (r.stderr.strip()[:80] or val)
+    return "PASS", "Merkle 根与锚点一致，包含证明验证通过"
+
+
 def probe_platform_machine():
     """当前进程所在机器的架构（CI 用；不代表开发机）。"""
     return platform.machine(), "platform.machine()"
@@ -329,6 +349,7 @@ PROBES = {
     "showcase_consistency": probe_showcase_consistency,
     "aarch64_linux": probe_aarch64_linux,
     "ledger_chain": probe_ledger_chain,
+    "merkle_inclusion": probe_merkle_inclusion,
     "ablation_l2": probe_ablation_l2,
     "liveness_killed": probe_liveness_killed,
 }

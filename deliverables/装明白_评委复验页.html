@@ -122,7 +122,7 @@ body.on-dark .deck-controls span:last-child{color:#888}
   <div class="cols c4 reveal">
     <div class="stat"><div class="big">119<small>概念</small></div><div class="l">388 别名 · 13 条规则</div></div>
     <div class="stat"><div class="big">5<small>份</small></div><div class="l">真实单据 · 603 行明细</div></div>
-    <div class="stat"><div class="big">331<small>测试</small></div><div class="l">20 步自检 · 门禁全绿</div></div>
+    <div class="stat"><div class="big">344<small>测试</small></div><div class="l">20 步自检 · 门禁全绿</div></div>
     <div class="stat"><div class="big">3<small>指纹</small></div><div class="l">冻结基线 · 离线可复算</div></div>
   </div>
   <div class="note reveal">边界先行：不判断贵不贵、不评价施工质量、不推断动机。只判漏没漏、重没重、算术与整单对不对得上。<br>
@@ -276,7 +276,7 @@ body.on-dark .deck-controls span:last-child{color:#888}
   <table class="reveal tight">
     <tr><th style="width:520px">命令</th><th>期望看到</th><th style="width:210px">对应主张</th></tr>
     <tr><td><code>git clone gitee.com/Cwt66/zhuangmingbai</code><br><code>或 github.com/cwt66/zhuangmingbai</code></td><td>双仓同一 commit；MIT；GitHub Actions CI 绿</td><td>开源 / 落地进展</td></tr>
-    <tr><td><code>bash scripts/check_all.sh</code></td><td>331 tests OK · 20 步 · <b>五份</b>指纹一致 · 规则活性 35/47 · <code>[ALL GREEN]</code></td><td>工程可信度</td></tr>
+    <tr><td><code>bash scripts/check_all.sh</code></td><td>344 tests OK · 20 步 · <b>五份</b>指纹一致 · 规则活性 35/47 · <code>[ALL GREEN]</code></td><td>工程可信度</td></tr>
     <tr><td><code>python3 scripts/gate_report.py</code></td><td>5 单全<b>可交付</b>；5 个故障注入 <b>5/5 全拦</b></td><td>报告会拒绝交付自己</td></tr>
     <tr><td><code>python3 eval/redteam.py</code></td><td>8 招攻击 <b>拦住 7</b>；得手那招有断言拦不住的测试</td><td>主动打自己</td></tr>
     <tr><td><code>python3 eval/golden_eval.py</code> + <code>injection_test.py</code></td><td>auto P/R 0.833（CI 0.552–0.953）；注入 242/242（下限，非召回率）</td><td>评测口径</td></tr>
@@ -299,8 +299,8 @@ body.on-dark .deck-controls span:last-child{color:#888}
   <div class="lead reveal">硬件边界逐层收紧：从 macOS arm64 到 <b>Linux aarch64 原生</b>，再到 x86_64；每条承诺都有命令。</div>
   <div class="hair reveal"></div>
   <table class="reveal tight">
-    <tr><th style="width:331px">层</th><th style="width:250px">状态</th><th>能说什么 / 不能说什么</th></tr>
-    <tr><td><b>ARM64 开发机</b></td><td>✅ 实测</td><td>331 测试 / 20 步自检全绿；判定引擎零第三方包、无 C 扩展轮子</td></tr>
+    <tr><th style="width:344px">层</th><th style="width:250px">状态</th><th>能说什么 / 不能说什么</th></tr>
+    <tr><td><b>ARM64 开发机</b></td><td>✅ 实测</td><td>344 测试 / 20 步自检全绿；判定引擎零第三方包、无 C 扩展轮子</td></tr>
     <tr><td><b>跨环境确定性</b></td><td>✅ 可复算</td><td>macOS arm64、<b>Linux aarch64 原生</b>（GitHub `ubuntu-24.04-arm`，glibc 2.39）、x86_64 CI 三边判定指纹逐字节一致</td></tr>
     <tr><td><b>华为云 x86 ECS</b></td><td>🟡 IaC 跑到 apply</td><td>Terraform <code>huaweicloud</code> provider 1.90.0 真建出 VPC / 子网 / 安全组 / 密钥对；ECS 停在 <code>Ecs.7000</code>，<b>不能说「已部署」</b></td></tr>
     <tr><td><b>鲲鹏 ARM / 昇腾</b></td><td>❌ 未实测 / 未涉及</td><td>同为 ARM64 指令集，同指令集上的判定确定性已被验证；<b>仍不写「已适配鲲鹏」</b>、不写任何 NPU 成果</td></tr>
@@ -311,9 +311,9 @@ body.on-dark .deck-controls span:last-child{color:#888}
     <tr><td><code>python3 eval/cloud_failure_matrix.py --self-test --json</code></td><td><b>9 个实验</b>；8 个依赖全挂时判定指纹不变</td></tr>
     <tr><td><code>python3 eval/determinism_matrix.py --self-test --json</code></td><td><b>12 变体 / 144 次比对</b>；跨指令集那一半由 x86_64 CI 证明</td></tr>
     <tr><td><code>python3 scripts/verify_aarch64.py --check --json</code></td><td>Linux aarch64 原生 run（glibc 2.39，digest 与 macOS 一致）</td></tr>
-    <tr><td><code>curl https://cwt66.github.io/zhuangmingbai/verify/anchor.json</code></td><td><b>公开锚点</b>：链头 + 6 条摘要，L2 无需 clone</td></tr>
+    <tr><td><code>curl https://cwt66.github.io/zhuangmingbai/verify/anchor.json</code></td><td><b>公开锚点</b>：Merkle 根 + 摘要；L2 含对数长度包含证明</td></tr>
     <tr><td><code>python3 eval/ledger_chain.py --json</code></td><td><b>账本 6 条</b>；链级 7/7、包级 3/3 攻击被拦</td></tr>
-    <tr><td><code>python3 scripts/claim_ledger.py --json</code></td><td><b>24 条主张 / 0 违规</b>；证据分档 ① 17 / ② 4 / ③ 3，③ 档 3 条不计已验证</td></tr>
+    <tr><td><code>python3 scripts/claim_ledger.py --json</code></td><td><b>25 条主张 / 0 违规</b>；证据分档 ① 18 / ② 4 / ③ 3，③ 档 3 条不计已验证</td></tr>
   </table>
   <div class="note reveal"><b>判据不给自己发豁免</b>：C18「鲲鹏实例未实测、昇腾未涉及」仍是 ③ 档声明；arm64 存档少一条边界声明，确定性矩阵直接 FAIL。<br>
   Linux aarch64 是<b>原生 runner 实测</b>，但仍不是鲲鹏物理机、不是 openEuler 发行版——这条也写进台账 C23 的边界声明。</div>
@@ -337,7 +337,7 @@ body.on-dark .deck-controls span:last-child{color:#888}
   <div class="rule reveal" style="background:#FAFAF8"></div>
   <div class="cols c3 reveal">
     <div><div class="big" style="font-size:76px">MIT</div><div class="stat l">开源许可</div></div>
-    <div><div class="big" style="font-size:76px">331</div><div class="stat l">单元测试全绿</div></div>
+    <div><div class="big" style="font-size:76px">344</div><div class="stat l">单元测试全绿</div></div>
     <div><div class="big" style="font-size:76px">0</div><div class="stat l">编造的真实用户数</div></div>
   </div>
   <div class="note reveal" style="font-size:25px">仓库 <code>https://gitee.com/Cwt66/zhuangmingbai</code> ｜ 唯一对外数字口径 <code>09_证据附录/评测数字总表.md</code><br>

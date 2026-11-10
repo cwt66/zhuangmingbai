@@ -32,6 +32,7 @@ import zipfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 import ledger as L  # noqa: E402
+import merkle as M  # noqa: E402
 
 LEDGER = os.path.join(ROOT, "data", "ledger.jsonl")
 ANCHOR = os.path.join(ROOT, "data", "ledger_anchor.json")
@@ -56,6 +57,7 @@ def fetch_public_anchor(url):
 def check_bundle(zip_path, ledger_path=LEDGER, anchor_path=ANCHOR, run_l1=False,
                  anchor_url=None):
     v = []
+    notes = []
     checks = 0
     tmp = tempfile.mkdtemp(prefix="zmb_l2_")
     try:
@@ -101,29 +103,66 @@ def check_bundle(zip_path, ledger_path=LEDGER, anchor_path=ANCHOR, run_l1=False,
             if r.returncode != 0:
                 v.append("离线 L1 未通过")
 
-        # L2-c：公开锚点对照。不需要 clone 仓库，curl 一个 URL 即可；
-        # 网络失败如实报 FAIL——「打不开」不能当成「对得上」。
+        # L2-c/d：公开锚点对照 + RFC 6962 包含证明。
+        # 不需要 clone 仓库，curl 一个 URL 即可；网络失败如实报 FAIL。
         if anchor_url:
             checks += 1
             try:
                 pub = fetch_public_anchor(anchor_url)
-                sums = {s["seq"]: s for s in pub.get("entry_summaries") or []}
-                if seq not in sums:
-                    v.append("公开锚点没有第 %s 条摘要（公开账本 %d 条，可能整条被重写）"
+                # D3 修复：先校验公开锚点自身（摘要序号 / head / merkle_root
+                # 是否由摘要算出），避免拿一份自相矛盾的文档当证据。
+                self_ok, self_errs = M.validate_public_anchor(pub)
+                if not self_ok:
+                    v += ["公开锚点自洽性：" + x for x in self_errs[:3]]
+                sums = sorted(pub.get("entry_summaries") or [],
+                              key=lambda s: s.get("seq", -1))
+                by_seq = {s.get("seq"): s for s in sums}
+                if seq not in by_seq and not self_ok:
+                    v.append("公开锚点没有第 %s 条摘要（公开账本 %d 条）"
                              % (seq, pub.get("entries", 0)))
-                else:
-                    if sums[seq].get("hash") != entry.get("hash"):
-                        v.append("公开锚点第 %s 条 hash 与包内不一致（整条可能被重写）" % seq)
-                    if (sums[seq].get("result_digest")
+                elif seq in by_seq:
+                    s = by_seq[seq]
+                    if s.get("hash") != entry.get("hash"):
+                        v.append("公开锚点第 %s 条 hash 与包内不一致" % seq)
+                    if (s.get("result_digest")
                             != (entry.get("payload") or {}).get("result_digest")):
                         v.append("公开锚点第 %s 条 result_digest 与包内不一致" % seq)
+
+                # L2-d：包内包含证明对「公开摘要的前缀树根」成立。
+                # 账本后来增长时，前缀根仍可从当前摘要算出，
+                # 这同时证明了旧记录没被改写（append-only）。
+                pp = os.path.join(tmp, "inclusion_proof.json")
+                if not os.path.isfile(pp):
+                    v.append("包里没有 inclusion_proof.json：无法做紧凑包含验证")
+                elif sums:
+                    proof = json.load(open(pp, encoding="utf-8"))
+                    checks += 1
+                    if proof.get("leaf") != entry.get("hash"):
+                        v.append("包含证明的叶子不是本包条目 hash")
+                    n = proof.get("tree_size", 0)
+                    if not isinstance(n, int) or n < 1 or n > len(sums):
+                        v.append("包含证明的 tree_size 超出公开摘要范围")
+                    else:
+                        prefix_root = M.root_hex(
+                            [x["hash"] for x in sums[:n]
+                             if isinstance(x.get("hash"), str)
+                             and len(x["hash"]) == 64])
+                        # 外部只承诺「当前有 len(sums) 条」；旧包的证明
+                        # 对应更短的前缀树，所以 tree_size 单独不硬比，
+                        # 由 prefix_root（按 n 从当前摘要重算）来约束。
+                        ok, why = M.verify_proof(proof, expect_root=prefix_root)
+                        if not ok:
+                            v.append("包含证明验证失败：%s" % why)
+                    if n < len(sums):
+                        notes.append("账本已增长到 %d 条；证明对应生成时的 %d 条前缀树，"
+                                     "前缀未变，仍成立" % (len(sums), n))
             except Exception as e:  # noqa: BLE001
-                v.append("公开锚点不可达（%s）——L2-c 无法完成，不算通过" % str(e)[:80])
+                v.append("公开锚点不可达（%s）——L2-c/d 无法完成，不算通过" % str(e)[:80])
 
         return {"status": "PASS" if not v else "FAIL", "checks": checks,
                 "violations": v, "seq": seq, "entry_hash": entry.get("hash"),
                 "repo_entries": len(repo), "l1": l1,
-                "public_anchor": anchor_url or None}
+                "notes": notes, "public_anchor": anchor_url or None}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

@@ -53,7 +53,7 @@ class ClaimLedgerTests(unittest.TestCase):
 
     def test_three_tiers_are_present_and_declared_not_counted(self):
         rep = self._verify()
-        self.assertEqual(rep["tier_counts"].get("ran"), 17)
+        self.assertEqual(rep["tier_counts"].get("ran"), 18)
         self.assertEqual(rep["tier_counts"].get("read"), 4)
         self.assertEqual(rep["tier_counts"].get("declared"), 3)
         # ③ 档必须进欠账清单，且状态不是 verified

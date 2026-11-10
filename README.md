@@ -7,7 +7,7 @@
 [![Gitee](https://img.shields.io/badge/Gitee-Cwt66%2Fzhuangmingbai-c71d23)](https://gitee.com/Cwt66/zhuangmingbai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](./requirements.txt)
-[![Tests](https://img.shields.io/badge/tests-331-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-344-brightgreen.svg)](./tests)
 [![Rules](https://img.shields.io/badge/rules-13-002FA7.svg)](./data/rules_v0.json)
 
 签合同之前，上传 2–4 家装修公司的报价单（照片 / PDF / Excel / CSV），输出一份**可核对、可溯源、可复现**的审计报告：
@@ -63,7 +63,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 | **分位金额** | ✅ `src/money.py`：Decimal 求和/求差；R8 仍保留 1 元容差，质量门额外报「精确到分」差额 |
 | **多 sheet Excel** | ✅ `.xlsx` 解析所有 worksheet，选非空行最多的一张，避免「主表在第二个 sheet」直接报空 |
 | 真实单据评测 | ✅ **5 份 / 603 行工序明细 + 11 行汇总**（合计 **614 行**原始表格数据）；两份完整黄金标注；注入实验 242 例 |
-| 单元测试 | ✅ **331 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / **红队与易混词 17** / **Skill 证据校验 16** / **规则活性 15** / **Web 交付门 4** / 优惠与负号 5 / 指纹一致性 3 / 主张台账 14 例 / Skills 规范 7 例 / 隐私扫描 4 例 / 干净 clone 保障 4 例 / 提交包数字 6 例 / 失效矩阵 6 例） |
+| 单元测试 | ✅ **344 个**（云原生 14 / 本地 OCR 7 / PDF 坐标 / 回归线 / 对账分层 / 四项创新 / 跨领域迁移 / 盲标与 κ 9 / 对标能力 16 / 两版对比 10 / 回放页 5 / **报告交付门 16** / **负向知识库 10** / **红队与易混词 17** / **Skill 证据校验 16** / **规则活性 15** / **Web 交付门 4** / 优惠与负号 5 / 指纹一致性 3 / 主张台账 14 例 / Skills 规范 7 例 / 隐私扫描 4 例 / 干净 clone 保障 4 例 / 提交包数字 6 例 / 失效矩阵 6 例） |
 | 可打印报告 | ✅ `/demo`、`/real`（打印级 HTML，判定指纹上封面） |
 | **服务端 PDF** | ✅ `/demo.pdf`、`/real.pdf`、`scripts/make_report_pdf.py`（不依赖浏览器打印） |
 | **上传守门** | ✅ `src/doc_gate.py`：**解析前**就判 报价单/合同/无关（只看表头与原文），非报价单直接 400 并给合同词/列结构证据 |
@@ -106,11 +106,11 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 ### 2.2 主张台账：材料里的数字，自己会说话
 
 前面所有门禁管的都是**引擎输出对不对**。还有一类东西从来没人管：
-**我们对外说的话对不对**。材料里写着「331 个测试」「119 概念 / 388 别名」
+**我们对外说的话对不对**。材料里写着「344 个测试」「119 概念 / 388 别名」
 「20 步自检」，代码一改就悄悄过期，评委不会去数，我们自己也不会。
 
 所以加了第 16 步：**每条可量化主张都必须带一条产生它的命令**
-（`data/claims_v0.json`，24 条）。判定不认台账里写的 `value`，
+（`data/claims_v0.json`，25 条）。判定不认台账里写的 `value`，
 只认 `probe` 当场从源头重算出来的 `observed`；同时用 `{v}` 模板反查文档，
 「改了文档没改台账」和「改了代码没改文档」两个方向都会红。
 
@@ -119,7 +119,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 
 | 档 | 含义 | 条数 | 例子 |
 |---|---|---:|---|
-| ① 跑出过结果 | 校验器当场执行命令，从源头重算 | 17 | 测试数、本体重命名、614 行、17 步、红队 7/8、±1.01 元 |
+| ① 跑出过结果 | 校验器当场执行命令，从源头重算 | 18 | 测试数、本体重命名、614 行、17 步、红队 7/8、±1.01 元 |
 | ② 读过原文 | 值来自命令生成的产物，本次未独立重算 | 4 | 消融精确率、规则活性被杀数 |
 | ③ 只按元数据判 | 写不出命令的边界声明，**不计已验证** | 3 | n=2 只作存在性证明、鲲鹏未实测、Key 未开通 |
 
@@ -364,11 +364,11 @@ python3 verify.py → [PASS] 复算结论与包内记录一致：0c8e2a741819f59
 
 ```bash
 python3 scripts/ledger.py seed && python3 scripts/ledger.py anchor
-python3 eval/ledger_chain.py --json   # 链级 8 招 + 包级 3 招
+python3 eval/ledger_chain.py --json   # 链级 8 招 + 包级 4 招
 python3 scripts/verify_bundle.py --zip /tmp/x.zmb.zip --run-l1
 ```
 
-**链级 8 招拦住 7 招，包级 3 招全拦住**；第 8 招（把链和锚点一起重写）
+**链级 8 招拦住 7 招，包级 4 招全拦住**；第 8 招（把链和锚点一起重写）
 离线拦不住，只有 L2 能发现。**这一招留在报告里，不删**——
 删掉它，这份材料就变成「我们什么都防住了」，那才是真的不可信。
 
@@ -376,6 +376,40 @@ python3 scripts/verify_bundle.py --zip /tmp/x.zmb.zip --run-l1
 > 与 OBS 对象锁的代码/DDL 都已写好，但实例与 AK 都不可用，
 > 所以状态是 `not_run`——材料里不写「账本已落库到 RDS」。
 > 详见 `docs/HASH-CHAIN-LEDGER.md` 第六节。
+
+### 2.10 Merkle 包含证明：一个 32 字节根就够了
+
+上一版公开锚点把**整张摘要表**发到 gh-pages，L2 得下载全表才能查一条记录。
+按 **RFC 6962 / Sigstore Rekor** 的做法改成 Merkle 根 + 对数长度审计路径：
+
+```
+MTH({})    = SHA-256(b"")
+MTH({d0})  = SHA-256(0x00 || d0)
+MTH(D[n])  = SHA-256(0x01 || MTH(D[:k]) || MTH(D[k:]))   k = 小于 n 的最大 2 的幂
+```
+
+`data/ledger_anchor.json` 现在同时承诺**链头**与 **`merkle_root`**；
+审计包带 `inclusion_proof.json`，`verify.py` 的 L1-d 与 `verify_bundle.py` 的
+L2-d 都能只凭一个根验证「这条记录确实在账本里」。
+
+```bash
+python3 eval/ledger_chain.py --json    # 链级 8 招 + 包级 4 招 + Merkle 12 招
+python3 scripts/verify_bundle.py --zip x.zmb.zip --run-l1 \
+    --anchor-url https://cwt66.github.io/zhuangmingbai/verify/anchor.json
+```
+
+顺带修了公开锚点的两个真实漏洞：
+`--check` 原来只比 `seq/head/entries`（**摘要表被改也判 PASS**，实测复现），
+L2-c 原来没检查 `head` 是否等于末条、`merkle_root` 是否由摘要算出。
+现在两端共用 `validate_public_anchor()`，全字段逐条比对。
+
+> **两个算法坑留在方法论里**：审计路径必须是自底向上（n=3 起会算错根）；
+> `tree_size` 不由证明单独绑定（6 叶证明改成 5 仍能算出同一个根），
+> 必须由外部锚点的 `seq` 约束。这两条都写进了攻击套件，没删。
+>
+> **边界**：包含证明不证明树本身诚实；根仍需仓库 + git + 公开 URL 背书。
+> 没有签名 STH、没有 RFC 6962 紧凑一致性证明、没有独立 monitor。
+> 详见 `docs/MERKLE-INCLUSION.md`。
 
 ---
 
@@ -605,7 +639,7 @@ data/coverage_v0.json   证据词 + 父类吸收表
 data/not_applicable_v0.json  负向知识库：13 条「不判」+ 理由 + 若判了的后果
 docs/RULE-BLIND-SPOTS.md 规则盲点清单：诊断，不是修复日志
 data/confusable_v0.json 易混词对：15 组只差一字但语义相反的词，fuzzy 匹配必须跳过
-data/claims_v0.json     主张台账：24 条公开主张 + 证据档位 + 文档出现位置
+data/claims_v0.json     主张台账：25 条公开主张 + 证据档位 + 文档出现位置
 data/claim_history_v0.json 撤回档案：10 条撤回/误报/已知未修 + 3 条预测 MISS
 data/real/              5 份真实单据（公开晒单/公开 PDF 的人工转录，无个人信息）
 eval/                   黄金标注评测 / 消融 / 注入 / 对照实验 / 冻结指纹 / 指标库

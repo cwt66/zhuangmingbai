@@ -41,6 +41,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 import audit_record as AR  # noqa: E402
 import ledger as L  # noqa: E402
+import merkle as MK  # noqa: E402
 
 DATA = AR.DATA
 # 兼容别名：清单的单一来源在 src/audit_record.py（打包与账本共用），
@@ -113,6 +114,69 @@ def check_map(rec, key, base, fails):
         if got != want:
             fails.append("%s：%s 被改动（记录 %s…，实际 %s…）"
                          % (key, name, want[:12], got[:12]))
+
+
+def _split_n(n):
+    k = 1
+    while k * 2 < n:
+        k *= 2
+    return k
+
+
+def _leaf_hash(d):
+    return hashlib.sha256(b"\\x00" + d).digest()
+
+
+def _node_hash(a, b):
+    return hashlib.sha256(b"\\x01" + a + b).digest()
+
+
+def merkle_root_hex(hashes):
+    """RFC 6962 §2.1：叶子 0x00 / 节点 0x01 域分隔，树形由叶子数唯一决定。"""
+    def mth(hs):
+        if not hs:
+            return hashlib.sha256(b"").digest()
+        if len(hs) == 1:
+            return _leaf_hash(hs[0])
+        k = _split_n(len(hs))
+        return _node_hash(mth(hs[:k]), mth(hs[k:]))
+    return mth([bytes.fromhex(h) for h in hashes]).hex()
+
+
+def verify_inclusion(proof, expect_root, expect_tree_size):
+    """RFC 6962-bis §2.1.3.2 的 fn/sn 位运算验证；返回 None 或错误原因。"""
+    try:
+        idx, n = proof["leaf_index"], proof["tree_size"]
+        leaf, root = bytes.fromhex(proof["leaf"]), bytes.fromhex(proof["root"])
+        path = [bytes.fromhex(h) for h in proof["audit_path"]]
+        if bytes.fromhex(expect_root) != root:
+            return "证明里的 root 与锚点快照不符"
+    except (KeyError, ValueError, TypeError):
+        return "证明字段不合法"
+    if len(leaf) != 32 or len(root) != 32 or any(len(x) != 32 for x in path):
+        return "证明里的哈希不是 32 字节"
+    if n < 1 or idx < 0 or idx >= n:
+        return "leaf_index / tree_size 越界"
+    if n != expect_tree_size:
+        return "tree_size 与包内账本条数不符（%d vs %d）" % (n, expect_tree_size)
+    fn, sn, r = idx, n - 1, _leaf_hash(leaf)
+    for sib in path:
+        if sn == 0:
+            return "审计路径过长"
+        if (fn & 1) == 1 or fn == sn:
+            r = _node_hash(sib, r)
+            while (fn & 1) == 0 and fn != 0:
+                fn >>= 1
+                sn >>= 1
+        else:
+            r = _node_hash(r, sib)
+        fn >>= 1
+        sn >>= 1
+    if sn != 0:
+        return "审计路径过短"
+    if r != root:
+        return "由审计路径算出的根与证明里的 root 不符"
+    return None
 
 
 def load_ledger(fails):
@@ -216,6 +280,26 @@ def main():
                 if pl.get(plkey) != hashlib.sha256(
                         canonical(rec.get(key) or {}).encode("utf-8")).hexdigest():
                     fails.append("账本 payload 的 %s 与 result.json 不一致" % plkey)
+
+            # --- L1-d Merkle 包含证明：只需锚点快照里的 32 字节根 ---
+            pp = os.path.join(HERE, "inclusion_proof.json")
+            if not os.path.isfile(pp):
+                fails.append("缺 inclusion_proof.json（当前版审计包必须带证明）")
+            else:
+                proof = json.load(open(pp, encoding="utf-8"))
+                if proof.get("leaf") != entry.get("hash"):
+                    fails.append("包含证明的叶子不是本包条目 hash")
+                if proof.get("tree_size") != len(entries):
+                    fails.append("包含证明的 tree_size 与包内账本条数不符")
+                root = anchor.get("merkle_root")
+                if not root:
+                    fails.append("锚点快照缺 merkle_root")
+                else:
+                    if merkle_root_hex([e["hash"] for e in entries]) != root:
+                        fails.append("包内账本算出的 Merkle 根与锚点快照不符")
+                    err = verify_inclusion(proof, root, len(entries))
+                    if err:
+                        fails.append("包含证明验证失败：%s" % err)
 
     if not quiet:
         print("单据：%s（%d 行明细 + %d 行汇总）" % (
@@ -350,6 +434,7 @@ def main():
                 "schema": "zmb-ledger-anchor/v1",
                 "seq": len(entries),
                 "head": entries[-1]["hash"],
+                "merkle_root": MK.root_hex([e["hash"] for e in entries]),
                 "anchored_at": datetime.now().astimezone().isoformat(timespec="seconds"),
                 "git_commit": AR.git_commit(),
                 "mirrors": {
@@ -377,6 +462,13 @@ def main():
             if os.path.isfile(src):
                 shutil.copy2(src, os.path.join(tmp, "src", n))
         write_json(os.path.join(tmp, "result.json"), record)
+        if entry is not None:
+            entry_hashes = [e["hash"] for e in entries]
+            proof = MK.make_proof(entry_hashes, entry["seq"] - 1)
+            snap = dict(anchor)
+            snap["merkle_root"] = MK.root_hex(entry_hashes)
+            write_json(os.path.join(tmp, "inclusion_proof.json"), proof)
+            write_json(os.path.join(tmp, "anchor_snapshot.json"), snap)
         with open(os.path.join(tmp, "verify.py"), "w", encoding="utf-8") as f:
             f.write(VERIFY_TMPL)
         with open(os.path.join(tmp, "README.txt"), "w", encoding="utf-8") as f:
@@ -385,7 +477,6 @@ def main():
             write_json(os.path.join(tmp, "ledger_entry.json"), entry)
             with open(os.path.join(tmp, "ledger.jsonl"), "w", encoding="utf-8") as f:
                 f.write(L.dumps(entries))
-            write_json(os.path.join(tmp, "anchor_snapshot.json"), anchor)
 
         with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
             for base, _, files in os.walk(tmp):

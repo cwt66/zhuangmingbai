@@ -29,6 +29,7 @@ import zipfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 import ledger as L  # noqa: E402
+import merkle as MK  # noqa: E402
 
 LEDGER = os.path.join(ROOT, "data", "ledger.jsonl")
 ANCHOR = os.path.join(ROOT, "data", "ledger_anchor.json")
@@ -45,7 +46,9 @@ def fixture(tmp):
                                "result_digest": "d%d" % i}, "2026-11-09T00:00:0%d+08:00" % i)
     entries = L.load(lp)
     anchor = {"schema": "zmb-ledger-anchor/v1", "seq": len(entries),
-              "head": entries[-1]["hash"], "anchored_at": "2026-11-09T00:00:09+08:00"}
+              "head": entries[-1]["hash"],
+              "merkle_root": MK.root_hex([e["hash"] for e in entries]),
+              "anchored_at": "2026-11-09T00:00:09+08:00"}
     with open(ap, "w", encoding="utf-8") as f:
         json.dump(anchor, f, ensure_ascii=False)
     return lp, ap
@@ -127,7 +130,12 @@ def attacks():
         es = L.load(lp)
         with open(ap, "w", encoding="utf-8") as f:
             json.dump({"schema": "zmb-ledger-anchor/v1", "seq": len(es),
-                       "head": es[-1]["hash"]}, f, ensure_ascii=False)
+                       "head": es[-1]["hash"],
+                       # 攻击者也把 Merkle 根一起重算：否则会被新加的
+                       # check_anchor 的 merkle_root 校验提前拦住，
+                       # 「链和锚点一起重写」就不再是同一个攻击了。
+                       "merkle_root": MK.root_hex([x["hash"] for x in es])},
+                      f, ensure_ascii=False)
 
     return [
         ("干净账本必须 PASS（会说「是」）", lambda lp, ap: None, "PASS"),
@@ -259,9 +267,34 @@ def _rewrite_all(case_dir):
         f.write(L.dumps(new))
     with open(os.path.join(case_dir, "ledger_entry.json"), "w", encoding="utf-8") as f:
         json.dump(new[0], f, ensure_ascii=False, indent=2)
-    with open(os.path.join(case_dir, "anchor_snapshot.json"), "w", encoding="utf-8") as f:
+    # 攻击者也把 Merkle 证明与根一起重算：离线包变成完全自洽的假历史。
+    # 只有这样，L2 的失败才真能说明「包外对照」在起作用。
+    hashes = [e["hash"] for e in new]
+    proof = MK.make_proof(hashes, 0)
+    with open(os.path.join(case_dir, "inclusion_proof.json"), "w",
+              encoding="utf-8") as f:
+        json.dump(proof, f, ensure_ascii=False, indent=2)
+    with open(os.path.join(case_dir, "anchor_snapshot.json"), "w",
+              encoding="utf-8") as f:
         json.dump({"schema": "zmb-ledger-anchor/v1", "seq": len(new),
-                   "head": new[-1]["hash"]}, f, ensure_ascii=False, indent=2)
+                   "head": new[-1]["hash"],
+                   "merkle_root": MK.root_hex(hashes)},
+                  f, ensure_ascii=False, indent=2)
+
+
+def _tamper_proof(case_dir):
+    """把包内 inclusion_proof.json 的审计路径改一个哈希。
+
+    临时账本只有 1 条时审计路径是空的（叶子即根），
+    这时改 root 一样能检验 L1-d——别让判据因为「没东西可改」而假 PASS。
+    """
+    fp = os.path.join(case_dir, "inclusion_proof.json")
+    d = json.load(open(fp, encoding="utf-8"))
+    if d.get("audit_path"):
+        d["audit_path"][0] = "0" * 64
+    else:
+        d["root"] = "0" * 64
+    json.dump(d, open(fp, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
 
 
 def bundle_attacks():
@@ -282,6 +315,7 @@ def bundle_attacks():
                 ("改标准 + 重算结论（上一版失守的那招）", _tamper_standards, "FAIL", "L1"),
                 ("改标准 + 同步改 result.json 哈希表",
                  lambda d: (_tamper_standards(d), _refresh_hash_map(d)), "FAIL", "L1"),
+                ("改包内 Merkle 证明（路径或根）", _tamper_proof, "FAIL", "L1"),
                 ("改标准 + 链 + 锚点 + 哈希表整包重写",
                  lambda d: (_tamper_standards(d), _rewrite_all(d)), "FAIL", "L2")):
             d = _extract(zp, os.path.join(tmp, "c_" + str(len(cases))))
@@ -311,6 +345,100 @@ def bundle_attacks():
         shutil.rmtree(tmp, ignore_errors=True)
     blocked = sum(1 for c in cases if c["expected"] != "PASS" and c["ok"])
     return {"cases": cases, "attacks": len(cases) - 1, "blocked": blocked,
+            "status": "PASS" if all(c["ok"] for c in cases) else "FAIL"}
+
+
+def merkle_attacks():
+    """RFC 6962 包含证明 + 公开锚点自洽性的攻击套件。
+
+    依据 GitHub 上 Sigstore Rekor / RFC 6962 的做法：只发布一个 32 字节根，
+    持有者用对数长度的审计路径自证「这条在树里」。
+    这一组验证：改路径、改叶子、改索引、改根、改摘要表都会被抓到。
+    """
+    import copy
+    import hashlib
+    sys.path.insert(0, os.path.join(ROOT, "src"))
+    import merkle as M  # noqa: E402
+
+    leaves = [hashlib.sha256(("e%d" % i).encode()).hexdigest()
+              for i in range(6)]
+    root = M.root_hex(leaves)
+    good = M.make_proof(leaves, 2)
+    cases = []
+
+    def case(name, got, expect):
+        cases.append({"name": name, "expected": expect, "got": got,
+                      "ok": got == expect, "why": []})
+
+    def as_result(ok, want_ok=True):
+        return "PASS" if (ok == want_ok and want_ok) else "拦截"
+
+    def proof_case(name, mutate, expect_root=root, expect_size=6):
+        p = copy.deepcopy(good)
+        mutate(p)
+        ok, _ = M.verify_proof(p, expect_root=expect_root,
+                               expect_tree_size=expect_size)
+        case(name, "PASS" if ok else "拦截", "拦截")
+
+    ok, _ = M.verify_proof(good, expect_root=root, expect_tree_size=6)
+    case("干净包含证明必须 PASS", "PASS" if ok else "拦截", "PASS")
+    # 不传 expect_tree_size 时 RFC fn/sn 算法单独不绑树大小：这是真实边界，
+    # 判据里专门留一例说明「为什么必须传」。
+    ok_no_size, _ = M.verify_proof(
+        {**copy.deepcopy(good), "tree_size": 5}, expect_root=root)
+    case("改 tree_size 但不给外部条数（已知边界）",
+         "PASS" if ok_no_size else "拦截", "PASS")
+    proof_case("改审计路径一个哈希", lambda p: p["audit_path"].__setitem__(0, "0" * 64))
+    proof_case("改叶子（条目 hash）", lambda p: p.__setitem__("leaf", "f" * 64))
+    proof_case("改 leaf_index", lambda p: p.__setitem__("leaf_index", 3))
+    proof_case("改 tree_size", lambda p: p.__setitem__("tree_size", 5))
+    proof_case("改证明里的 root", lambda p: p.__setitem__("root", "e" * 64))
+    proof_case("外部锚点 root 与证明不符", lambda p: None, expect_root="a" * 64)
+
+    pub = {
+        "schema": "zmb-ledger-public-anchor/v1",
+        "seq": len(leaves), "entries": len(leaves),
+        "head": leaves[-1], "merkle_root": root,
+        "entry_summaries": [
+            {"seq": i + 1, "hash": h, "result_digest": "d%d" % i}
+            for i, h in enumerate(leaves)],
+    }
+    ok, _ = M.validate_public_anchor(pub)
+    case("干净公开锚点必须 PASS", "PASS" if ok else "拦截", "PASS")
+
+    def anchor_case(name, mutate):
+        q = copy.deepcopy(pub)
+        mutate(q)
+        good_anchor, _ = M.validate_public_anchor(q)
+        case(name, "拦截" if not good_anchor else "PASS", "拦截")
+
+    anchor_case("head 与最后一条摘要不符", lambda q: q.__setitem__("head", "0" * 64))
+    anchor_case("merkle_root 与摘要序列不符", lambda q: q.__setitem__("merkle_root", "0" * 64))
+    anchor_case("摘要 hash 被换（根对不上）",
+                lambda q: q["entry_summaries"][2].__setitem__("hash", "1" * 64))
+    anchor_case("摘要 seq 断号", lambda q: q["entry_summaries"][2].__setitem__("seq", 99))
+
+    # 结构自洽查不出「摘要里的业务字段被改」——这是一个必须承认的边界。
+    # 补它的不是 Merkle，而是 publish_pages --check 的**全字段逐条比对**。
+    q = copy.deepcopy(pub)
+    q["entry_summaries"][0]["result_digest"] = "FORGED"
+    struct_ok, _ = M.validate_public_anchor(q)
+    case("摘要业务字段被改：结构自洽查不出（已知边界）",
+         "PASS" if struct_ok else "拦截", "PASS")
+    full_same = (q.get("seq") == pub["seq"] and q.get("head") == pub["head"]
+                 and q.get("entries") == pub["entries"]
+                 and q.get("merkle_root") == pub["merkle_root"]
+                 and q.get("entry_summaries") == pub["entry_summaries"])
+    case("同一篡改被 --check 全字段比对拦住", "拦截" if not full_same else "PASS", "拦截")
+
+    changed = list(leaves)
+    changed[1] = "2" * 64
+    append_ok, _ = M.verify_append_only(root, 3, changed)
+    case("旧根对应的前缀被重写", "拦截" if not append_ok else "PASS", "拦截")
+
+    attacks_n = sum(1 for c in cases if c["expected"] == "拦截")
+    blocked = sum(1 for c in cases if c["expected"] == "拦截" and c["ok"])
+    return {"cases": cases, "attacks": attacks_n, "blocked": blocked,
             "status": "PASS" if all(c["ok"] for c in cases) else "FAIL"}
 
 
@@ -356,7 +484,7 @@ def real_ledger():
             "anchor_seq": (anchor or {}).get("seq")}
 
 
-def render(real, st, bt=None):
+def render(real, st, bt=None, mt=None):
     lines = ["# 哈希链账本 · 攻击套件报告", "",
              "> 由 `python3 eval/ledger_chain.py` 生成。链级 9 个用例"
              "（8 招 + 1 个干净基线）、包级 4 个用例（3 招 + 1 个干净基线）。", "",
@@ -387,6 +515,17 @@ def render(real, st, bt=None):
         lines += ["## 四、已知盲点：为什么它必须留在报告里", ""]
     else:
         lines += ["## 三、已知盲点：为什么它必须留在报告里", ""]
+    if mt and mt.get("cases"):
+        lines += ["## 五、Merkle 包含证明（RFC 6962 / Sigstore Rekor 方法）", "",
+                  "| 用例 | 期望 | 实际 | 判定 |", "|---|---|---|---|"]
+        for c in mt["cases"]:
+            lines.append("| %s | %s | %s | %s |" % (
+                c["name"], c["expected"], c["got"], "✅" if c["ok"] else "❌"))
+        lines += ["", "**Merkle / 锚点自洽攻击 %d 招，拦住 %d 招**"
+                  % (mt["attacks"], mt["blocked"]), "",
+                  "> 只发布一个 32 字节根 + 对数长度审计路径，不需要下载整张账本。",
+                  "> 「摘要业务字段被改」结构自洽查不出，靠 `--check` 全字段比对补上——",
+                  "> 这条边界留在表里，不删。", ""]
     lines += [
               "第 8 招把链和锚点**一起**重写。离线包里没有「链外的真相」，",
               "所以任何自洽性校验都会被一起说服——这不是实现缺陷，是离线校验的边界。", "",
@@ -411,13 +550,15 @@ def main():
     st = self_test()
     bt = bundle_attacks() if not args.skip_bundle else {"status": "PASS", "cases": [],
                                                        "attacks": 0, "blocked": 0}
+    mt = merkle_attacks()
     real = real_ledger()
     if not args.no_report:
         os.makedirs(os.path.dirname(OUT), exist_ok=True)
         with open(OUT, "w", encoding="utf-8") as f:
-            f.write(render(real, st, bt))
+            f.write(render(real, st, bt, mt))
 
     overall = "PASS" if (st["status"] == "PASS" and bt["status"] == "PASS"
+                        and mt["status"] == "PASS"
                         and real["chain_ok"] and real["anchor_ok"]) else "FAIL"
     if args.json:
         print(json.dumps({"status": overall, "self_test": st["status"],
@@ -426,6 +567,9 @@ def main():
                           "bundle_attacks": bt["attacks"],
                           "bundle_blocked": bt["blocked"],
                           "bundle_self_test": bt["status"],
+                          "merkle_attacks": mt["attacks"],
+                          "merkle_blocked": mt["blocked"],
+                          "merkle_self_test": mt["status"],
                           "entries": real["entries"], "head": real["head"],
                           "chain_ok": real["chain_ok"],
                           "anchor_ok": real["anchor_ok"],

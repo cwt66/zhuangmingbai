@@ -183,6 +183,15 @@ def check_anchor(entries, anchor):
     if got != head:
         v.append("锚点不符：第 %d 条 hash 记录 %s…，实际 %s…（整条可能被重写）"
                  % (seq, head[:12], got[:12]))
+    # 2026-11-10：锚点同时承诺 Merkle 根。链头承诺「最后一条」，
+    # 根承诺「整个有序序列」——后者才是包含证明要对照的东西。
+    mroot = anchor.get("merkle_root")
+    if not mroot:
+        v.append("锚点缺 merkle_root（当前版必须同时承诺 Merkle 根）")
+    else:
+        import merkle as MK  # noqa: E402  延迟导入，避免模块间耦合
+        if mroot != MK.root_hex([e["hash"] for e in entries[:seq]]):
+            v.append("锚点 merkle_root 与账本前 %d 条算出的根不符" % seq)
     extra = len(entries) - seq
     if extra > 0:
         v.append("锚点落后 %d 条：新追加的记录还没被锚定，尾部暂不具备防篡改能力"
