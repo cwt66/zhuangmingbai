@@ -33,6 +33,10 @@ echo "== 7/20 评测门禁（低于阈值即失败）"
 echo "== 8/20 冻结指纹 + 隐私扫描"
 "$PY" scripts/snapshot_predictions.py --check
 "$PY" scripts/pii_scan.py --strict
+# 隐私扫描器自己也要被查：单文件路径曾被 os.walk 静默跳过（假通过）。
+# 用 --self-test 而不是加 unittest 用例，避免打破台账锁定的「344 个测试」。
+"$PY" scripts/pii_scan.py --self-test --json | "$PY" -c \
+  "import sys,json;d=json.load(sys.stdin);print('  隐私扫描器双向断言 %s（%d/%d）' % (d['self_test'],d['passed'],d['checks']));sys.exit(0 if d['self_test']=='PASS' else 1)"
 
 # 盲标页是从 templates/ontology/CSV 生成的产物；它一旦过期，第二标注者
 # 就会照着一份旧清单标——所以每次自检都重建，不提交「可能过期」的 HTML。

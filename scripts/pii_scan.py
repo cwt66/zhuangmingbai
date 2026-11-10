@@ -12,6 +12,7 @@
     python3 scripts/pii_scan.py docs/      # 只扫指定目录
 """
 import argparse
+import json
 import os
 import re
 import sys
@@ -36,6 +37,12 @@ HASH_LINE_MARKERS = ('"history_digest"', '"result_digest"', '"digest"', '"sha256
 
 
 def iter_files(root):
+    # 2026-11-10 修：原来只有 os.walk 一条路。传**单个文件路径**时
+    # os.walk 静默返回空，CLI 照样打印 [OK] 并 exit 0 ——「已扫描」是假通过。
+    # 显式传文件就明确扫它，也不再用扩展名过滤（指定了还要被跳过说不通）。
+    if os.path.isfile(root):
+        yield root
+        return
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
         for fn in filenames:
@@ -81,11 +88,63 @@ def scan_file(path):
     return hits
 
 
+def self_test():
+    """双向断言：单文件路径必须真的被扫；干净的过、脏的红、白的仍豁免。
+
+    起因见 iter_files 注释。这里不新增 unittest 用例——主张台账锁死
+    「单元测试 344 个」，加一条就会让台账违规，所以走 --self-test 通道。
+    """
+    import tempfile
+    from pathlib import Path
+
+    results = []
+
+    def case(name, ok):
+        results.append({"name": name, "status": "pass" if ok else "fail"})
+
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        clean = d / "clean.txt"
+        dirty = d / "dirty.txt"
+        demo = d / "demo.json"
+        clean.write_text("普通文本，没有个人信息\n", encoding="utf-8")
+        dirty.write_text("联系：13912345678\n", encoding="utf-8")
+        demo.write_text('{"demo": "13800138000"}\n', encoding="utf-8")
+
+        case("单文件路径进入 iter_files（原 bug）",
+             list(iter_files(str(clean))) == [str(clean)])
+        case("干净单文件 0 命中", scan_file(str(clean)) == [])
+        case("含手机号的单文件被报出",
+             any(h[1] == "phone" for h in scan_file(str(dirty))))
+        case("白名单示例号仍不报", scan_file(str(demo)) == [])
+        case("目录路径仍正常（未回归）",
+             {str(clean), str(dirty), str(demo)} <= set(iter_files(str(d))))
+
+    ok = all(r["status"] == "pass" for r in results)
+    return {"self_test": "PASS" if ok else "FAIL", "checks": len(results),
+            "passed": sum(r["status"] == "pass" for r in results),
+            "results": results}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("paths", nargs="*")
     ap.add_argument("--strict", action="store_true")
+    ap.add_argument("--self-test", action="store_true", help="双向断言自测")
+    ap.add_argument("--json", action="store_true", help="JSON 输出")
     args = ap.parse_args()
+
+    if args.self_test:
+        r = self_test()
+        if args.json:
+            print(json.dumps(r, ensure_ascii=False, indent=2))
+        else:
+            print("隐私扫描器双向断言 %s（%d/%d）" %
+                  (r["self_test"], r["passed"], r["checks"]))
+            for x in r["results"]:
+                print("  [%s] %s" % (x["status"], x["name"]))
+        return 0 if r["self_test"] == "PASS" else 1
+
     roots = args.paths or [BASE]
     total = 0
     for root in roots:
