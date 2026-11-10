@@ -327,6 +327,10 @@ def self_test():
         if not base["ok"]:
             return {"self_test": "FAIL", "results": results, "violations": base["violations"]}
 
+        # bytes 字面量只能含 ASCII；中文日志行先 encode，别写进 b"" 里。
+        step_line = "== 7/20 占位步骤\n".encode("utf-8")
+        green_line = "[ALL GREEN] 全部检查通过。\n".encode("utf-8")
+
         def mutated(name, mutate_stmt=None, mutate_log=None):
             s = copy.deepcopy(stmt)
             lp = Path(td) / (name + ".log")
@@ -340,9 +344,9 @@ def self_test():
 
         caught = 0
         caught += not mutated("删掉一个步骤标记",
-                              mutate_log=lambda b: b.replace(b"== 7/20 占位步骤\n", b""))
+                              mutate_log=lambda b: b.replace(step_line, b""))
         caught += not mutated("删掉 ALL GREEN",
-                              mutate_log=lambda b: b.replace(b"[ALL GREEN] 全部检查通过。\n", b""))
+                              mutate_log=lambda b: b.replace(green_line, b""))
         caught += not mutated("测试数改成 0",
                               mutate_log=lambda b: b.replace(b"Ran 344 tests", b"Ran 0 tests"))
         caught += not mutated("塞进 FAILED 标记",
