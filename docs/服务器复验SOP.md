@@ -114,19 +114,29 @@ python3 scripts/publish_pages.py --check --json
 「日志里出现 `[ALL GREEN]`」不再算复验完成。生成可复算证据：
 
 ```bash
-python3 scripts/verify_server_attestation.py --build \
+# 先脱敏再生成证据：原始日志含服务器账号路径，不上传
+python3 scripts/verify_server_attestation.py --redact \
   --log  ~/zmb-tasks/results/T002_check_all.txt \
+  --out  ~/zmb-tasks/results/server_reverify.log
+python3 scripts/pii_scan.py --strict ~/zmb-tasks/results/server_reverify.log
+
+python3 scripts/verify_server_attestation.py --build \
+  --log  ~/zmb-tasks/results/server_reverify.log \
   --out  ~/zmb-tasks/results/server_attestation.json \
   --commit "$(git rev-parse HEAD)" \
-  --builder "cwt:$(hostname):$(uname -m)" \
+  --builder "self-hosted:linux:$(uname -m)" \
   --deps ~/zmb-tasks/pydeps
 
 python3 scripts/verify_server_attestation.py --verify \
   --attestation ~/zmb-tasks/results/server_attestation.json \
-  --log ~/zmb-tasks/results/T002_check_all.txt
+  --log ~/zmb-tasks/results/server_reverify.log
 ```
 
 它把 5 条主张逐行映射到日志、用 sha256 绑定日志字节、记录 builder 与依赖清单，
 并自带 7 招双向断言（已挂进 `check_all.sh` 第 16 步）。
 结构与边界见 `docs/服务器复验证据.md`——**注意这不是签名、不是 SLSA L3，
 builder 是自建 x86_64 服务器，不能拿来支撑国产化硬件主张**。
+
+> **上传纪律**：只有 `data/server_attestation_v0.json` 与脱敏日志可以进公开仓库。
+> SSH 别名、IP / 端口、账号、密钥、`authorized_keys`、服务器工作目录里的
+> 连接配置与运行日志一律**不上传**；本地任务台账属于工作区，不在任何 git 仓库内。

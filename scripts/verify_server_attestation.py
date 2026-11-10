@@ -95,6 +95,21 @@ CLAIM_SPECS = (
 
 FORBIDDEN = (r"^FAILED \(", r"^Traceback \(most recent call last\):", r"^ERROR: ")
 
+# 公开前的确定性脱敏：只泛化「服务器/账号」形态，不写死任何真实主机名、IP 或账号，
+# 也不改任何判定数字。规则公开，任何人都能对同一份原始日志重做变换并比对 sha256。
+REDACT_PATTERNS = (
+    (re.compile(r"/(?:disk|home|mnt|data)\d*/[A-Za-z0-9_.-]+"), "~"),
+    (re.compile(r"\b[A-Za-z0-9_-]*SYS-\d+GP-[A-Za-z0-9_-]+\b"), "<host>"),
+    (re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"), "<ip>"),
+    (re.compile(r"\buser\d+@"), "<user>@"),
+)
+
+
+def redact_text(text: str) -> str:
+    for rx, repl in REDACT_PATTERNS:
+        text = rx.sub(repl, text)
+    return text
+
 
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
@@ -216,7 +231,8 @@ def build_statement(log_path: Path, commit: str, builder: str, deps_dir=None):
                     "command": "bash scripts/check_all.sh",
                     "repo_commit": commit,
                     "python": sys.version.split()[0],
-                    "platform": platform.platform(),
+                    # 只记系统与架构，不写内核细节 / 主机名 / 账号
+                    "platform": "%s %s" % (platform.system(), platform.machine()),
                 },
                 "resolvedDependencies": deps,
             },
@@ -362,11 +378,28 @@ def self_test():
     total = len(results) - 1
     ok = (results[0]["actual"] == "pass") and (caught == total) and all(
         r["actual"] == r["expect"] for r in results)
+
+    # 脱敏自锁：抹掉账号路径，但 5 条主张的观测值与违规结论必须逐字不变。
+    raw = clean.replace("== 1/20 语法编译",
+                        "== 1/20 语法编译 /disk3/user1/zmb-tasks/repo")
+    red = redact_text(raw)
+    a_claims, a_v = analyze_log(raw)
+    b_claims, b_v = analyze_log(red)
+
+    def sig(claims):
+        return [[h["groups"] for h in c["hits"]] for c in claims]
+
+    redaction_ok = (red != raw and "/disk3/user1" not in red
+                    and not a_v and not b_v and sig(a_claims) == sig(b_claims))
+    results.append({"name": "脱敏不改判定", "expect": "pass",
+                    "actual": "pass" if redaction_ok else "fail"})
+    ok = ok and redaction_ok
     return {
         "self_test": "PASS" if ok else "FAIL",
         "clean": results[0]["actual"],
         "injections": total,
         "caught": caught,
+        "redaction": "PASS" if redaction_ok else "FAIL",
         "results": results,
         "violations": [] if ok else ["双向断言不完整"],
     }
@@ -375,6 +408,7 @@ def self_test():
 def main():
     ap = argparse.ArgumentParser(description="服务器复验证据（生成 / 复算 / 自测）")
     ap.add_argument("--self-test", action="store_true", help="双向断言自测")
+    ap.add_argument("--redact", action="store_true", help="确定性脱敏日志（公开前）")
     ap.add_argument("--build", action="store_true", help="从日志生成证据")
     ap.add_argument("--verify", action="store_true", help="复算证据")
     ap.add_argument("--log", help="check_all.sh 全量日志路径")
@@ -396,6 +430,26 @@ def main():
             for x in r["results"]:
                 print("  [%s] %s" % (x["actual"], x["name"]))
         return 0 if r["self_test"] == "PASS" else 1
+
+    if a.redact:
+        if not a.log or not a.out:
+            ap.error("--redact 需要 --log 与 --out")
+        text = Path(a.log).read_text(encoding="utf-8", errors="replace")
+        before, bv = analyze_log(text)
+        red = redact_text(text)
+        after, av = analyze_log(red)
+        sig = lambda cs: [[h["groups"] for h in c["hits"]] for c in cs]
+        if bv or av or sig(before) != sig(after):
+            raise SystemExit("✗ 脱敏改变了判定证据，拒绝输出")
+        out = Path(a.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(red, encoding="utf-8")
+        r = {"ok": True, "out": str(out), "sha256": sha256_bytes(red.encode("utf-8")),
+             "claims_unchanged": True, "bytes": len(red.encode("utf-8"))}
+        print(json.dumps(r, ensure_ascii=False, indent=2) if a.json else
+              "✓ 脱敏完成：%s（%d 字节，sha256 %s，判定证据未变）" %
+              (out, r["bytes"], r["sha256"][:16]))
+        return 0
 
     if a.build:
         if not a.log or not a.out:

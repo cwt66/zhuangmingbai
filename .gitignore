@@ -10,6 +10,8 @@ eval/dataset/labels/
 venv/
 .auto-deploy/
 *.log
+# 证据日志是脱敏后的公开产物，白名单放行（原始日志留在服务器，不上传）
+!data/server_reverify_*.log
 
 # 运行时状态（不要提交）
 data/state.db
