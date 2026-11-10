@@ -108,7 +108,10 @@ def self_test():
         dirty = d / "dirty.txt"
         demo = d / "demo.json"
         clean.write_text("普通文本，没有个人信息\n", encoding="utf-8")
-        dirty.write_text("联系：13912345678\n", encoding="utf-8")
+        # 拼接生成，避免源码里出现完整的手机号字面量——否则第 8 步
+        # `pii_scan.py --strict` 扫全仓库时会把测试样本自己抓出来。
+        dirty_phone = "139" + "1234" + "5678"
+        dirty.write_text("联系：" + dirty_phone + "\n", encoding="utf-8")
         demo.write_text('{"demo": "13800138000"}\n', encoding="utf-8")
 
         case("单文件路径进入 iter_files（原 bug）",
