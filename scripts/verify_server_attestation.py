@@ -380,8 +380,9 @@ def self_test():
         r["actual"] == r["expect"] for r in results)
 
     # 脱敏自锁：抹掉账号路径，但 5 条主张的观测值与违规结论必须逐字不变。
-    raw = clean.replace("== 1/20 语法编译",
-                        "== 1/20 语法编译 /disk3/user1/zmb-tasks/repo")
+    # 用合成路径做样本，不写任何真实账号或磁盘名
+    fake_home = "/disk9/tester99/zmb-tasks/repo"
+    raw = clean.replace("== 1/20 语法编译", "== 1/20 语法编译 " + fake_home)
     red = redact_text(raw)
     a_claims, a_v = analyze_log(raw)
     b_claims, b_v = analyze_log(red)
@@ -389,7 +390,7 @@ def self_test():
     def sig(claims):
         return [[h["groups"] for h in c["hits"]] for c in claims]
 
-    redaction_ok = (red != raw and "/disk3/user1" not in red
+    redaction_ok = (red != raw and fake_home not in red
                     and not a_v and not b_v and sig(a_claims) == sig(b_claims))
     results.append({"name": "脱敏不改判定", "expect": "pass",
                     "actual": "pass" if redaction_ok else "fail"})
