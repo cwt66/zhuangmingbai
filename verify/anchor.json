@@ -5,6 +5,7 @@
   "anchored_at": "2026-11-09T20:49:03+08:00",
   "git_commit": "9de6ec2",
   "entries": 6,
+  "merkle_root": "80d87f10783db0061369caaf50413594ce15484f2377a1ba5d0d2b05d415e90f",
   "entry_summaries": [
     {
       "seq": 1,
