@@ -1,0 +1,685 @@
+== 1/20 语法编译
+== 2/20 单元测试
+...~/zmb-tasks/repo/eval/ab_tally.py:44: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpdbjsjrn7.csv' mode='r' encoding='utf-8-sig'>
+  rows = [r for r in csv.DictReader(open(args.csv, encoding="utf-8-sig"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/zmb-tasks/repo/eval/ab_tally.py:103: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpdbjsjrn7.csv.md' mode='w' encoding='utf-8'>
+  open(args.out, "w", encoding="utf-8").write(out + "\n")
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.~/zmb-tasks/repo/eval/ab_tally.py:44: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpy5e79i9i.csv' mode='r' encoding='utf-8-sig'>
+  rows = [r for r in csv.DictReader(open(args.csv, encoding="utf-8-sig"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/zmb-tasks/repo/eval/ab_tally.py:103: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpy5e79i9i.csv.md' mode='w' encoding='utf-8'>
+  open(args.out, "w", encoding="utf-8").write(out + "\n")
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.~/zmb-tasks/repo/eval/ab_tally.py:44: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpdj0iv7xp.csv' mode='r' encoding='utf-8-sig'>
+  rows = [r for r in csv.DictReader(open(args.csv, encoding="utf-8-sig"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/zmb-tasks/repo/eval/ab_tally.py:103: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpdj0iv7xp.csv.md' mode='w' encoding='utf-8'>
+  open(args.out, "w", encoding="utf-8").write(out + "\n")
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.........................s......................................................................................~/zmb-tasks/repo/tests/test_ledger.py:179: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/zmb_bundle_test_0kw9fbj7/zmb_bundle_x_4oowkve4/standards/templates_v0.json' mode='r' encoding='utf-8'>
+  data = json.load(open(p, encoding="utf-8"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/zmb-tasks/repo/tests/test_ledger.py:182: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/zmb_bundle_test_0kw9fbj7/zmb_bundle_x_4oowkve4/standards/templates_v0.json' mode='w' encoding='utf-8'>
+  json.dump(data, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+....................................................s...................................................................................................拒绝采集：当前是 x86_64，存档必须来自 arm64 机器。
+{
+  "rules": 13,
+  "mutants": 47,
+  "killed": 35,
+  "survived": 12,
+  "kill_rate": 0.745,
+  "decisive_survived": [],
+  "no_real_trigger": [
+    "R10_fee_rate",
+    "R11_spec_missing",
+    "R12_wp_height"
+  ],
+  "positive_controls": {
+    "R10_fee_rate": 1,
+    "R11_spec_missing": 1,
+    "R12_wp_height": 1,
+    "R9_qty_unit": 2,
+    "R5_unit_mix": 14
+  },
+  "positive_ok": true,
+  "clean_ok": true,
+  "unreachable_pairs": [
+    {
+      "pair": "tile_floor→grout",
+      "template": "old_house",
+      "container_in_template": true,
+      "contained_in_template": true
+    },
+    {
+      "pair": "tile_floor→grout",
+      "template": "new_house",
+      "container_in_template": true,
+      "contained_in_template": true
+    },
+    {
+      "pair": "tile_wall→tile_corner",
+      "template": "old_house",
+      "container_in_template": true,
+      "contained_in_template": true
+    },
+    {
+      "pair": "tile_wall→tile_corner",
+      "template": "new_house",
+      "container_in_template": true,
+      "contained_in_template": false
+    },
+    {
+      "pair": "demo_putty→putty",
+      "template": "old_house",
+      "container_in_template": true,
+      "contained_in_template": true
+    }
+  ],
+  "rows": [
+    {
+      "rule": "R1_missing_item",
+      "field": "enabled",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 317,
+      "triggered_real": 48
+    },
+    {
+      "rule": "R1_missing_item",
+      "field": "strength",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 317,
+      "triggered_real": 48
+    },
+    {
+      "rule": "R1_missing_item",
+      "field": "then.evidence.basis",
+      "kind": "declarative",
+      "killed": false,
+      "status": "survived",
+      "triggered": 317,
+      "triggered_real": 48
+    },
+    {
+      "rule": "R2_duplicate_known",
+      "field": "enabled",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 1,
+      "triggered_real": 1
+    },
+    {
+      "rule": "R2_duplicate_known",
+      "field": "strength",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 1,
+      "triggered_real": 1
+    },
+    {
+      "rule": "R2_duplicate_known",
+      "field": "then.evidence.basis",
+      "kind": "declarative",
+      "killed": false,
+      "status": "survived",
+      "triggered": 1,
+      "triggered_real": 1
+    },
+    {
+      "rule": "R2_duplicate_known",
+      "field": "pairs",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 1,
+      "triggered_real": 1
+    },
+    {
+      "rule": "R3_duplicate_same_concept",
+      "field": "enabled",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 3,
+      "triggered_real": 3
+    },
+    {
+      "rule": "R3_duplicate_same_concept",
+      "field": "strength",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 3,
+      "triggered_real": 3
+    },
+    {
+      "rule": "R3_duplicate_same_concept",
+      "field": "then.evidence.basis",
+      "kind": "declarative",
+      "killed": false,
+      "status": "survived",
+      "triggered": 3,
+      "triggered_real": 3
+    },
+    {
+      "rule": "R3_duplicate_same_concept",
+      "field": "min_lines",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 3,
+      "triggered_real": 3
+    },
+    {
+      "rule": "R4_vague_term",
+      "field": "enabled",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 5,
+      "triggered_real": 5
+    },
+    {
+      "rule": "R4_vague_term",
+      "field": "strength",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 5,
+      "triggered_real": 5
+    },
+    {
+      "rule": "R4_vague_term",
+      "field": "then.evidence.basis",
+      "kind": "declarative",
+      "killed": false,
+      "status": "survived",
+      "triggered": 5,
+      "triggered_real": 5
+    },
+    {
+      "rule": "R4_vague_term",
+      "field": "patterns",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 5,
+      "triggered_real": 5
+    },
+    {
+      "rule": "R5_unit_mix",
+      "field": "enabled",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 14,
+      "triggered_real": 14
+    },
+    {
+      "rule": "R5_unit_mix",
+      "field": "strength",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 14,
+      "triggered_real": 14
+    },
+    {
+      "rule": "R5_unit_mix",
+      "field": "then.evidence.basis",
+      "kind": "declarative",
+      "killed": false,
+      "status": "survived",
+      "triggered": 14,
+      "triggered_real": 14
+    },
+    {
+      "rule": "R5_unit_mix",
+      "field": "scope",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 14,
+      "triggered_real": 14
+    },
+    {
+      "rule": "R6_unit_anomaly",
+      "field": "enabled",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 10,
+      "triggered_real": 10
+    },
+    {
+      "rule": "R6_unit_anomaly",
+      "field": "strength",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 10,
+      "triggered_real": 10
+    },
+    {
+      "rule": "R6_unit_anomaly",
+      "field": "then.evidence.basis",
+      "kind": "declarative",
+      "killed": false,
+      "status": "survived",
+      "triggered": 10,
+      "triggered_real": 10
+    },
+    {
+      "rule": "R7_split_billing",
+      "field": "enabled",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 3,
+      "triggered_real": 3
+    },
+    {
+      "rule": "R7_split_billing",
+      "field": "strength",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 3,
+      "triggered_real": 3
+    },
+    {
+      "rule": "R7_split_billing",
+      "field": "then.evidence.basis",
+      "kind": "declarative",
+      "killed": false,
+      "status": "survived",
+      "triggered": 3,
+      "triggered_real": 3
+    },
+    {
+      "rule": "R7_split_billing",
+      "field": "keywords",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 3,
+      "triggered_real": 3
+    },
+    {
+      "rule": "R8_arithmetic",
+      "field": "enabled",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 7,
+      "triggered_real": 7
+    },
+    {
+      "rule": "R8_arithmetic",
+      "field": "strength",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 7,
+      "triggered_real": 7
+    },
+    {
+      "rule": "R8_arithmetic",
+      "field": "then.evidence.basis",
+      "kind": "declarative",
+      "killed": false,
+      "status": "survived",
+      "triggered": 7,
+      "triggered_real": 7
+    },
+    {
+      "rule": "R9_qty_unit",
+      "field": "enabled",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 2,
+      "triggered_real": 1
+    },
+    {
+      "rule": "R9_qty_unit",
+      "field": "strength",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 2,
+      "triggered_real": 1
+    },
+    {
+      "rule": "R9_qty_unit",
+      "field": "then.evidence.basis",
+      "kind": "declarative",
+      "killed": false,
+      "status": "survived",
+      "triggered": 2,
+      "triggered_real": 1
+    },
+    {
+      "rule": "R10_fee_rate",
+      "field": "enabled",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 1,
+      "triggered_real": 0
+    },
+    {
+      "rule": "R10_fee_rate",
+      "field": "strength",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 1,
+      "triggered_real": 0
+    },
+    {
+      "rule": "R10_fee_rate",
+      "field": "then.evidence.basis",
+      "kind": "declarative",
+      "killed": false,
+      "status": "survived",
+      "triggered": 1,
+      "triggered_real": 0
+    },
+    {
+      "rule": "R10_fee_rate",
+      "field": "threshold",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 1,
+      "triggered_real": 0
+    },
+    {
+      "rule": "R11_spec_missing",
+      "field": "enabled",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 1,
+      "triggered_real": 0
+    },
+    {
+      "rule": "R11_spec_missing",
+      "field": "strength",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 1,
+      "triggered_real": 0
+    },
+    {
+      "rule": "R11_spec_missing",
+      "field": "then.evidence.basis",
+      "kind": "declarative",
+      "killed": false,
+      "status": "survived",
+      "triggered": 1,
+      "triggered_real": 0
+    },
+    {
+      "rule": "R11_spec_missing",
+      "field": "min_amount",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 1,
+      "triggered_real": 0
+    },
+    {
+      "rule": "R12_wp_height",
+      "field": "enabled",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 1,
+      "triggered_real": 0
+    },
+    {
+      "rule": "R12_wp_height",
+      "field": "strength",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 1,
+      "triggered_real": 0
+    },
+    {
+      "rule": "R12_wp_height",
+      "field": "then.evidence.basis",
+      "kind": "declarative",
+      "killed": false,
+      "status": "survived",
+      "triggered": 1,
+      "triggered_real": 0
+    },
+    {
+      "rule": "R13_doc_recon",
+      "field": "enabled",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 2,
+      "triggered_real": 2
+    },
+    {
+      "rule": "R13_doc_recon",
+      "field": "strength",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 2,
+      "triggered_real": 2
+    },
+    {
+      "rule": "R13_doc_recon",
+      "field": "then.evidence.basis",
+      "kind": "declarative",
+      "killed": true,
+      "status": "killed",
+      "triggered": 2,
+      "triggered_real": 2
+    },
+    {
+      "rule": "R13_doc_recon",
+      "field": "tolerance_pct",
+      "kind": "decisive",
+      "killed": true,
+      "status": "killed",
+      "triggered": 2,
+      "triggered_real": 2
+    }
+  ]
+}...........................................................................
+----------------------------------------------------------------------
+Ran 344 tests in 48.355s
+
+OK (skipped=2)
+
+# 码道 Skill 运行证据校验
+
+| 项 | 值 |
+|---|---|
+| 状态 | **待采集**（R7 仍为 🟡） |
+| 期望路径 | `05_CodeArts过程资产/raw/stage6_skill.txt` |
+| 提示词 | `05_CodeArts过程资产/prompts/stage6_skill_prompt.md` |
+
+证据文件不存在，未做任何校验。**这不代表通过，只是还没采。**
+# 码道 Skill 运行证据校验
+
+指定的证据文件不存在：`/tmp/ve_no_such_file.txt`
+
+要采证请按 `05_CodeArts过程资产/prompts/stage6_skill_prompt.md` 跑一次码道。
+# 码道 Skill 运行证据校验
+
+| 项 | 值 |
+|---|---|
+| 证据文件 | `/tmp/ve_bad.txt` |
+| 体积 | 379 字符 |
+| 来源标记 | 有 |
+
+## 逐字段比对（基准：引擎实跑 翡翠台 / auto）
+
+| 字段 | 证据里写的 | 实跑得到 | 判定 |
+|---|---:|---:|---|
+| 工序行数 | 123 | 123 | ✅ |
+| 明细合计 | 153,384.00 | 153,384.00 | ✅ |
+| 可核减漏项 | 6,184.00 | 618.40 | ❌ **不一致**　与实跑不一致 |
+| 可核减重复 | 182.00 | 182.00 | ✅ |
+| 交付判定 | pass | pass | ✅ |
+| 判定指纹 | 52bf7b635204fd96 | 52bf7b635204fd96 | ✅ |
+
+## 纪律检查：通过（未出现无口径的确定性断言）
+
+**结论：不可引用。** 上面标出 1 个字段不一致、0 处纪律问题。
+
+字段不一致不是「格式问题」，是**证据里的数与被审对象对不上**——
+要么会话被改过，要么智能体自己编了数。两种都不能进材料。
+# 码道 Skill 运行证据校验
+
+| 项 | 值 |
+|---|---|
+| 证据文件 | `/tmp/ve_good.txt` |
+| 体积 | 377 字符 |
+| 来源标记 | 有 |
+
+## 逐字段比对（基准：引擎实跑 翡翠台 / auto）
+
+| 字段 | 证据里写的 | 实跑得到 | 判定 |
+|---|---:|---:|---|
+| 工序行数 | 123 | 123 | ✅ |
+| 明细合计 | 153,384.00 | 153,384.00 | ✅ |
+| 可核减漏项 | 618.40 | 618.40 | ✅ |
+| 可核减重复 | 182.00 | 182.00 | ✅ |
+| 交付判定 | pass | pass | ✅ |
+| 判定指纹 | 52bf7b635204fd96 | 52bf7b635204fd96 | ✅ |
+
+## 纪律检查：通过（未出现无口径的确定性断言）
+
+**结论：证据与实跑一致，可以引用。**
+# 码道 Skill 运行证据校验
+
+| 项 | 值 |
+|---|---|
+| 证据文件 | `/tmp/ve_dis.txt` |
+| 体积 | 388 字符 |
+| 来源标记 | 有 |
+
+## 逐字段比对（基准：引擎实跑 翡翠台 / auto）
+
+| 字段 | 证据里写的 | 实跑得到 | 判定 |
+|---|---:|---:|---|
+| 工序行数 | 123 | 123 | ✅ |
+| 明细合计 | 153,384.00 | 153,384.00 | ✅ |
+| 可核减漏项 | 618.40 | 618.40 | ✅ |
+| 可核减重复 | 182.00 | 182.00 | ✅ |
+| 交付判定 | pass | pass | ✅ |
+| 判定指纹 | 52bf7b635204fd96 | 52bf7b635204fd96 | ✅ |
+
+## 纪律检查：**不通过**
+
+- 出现无口径断言「召回率 100%」——要么补口径（auto 档 / n=2 / 95%CI），要么删掉
+
+**结论：不可引用。** 上面标出 0 个字段不一致、1 处纪律问题。
+
+数字都对，但**表述越界**了。数字真、话说过头，一样不能进材料——
+评委抓住一句无口径的「100%」，前面所有诚实都会被重新怀疑。
+# 码道 Skill 运行证据校验
+
+| 项 | 值 |
+|---|---|
+| 状态 | **待采集**（R7 仍为 🟡） |
+| 期望路径 | `05_CodeArts过程资产/raw/stage6_skill.txt` |
+| 提示词 | `05_CodeArts过程资产/prompts/stage6_skill_prompt.md` |
+
+证据文件不存在，未做任何校验。**这不代表通过，只是还没采。**
+== 3/20 本体对齐覆盖率
+   ok（out/alignment_report.md）
+== 4/20 黄金标注评测（精确率/召回率 + Wilson CI）
+   ok（out/golden_eval.md）
+== 5/20 消融实验（L0→L3）
+   ok（out/ablation.md）
+== 6/20 注入实验（242 例已知缺陷形态）
+   ok（eval/injection_runs/）
+== 7/20 评测门禁（低于阈值即失败）
+# 评测门禁
+
+| 指标 | 当前值 | 阈值 | 结果 |
+|---|---:|---:|---|
+| auto 精确率 | 0.833 | >= 0.75 | PASS |
+| auto 召回率 | 0.833 | >= 0.75 | PASS |
+| all 召回率 | 1.0 | >= 0.9 | PASS |
+| 注入检出 | 242 | >= 230 | PASS |
+| 消融 L2 feitai 精确率 | 0.8 | >= 0.75 | PASS |
+| 注入总例数 | 242 | — | OK |
+
+全部通过。
+== 8/20 冻结指纹 + 隐私扫描
+sh_zhuoguan    行127 对齐111 | 漏(确定)10 漏(复核) 3 已列26 | 指纹 2ab9413a0d32ebab
+   = 与冻结基线一致
+huaxibeian     行120 对齐105 | 漏(确定) 4 漏(复核) 2 已列22 | 指纹 456e1bd94ab39a08
+   = 与冻结基线一致
+szxinxin_clinic 行168 对齐113 | 漏(确定)11 漏(复核) 1 已列16 | 指纹 3d33c49caf60f48d
+   = 与冻结基线一致
+feitai         行123 对齐102 | 漏(确定)10 漏(复核) 2 已列27 | 指纹 8e32410761263494
+   = 与冻结基线一致
+guijiao124     行 65 对齐 62 | 漏(确定) 3 漏(复核) 2 已列15 | 指纹 f9e38787793ddb5e
+   = 与冻结基线一致
+[OK] 未发现手机号 / 身份证 / 邮箱 / 银行卡 / 明确上下文姓名。
+== 9/20 盲标工具重建（第二标注者用）
+生成 eval/annotator/annotate_feitai.html ｜ 39 项概念 ｜ 131 行单据 ｜ 39 KB
+生成 eval/annotator/annotate_guijiao124.html ｜ 28 项概念 ｜ 68 行单据 ｜ 29 KB
+== 10/20 报告交付门（7 检查 + 5 故障注入）
+|---|---|---|---|---|
+| 账目差 11,711 元却删掉 R13 结论 | 掩盖对账差异 | D3 | 禁止交付 | ✅ 拦住 |
+| 把一条 auto 降成 review，钱没扣回 | 低置信结论混进核减 | D5 | 禁止交付 | ✅ 拦住 |
+| 给漏项编 8,888 元、不给来源 | 无依据金额 | D4 | 禁止交付 | ✅ 拦住 |
+| 报告指纹与冻结基准不一致 | 不可复现 | D6 | 禁止交付 | ✅ 拦住 |
+| 100 行各虚 0.99 元（累计 99 元） | 系统性小额多收 | D7 | 需修正 | ✅ 拦住 |
+
+拦截：5/5
+== 11/20 检测下限（单行/累计两维）
+**该单最小可靠捕获：+1.01 元**
+**该单最小可靠捕获：+1.01 元**
+**盲区确认：7 / 8 组配置完全抓不到。**
+最严重的一组：翡翠台 · 老房全案 改 100 行、每行 +0.99 元，累计虚增 **+99.00 元**，R8 与 R13 双双沉默。
+== 12/20 负向知识库（13 条不判 + 10 条测试锁 + 1 条已知拦不住）
+wrote out/not_applicable.md (2622 chars)
+== 13/20 红队自测（8 招攻击，7 招拦住）
+拦住 **7/8**，得手 1 招。
+
+得手的：
+- **A3 ㎡ 写成 m（量纲差一个数量级）** → 单位异常规则命中：无（该单只有一个 m，跨单 R5 不适用）
+
+这些会被逐条处理：能修的当轮修掉，修不掉的写进负向知识库并标明边界。
+== 14/20 码道 Skill 运行证据（有则逐字段复算）
+| 状态 | **待采集**（R7 仍为 🟡） |
+== 15/20 规则活性（变异测试 + 双向断言 + 静态可达性）
+  变异 47 / 被杀 35 / 杀死率 74.5% / 判定字段存活 0 / 真实语料未触发 3 条 / 双向断言 通过
+== 16/20 主张台账（证据分档 + 撤回档案 + 双向断言）
+  主张 25 条 / 违规 0 / 欠账 3 / 撤回档案 13 条 / 双向断言 PASS
+  复验证据双向断言 PASS（注入 7 招拦 7）
+== 17/20 华为云失效矩阵（9 个实验 + 双向断言）
+  实验 9 个 / 失败 无 / 双向断言 PASS
+== 18/20 跨环境判定确定性（12 变体 + arm64 存档 + 双向断言）
+  变体 12 个 / 字段比对 144 次 / 跨指令集 是 / 双向断言 PASS
+== 19/20 评委复验页一致性（11 页 + 台账绑定 + 双向断言）
+  展示页 11 页 / 23 项检查 / 违规 0 / 双向断言 PASS
+== 20/20 哈希链 + Merkle 包含证明（链 8 招 + 包 4 招 + Merkle 12 招）
+  账本 6 条 / 链 OK / 锚点 OK / 链 7/7 / 包 4/4 / Merkle 12/12
+
+[ALL GREEN] 全部检查通过。
+提示：公网/本地 Demo 用 python3 -m uvicorn main:app --host <ip> --port 8000

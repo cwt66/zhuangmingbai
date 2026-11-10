@@ -262,7 +262,9 @@ def verify_statement(stmt, log_path: Path):
     violations = []
 
     def check(name, ok, detail=""):
-        checks.append({"name": name, "status": "pass" if ok else "fail", "detail": detail})
+        # 通过时不写 detail：失败文案若出现在 pass 行会让人误读成「不符」
+        checks.append({"name": name, "status": "pass" if ok else "fail",
+                       "detail": "" if ok else detail})
         if not ok:
             violations.append("%s：%s" % (name, detail))
 

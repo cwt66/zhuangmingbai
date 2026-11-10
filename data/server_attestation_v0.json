@@ -1,0 +1,368 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "check_all.sh 运行日志",
+      "digest": {
+        "sha256": "04bfd142339fc771372c50f7a2f124904077ad04236529af1a6d7b498226e1a2"
+      }
+    }
+  ],
+  "predicateType": "https://zhuangmingbai.local/attestation/server-reverify/v1",
+  "predicate": {
+    "buildDefinition": {
+      "buildType": "https://zhuangmingbai.local/attestation/server-reverify/v1",
+      "externalParameters": {
+        "command": "bash scripts/check_all.sh",
+        "repo_commit": "e376003b7637cc028ba6b918d5c3f5a66787ed33",
+        "python": "3.12.3",
+        "platform": "Linux x86_64"
+      },
+      "resolvedDependencies": [
+        {
+          "name": "annotated-doc",
+          "version": "0.0.5"
+        },
+        {
+          "name": "annotated-types",
+          "version": "0.8.0"
+        },
+        {
+          "name": "anyio",
+          "version": "4.16.0"
+        },
+        {
+          "name": "charset-normalizer",
+          "version": "3.5.2"
+        },
+        {
+          "name": "click",
+          "version": "8.5.1"
+        },
+        {
+          "name": "fastapi",
+          "version": "0.162.2"
+        },
+        {
+          "name": "h11",
+          "version": "0.16.0"
+        },
+        {
+          "name": "httptools",
+          "version": "0.9.0"
+        },
+        {
+          "name": "idna",
+          "version": "3.20"
+        },
+        {
+          "name": "opentelemetry-api",
+          "version": "1.45.2"
+        },
+        {
+          "name": "pillow",
+          "version": "13.0.0"
+        },
+        {
+          "name": "psycopg",
+          "version": "3.3.8"
+        },
+        {
+          "name": "psycopg-binary",
+          "version": "3.3.8"
+        },
+        {
+          "name": "pydantic",
+          "version": "2.14.3"
+        },
+        {
+          "name": "pydantic_core",
+          "version": "2.50.4"
+        },
+        {
+          "name": "pypdf",
+          "version": "6.21.4"
+        },
+        {
+          "name": "python-dotenv",
+          "version": "1.2.4"
+        },
+        {
+          "name": "python-multipart",
+          "version": "0.0.33"
+        },
+        {
+          "name": "PyYAML",
+          "version": "6.0.3"
+        },
+        {
+          "name": "redis",
+          "version": "6.4.0"
+        },
+        {
+          "name": "reportlab",
+          "version": "4.5.1"
+        },
+        {
+          "name": "starlette",
+          "version": "1.10.0"
+        },
+        {
+          "name": "typing_extensions",
+          "version": "4.16.0"
+        },
+        {
+          "name": "typing-inspection",
+          "version": "0.4.5"
+        },
+        {
+          "name": "uvicorn",
+          "version": "0.54.0"
+        },
+        {
+          "name": "uvloop",
+          "version": "0.23.0"
+        },
+        {
+          "name": "watchfiles",
+          "version": "1.3.0"
+        },
+        {
+          "name": "websockets",
+          "version": "17.4"
+        }
+      ]
+    },
+    "runDetails": {
+      "builder": {
+        "id": "self-hosted:linux:x86_64"
+      },
+      "metadata": {
+        "generatedOn": "2026-11-10T13:04:37+00:00",
+        "executionTime": "not_recorded",
+        "invocationId": "e020dcbe43ba1ec3"
+      }
+    },
+    "claims": [
+      {
+        "id": "C-STEPS-20",
+        "desc": "20 步自检全部执行且编号 1..20 齐全",
+        "expect": "20 个步骤标记，编号集合恰为 1..20",
+        "reproduce": "bash scripts/check_all.sh",
+        "hits": [
+          {
+            "line": 1,
+            "text": "== 1/20 语法编译",
+            "groups": [
+              "1"
+            ]
+          },
+          {
+            "line": 2,
+            "text": "== 2/20 单元测试",
+            "groups": [
+              "2"
+            ]
+          },
+          {
+            "line": 609,
+            "text": "== 3/20 本体对齐覆盖率",
+            "groups": [
+              "3"
+            ]
+          },
+          {
+            "line": 611,
+            "text": "== 4/20 黄金标注评测（精确率/召回率 + Wilson CI）",
+            "groups": [
+              "4"
+            ]
+          },
+          {
+            "line": 613,
+            "text": "== 5/20 消融实验（L0→L3）",
+            "groups": [
+              "5"
+            ]
+          },
+          {
+            "line": 615,
+            "text": "== 6/20 注入实验（242 例已知缺陷形态）",
+            "groups": [
+              "6"
+            ]
+          },
+          {
+            "line": 617,
+            "text": "== 7/20 评测门禁（低于阈值即失败）",
+            "groups": [
+              "7"
+            ]
+          },
+          {
+            "line": 630,
+            "text": "== 8/20 冻结指纹 + 隐私扫描",
+            "groups": [
+              "8"
+            ]
+          },
+          {
+            "line": 642,
+            "text": "== 9/20 盲标工具重建（第二标注者用）",
+            "groups": [
+              "9"
+            ]
+          },
+          {
+            "line": 645,
+            "text": "== 10/20 报告交付门（7 检查 + 5 故障注入）",
+            "groups": [
+              "10"
+            ]
+          },
+          {
+            "line": 654,
+            "text": "== 11/20 检测下限（单行/累计两维）",
+            "groups": [
+              "11"
+            ]
+          },
+          {
+            "line": 659,
+            "text": "== 12/20 负向知识库（13 条不判 + 10 条测试锁 + 1 条已知拦不住）",
+            "groups": [
+              "12"
+            ]
+          },
+          {
+            "line": 661,
+            "text": "== 13/20 红队自测（8 招攻击，7 招拦住）",
+            "groups": [
+              "13"
+            ]
+          },
+          {
+            "line": 668,
+            "text": "== 14/20 码道 Skill 运行证据（有则逐字段复算）",
+            "groups": [
+              "14"
+            ]
+          },
+          {
+            "line": 670,
+            "text": "== 15/20 规则活性（变异测试 + 双向断言 + 静态可达性）",
+            "groups": [
+              "15"
+            ]
+          },
+          {
+            "line": 672,
+            "text": "== 16/20 主张台账（证据分档 + 撤回档案 + 双向断言）",
+            "groups": [
+              "16"
+            ]
+          },
+          {
+            "line": 675,
+            "text": "== 17/20 华为云失效矩阵（9 个实验 + 双向断言）",
+            "groups": [
+              "17"
+            ]
+          },
+          {
+            "line": 677,
+            "text": "== 18/20 跨环境判定确定性（12 变体 + arm64 存档 + 双向断言）",
+            "groups": [
+              "18"
+            ]
+          },
+          {
+            "line": 679,
+            "text": "== 19/20 评委复验页一致性（11 页 + 台账绑定 + 双向断言）",
+            "groups": [
+              "19"
+            ]
+          },
+          {
+            "line": 681,
+            "text": "== 20/20 哈希链 + Merkle 包含证明（链 8 招 + 包 4 招 + Merkle 12 招）",
+            "groups": [
+              "20"
+            ]
+          }
+        ],
+        "status": "pass"
+      },
+      {
+        "id": "C-ALLGREEN",
+        "desc": "自检自己判定为全部通过",
+        "expect": "必须出现 ALL GREEN，且不得出现 FAILED / Traceback",
+        "reproduce": "bash scripts/check_all.sh",
+        "hits": [
+          {
+            "line": 684,
+            "text": "[ALL GREEN] 全部检查通过。",
+            "groups": []
+          }
+        ],
+        "status": "pass"
+      },
+      {
+        "id": "C-UNITTESTS",
+        "desc": "单元测试规模",
+        "expect": "Ran >= 340 tests",
+        "reproduce": "python3 -m unittest discover -s tests",
+        "hits": [
+          {
+            "line": 508,
+            "text": "Ran 344 tests in 48.355s",
+            "groups": [
+              "344"
+            ]
+          }
+        ],
+        "status": "pass"
+      },
+      {
+        "id": "C-CLAIMS-LEDGER",
+        "desc": "主张台账无违规",
+        "expect": "违规 = 0",
+        "reproduce": "python3 scripts/claim_ledger.py --self-test --json",
+        "hits": [
+          {
+            "line": 673,
+            "text": "  主张 25 条 / 违规 0 / 欠账 3 / 撤回档案 13 条 / 双向断言 PASS",
+            "groups": [
+              "0"
+            ]
+          }
+        ],
+        "status": "pass"
+      },
+      {
+        "id": "C-MERKLE",
+        "desc": "哈希链 + Merkle 包含证明全部拦住",
+        "expect": "Merkle 12/12",
+        "reproduce": "python3 eval/ledger_chain.py --json",
+        "hits": [
+          {
+            "line": 682,
+            "text": "  账本 6 条 / 链 OK / 锚点 OK / 链 7/7 / 包 4/4 / Merkle 12/12",
+            "groups": [
+              "12",
+              "12"
+            ]
+          }
+        ],
+        "status": "pass"
+      }
+    ],
+    "claimCount": 5,
+    "limits": [
+      "无 DSSE / Sigstore 签名，不具备第三方不可伪造性",
+      "builder 为自建 x86_64 服务器，不是隔离托管 CI，不构成 SLSA L3",
+      "resolvedDependencies 只有 name/version，未锁定 wheel 字节",
+      "executionTime 未记录；generatedOn 是证据生成时间"
+    ]
+  }
+}
