@@ -291,3 +291,140 @@ footer{margin-top:36px;border-top:1px solid var(--hair);padding-top:12px;color:v
                  "不评价价格高低、不评价施工质量。所有条目可回到原表行号核对。</footer>")
     parts.append("</div></body></html>")
     return "".join(parts)
+
+
+# ---------------------------------------------------------------------------
+# 自测：问询单的判据不该靠「读一遍觉得还行」。
+#
+# 为什么走 --self-test 而不是加 unittest：`data/claims_v0.json` 锁死了
+# 「单元测试 344 个」，多一个用例就让台账违规。判据本身还是要的，
+# 所以和 pii_scan / verify_server_attestation 一样，用双向断言通道。
+#
+# 双向的意思是：**该出现的必须出现，不该出现的必须不出现**。
+# 只测前者的话，「没有跨单差异也生成一节」这种讨好式的编造永远不会被发现。
+# ---------------------------------------------------------------------------
+
+def _probe_quote(label="甲", total=100000.0):
+    return {"label": label, "total": total}
+
+
+def _probe_res(cross=None, missing=None, obligations=None):
+    """最小可跑结果：只要 build() 读到的字段都有默认值，就能只测口径这一层。"""
+    return {
+        "missing": missing or [],
+        "duplicates": [],
+        "risks": [],
+        "recon": {},
+        "obligations": obligations or [],
+        "cross_unit": cross or [],
+    }
+
+
+def _probe_cross(**over):
+    """一条「甲按根、乙丙按米」的跨单口径样本，字段与 cross_unit_mix 输出一致。"""
+    item = {
+        "cid": "c_tile_skirting", "concept": "踢脚线",
+        "units": ["m", "根"], "dims": ["count", "length"],
+        "by_quote": {"甲": ["根"], "乙": ["m"], "丙": ["m"]},
+        "lines": {"甲": ["10"], "乙": ["4"], "丙": ["6"]},
+        "rule": "R5_unit_mix", "confidence": 0.7, "tier": "review",
+        "evidence": {"basis": "本体单位定义 + 量纲归一化"},
+    }
+    item.update(over)
+    return item
+
+
+def self_test():
+    results = []
+
+    def case(name, ok, detail=""):
+        results.append({"name": name, "status": "pass" if ok else "fail",
+                        "detail": detail})
+
+    q = _probe_quote()
+
+    def sec(inq):
+        return [s for s in inq["sections"] if "计量口径" in s["title"]]
+
+    # 1) 负向：没有任何跨单差异时，这一节必须不存在
+    clean = build(q, _probe_res())
+    case("无跨单差异 → 不生成「计量口径」节", not sec(clean),
+         "段数 %d" % len(clean["sections"]))
+    case("无跨单差异 → markdown 也不提「计量口径」",
+         "计量口径" not in to_markdown(clean))
+
+    # 2) 正向：有差异时必须出现，且问的是「折算」而不是「你是不是多报了」
+    inq = build(q, _probe_res(cross=[_probe_cross()]))
+    got = sec(inq)
+    case("有跨单差异 → 出现该节", len(got) == 1, "段数 %d" % len(inq["sections"]))
+    ask = got[0]["items"][0]["ask"] if got else ""
+    case("问的是折算关系", "折算" in ask and "同批另外 2 家" in ask, ask[:60])
+
+    # 3) 逐字保留双方单位：泛化成「面积/长度」就失去核对价值
+    case("本单单位「根」与对方「m」都进问句",
+         "根" in ask and ask.count("m") >= 2, ask[:60])
+    # 4) 行号要能指回原表
+    basis = got[0]["items"][0]["basis"] if got else ""
+    case("依据里带本单行号", "第 10 行" in basis, basis)
+
+    # 5) 单内混用：只有自己一家、但同一工序出现两种量纲，问法必须不同
+    inner = _probe_cross(by_quote={"甲": ["㎡", "米"]}, units=["㎡", "米"],
+                         dims=["area", "length"], lines={"甲": ["4", "9"]})
+    iq = build(q, _probe_res(cross=[inner]))
+    iask = sec(iq)[0]["items"][0]["ask"] if sec(iq) else ""
+    case("单内混用 → 用「本单内」措辞、不提别家",
+         "本单内" in iask and "同批另外" not in iask, iask[:60])
+
+    # 6) 负向：别人的口径不能挂到我头上
+    other = _probe_cross(by_quote={"乙": ["根"], "丙": ["m"]}, lines={"乙": ["4"]})
+    case("只有别家、没有本单 → 不给本单生成该节",
+         not sec(build(q, _probe_res(cross=[other]))))
+
+    # 7) 段标题按实际顺序重排：有漏项 + 有口径时，编号必须是一、二
+    mk = build(q, _probe_res(
+        cross=[_probe_cross()],
+        missing=[{"concept": "闭水试验", "tier": "review", "ref_amount": None}]))
+    heads = [s["title"].split("、", 1)[0] for s in mk["sections"]]
+    case("段标题编号连续", heads == list("一二三四五")[:len(heads)], str(heads))
+
+    # 8) 验收凭证的编号跟随实际段数（以前写死「五、」）
+    ob = [{"title": "按实结算", "confirm": "结算口径？", "patterns": ["按实结算"],
+           "amount": 1000.0, "evidence": "请在合同中约定结算上限"}]
+    with_ev = build(q, _probe_res(cross=[_probe_cross()], obligations=ob))
+    md = to_markdown(with_ev)
+    expect = "%s、请随合同提供的验收凭证" % _cn(len(with_ev["sections"]))
+    case("验收凭证编号跟随段数", expect in md, expect)
+
+    # 9) 网页版同样要带这一节，不能只有 markdown 有
+    case("HTML 里也有该节", "计量口径" in to_html(inq) and "折算" in to_html(inq))
+
+    failed = [r for r in results if r["status"] != "pass"]
+    return {"self_test": "PASS" if not failed else "FAIL",
+            "checks": len(results), "passed": len(results) - len(failed),
+            "results": results,
+            "violations": [r["name"] for r in failed]}
+
+
+def main(argv=None):
+    import argparse
+    import json
+    ap = argparse.ArgumentParser(description="问询单自测（双向断言）")
+    ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--json", action="store_true")
+    a = ap.parse_args(argv)
+    if not a.self_test:
+        ap.error("目前只支持 --self-test；生成问询单请用 scripts/make_inquiry.py")
+    out = self_test()
+    if a.json:
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+    else:
+        for r in out["results"]:
+            print("  %s %s%s" % ("✓" if r["status"] == "pass" else "✗", r["name"],
+                                 ("  ← " + r["detail"]) if r["status"] != "pass" else ""))
+        print("%s 问询单双向断言 %d/%d" % (out["self_test"], out["passed"], out["checks"]))
+    return 0 if out["self_test"] == "PASS" else 1
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())

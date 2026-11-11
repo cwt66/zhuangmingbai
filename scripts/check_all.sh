@@ -114,6 +114,11 @@ echo "== 19/20 评委复验页一致性（11 页 + 台账绑定 + 双向断言�
 "$PY" scripts/auto_demo.py --self-test --json | "$PY" -c \
   "import sys,json;d=json.load(sys.stdin);print('  演示剧本 %d 镜 / 双向断言 %s（%d/%d）' % (8,d['self_test'],d['passed'],d['checks']));sys.exit(0 if d['self_test']=='PASS' else 1)"
 
+# 问询单：口径差异要真的问得出口；**没有差异时不许凭空生成一节**。
+# 后一句是负向断言——只测「该出现的出现了」，就永远发现不了讨好式编造。
+"$PY" src/inquiry.py --self-test --json | "$PY" -c \
+  "import sys,json;d=json.load(sys.stdin);print('  问询单双向断言 %s（%d/%d）' % (d['self_test'],d['passed'],d['checks']));sys.exit(0 if d['self_test']=='PASS' else 1)"
+
 # 哈希链账本：把「每一次判定」串成一条改不动的链。
 # 这一步管的是前面 19 步都管不到的一件事——**结论被事后改写**。
 # 链级 8 招 + 包级 3 招，其中 1 招离线拦不住、必须靠外部锚点，
