@@ -4,7 +4,7 @@
     {
       "name": "check_all.sh 运行日志",
       "digest": {
-        "sha256": "04bfd142339fc771372c50f7a2f124904077ad04236529af1a6d7b498226e1a2"
+        "sha256": "bfe8e7de3e52307fc43635f4149b742f0f13431d94be79e3fec59c47d2097149"
       }
     }
   ],
@@ -14,7 +14,7 @@
       "buildType": "https://zhuangmingbai.local/attestation/server-reverify/v1",
       "externalParameters": {
         "command": "bash scripts/check_all.sh",
-        "repo_commit": "e376003b7637cc028ba6b918d5c3f5a66787ed33",
+        "repo_commit": "a70c2c34485716833909eb2f28a12e2cc90b7404",
         "python": "3.12.3",
         "platform": "Linux x86_64"
       },
@@ -138,9 +138,9 @@
         "id": "self-hosted:linux:x86_64"
       },
       "metadata": {
-        "generatedOn": "2026-11-10T13:04:37+00:00",
+        "generatedOn": "2026-11-11T11:31:27+00:00",
         "executionTime": "not_recorded",
-        "invocationId": "e020dcbe43ba1ec3"
+        "invocationId": "1c6675b68d5c5e59"
       }
     },
     "claims": [
@@ -207,84 +207,84 @@
             ]
           },
           {
-            "line": 642,
+            "line": 643,
             "text": "== 9/20 盲标工具重建（第二标注者用）",
             "groups": [
               "9"
             ]
           },
           {
-            "line": 645,
+            "line": 646,
             "text": "== 10/20 报告交付门（7 检查 + 5 故障注入）",
             "groups": [
               "10"
             ]
           },
           {
-            "line": 654,
+            "line": 655,
             "text": "== 11/20 检测下限（单行/累计两维）",
             "groups": [
               "11"
             ]
           },
           {
-            "line": 659,
+            "line": 660,
             "text": "== 12/20 负向知识库（13 条不判 + 10 条测试锁 + 1 条已知拦不住）",
             "groups": [
               "12"
             ]
           },
           {
-            "line": 661,
+            "line": 662,
             "text": "== 13/20 红队自测（8 招攻击，7 招拦住）",
             "groups": [
               "13"
             ]
           },
           {
-            "line": 668,
+            "line": 669,
             "text": "== 14/20 码道 Skill 运行证据（有则逐字段复算）",
             "groups": [
               "14"
             ]
           },
           {
-            "line": 670,
+            "line": 671,
             "text": "== 15/20 规则活性（变异测试 + 双向断言 + 静态可达性）",
             "groups": [
               "15"
             ]
           },
           {
-            "line": 672,
+            "line": 673,
             "text": "== 16/20 主张台账（证据分档 + 撤回档案 + 双向断言）",
             "groups": [
               "16"
             ]
           },
           {
-            "line": 675,
+            "line": 676,
             "text": "== 17/20 华为云失效矩阵（9 个实验 + 双向断言）",
             "groups": [
               "17"
             ]
           },
           {
-            "line": 677,
+            "line": 678,
             "text": "== 18/20 跨环境判定确定性（12 变体 + arm64 存档 + 双向断言）",
             "groups": [
               "18"
             ]
           },
           {
-            "line": 679,
+            "line": 680,
             "text": "== 19/20 评委复验页一致性（11 页 + 台账绑定 + 双向断言）",
             "groups": [
               "19"
             ]
           },
           {
-            "line": 681,
+            "line": 683,
             "text": "== 20/20 哈希链 + Merkle 包含证明（链 8 招 + 包 4 招 + Merkle 12 招）",
             "groups": [
               "20"
@@ -300,7 +300,7 @@
         "reproduce": "bash scripts/check_all.sh",
         "hits": [
           {
-            "line": 684,
+            "line": 686,
             "text": "[ALL GREEN] 全部检查通过。",
             "groups": []
           }
@@ -315,7 +315,7 @@
         "hits": [
           {
             "line": 508,
-            "text": "Ran 344 tests in 48.355s",
+            "text": "Ran 344 tests in 49.226s",
             "groups": [
               "344"
             ]
@@ -330,7 +330,7 @@
         "reproduce": "python3 scripts/claim_ledger.py --self-test --json",
         "hits": [
           {
-            "line": 673,
+            "line": 674,
             "text": "  主张 25 条 / 违规 0 / 欠账 3 / 撤回档案 13 条 / 双向断言 PASS",
             "groups": [
               "0"
@@ -346,7 +346,7 @@
         "reproduce": "python3 eval/ledger_chain.py --json",
         "hits": [
           {
-            "line": 682,
+            "line": 684,
             "text": "  账本 6 条 / 链 OK / 锚点 OK / 链 7/7 / 包 4/4 / Merkle 12/12",
             "groups": [
               "12",
