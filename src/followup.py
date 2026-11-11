@@ -58,27 +58,32 @@ def _lines_of(rows):
     return "、".join(str(r.get("no")) for r in rows)
 
 
-def _judge(item, rows, text, risks, recon):
+def _judge(item, rows, text, after_res):
     """返回 (status, evidence)。每一支都必须能说清「凭哪一行判的」。"""
     kind = item.get("kind")
     cid = item.get("cid")
+    risks = after_res.get("risks") or []
+    recon = after_res.get("recon") or {}
 
     if kind == "missing":
         rs = rows.get(cid) or []
         if not rs:
-            return "open", "新版仍未列出该项"
+            # 宁可漏判也不替对方说「补过了」：概念对不上时交给人工
+            return "open", "新版未找到同一概念（%s）的条目；若对方换了写法，请人工核对" % (cid or "—")
         amt = sum(float(r.get("amount") or 0) for r in rs)
         if amt > 0:
             return "resolved", "新版第 %s 行已单列，金额 %s 元" % (_lines_of(rs), _money(amt))
         return "open", "新版第 %s 行有该项目但金额为 0" % _lines_of(rs)
 
     if kind == "duplicate":
-        rs = rows.get(cid) or []
-        if not rs:
-            return "resolved", "新版已无该项"
-        if len(rs) == 1:
-            return "resolved", "新版已合并为 1 行（第 %s 行）" % _lines_of(rs)
-        return "open", "新版仍有 %d 行（第 %s 行）" % (len(rs), _lines_of(rs))
+        if not cid:
+            return "unknown", "该重复项没有概念锚点，无法机读比对"
+        # 用引擎在新版上的结论，而不是数行数：同一概念可能合法拆成多行（分部位）
+        left = [d for d in (after_res.get("duplicates") or []) if d.get("cid") == cid]
+        if not left:
+            return "resolved", "新版该项已不再判为重复计价"
+        return "open", "新版仍判为重复（第 %s 行）" % "、".join(
+            str(x) for x in (left[0].get("lines") or []))
 
     if kind == "arithmetic":
         line = str(item.get("line"))
@@ -112,11 +117,22 @@ def _judge(item, rows, text, risks, recon):
     return "unknown", "该条目没有可机读的锚点（旧版问询单），请人工核对"
 
 
+def _risk_key(x):
+    """风险的「身份」。分组条目的 line 是一串行号（`7,23,27…`），
+    只要单据多一行它就会变——按 (rule, line) 比会把「行号集合变了」误报成新问题。"""
+    line = str(x.get("line") or "")
+    if x.get("cid"):
+        return (x.get("rule"), "cid:" + str(x["cid"]))
+    if "," in line or "行" in line:
+        return (x.get("rule"), "group")
+    return (x.get("rule"), line)
+
+
 def _signature(res):
     """新版 - 旧版 的差异键：只比「问题本身」，不比金额措辞。"""
     miss = {m.get("cid") for m in (res.get("missing") or []) if m.get("cid")}
     dup = {d.get("cid") for d in (res.get("duplicates") or []) if d.get("cid")}
-    risk = {(x.get("rule"), str(x.get("line"))) for x in (res.get("risks") or [])}
+    risk = {_risk_key(x) for x in (res.get("risks") or [])}
     return {"missing": miss, "duplicates": dup, "risks": risk}
 
 
@@ -134,8 +150,7 @@ def _new_findings(before_res, after_res):
             out.append({"kind": "duplicate", "subject": d.get("concept"),
                         "detail": "新版新增重复计价 %s 元" % _money(d.get("amount"))})
     for x in after_res.get("risks") or []:
-        key = (x.get("rule"), str(x.get("line")))
-        if key not in b["risks"]:
+        if _risk_key(x) not in b["risks"]:
             out.append({"kind": x.get("rule") or "risk",
                         "subject": x.get("concept") or ("第 %s 行" % x.get("line")),
                         "detail": "新版新出现的口径/算术风险 %s 元" % _money(x.get("amount"))})
@@ -151,13 +166,11 @@ def check(inq, after_quote, after_res, before_res=None):
     """
     rows = _rows_by_cid(after_quote)
     text = _quote_text(after_quote)
-    risks = after_res.get("risks") or []
-    recon = after_res.get("recon") or {}
 
     items, counts = [], {"resolved": 0, "open": 0, "unknown": 0}
     for sec in inq["sections"]:
         for it in sec["items"]:
-            status, ev = _judge(it, rows, text, risks, recon)
+            status, ev = _judge(it, rows, text, after_res)
             counts[status] = counts.get(status, 0) + 1
             items.append({"no": len(items) + 1, "section": sec["title"],
                           "subject": it["subject"], "kind": it.get("kind") or "unknown",
@@ -246,9 +259,9 @@ def self_test():
     # 1) 锚点必须齐：问询单每种条目都要带 kind，否则闭环核不了
     try:
         try:
-            from . import inquiry as _inq
+            from . import inquiry as _inquiry_mod
         except ImportError:
-            import inquiry as _inq
+            import inquiry as _inquiry_mod
         fake_res = {
             "missing": [{"concept": "闭水试验", "cid": "c1", "tier": "review", "ref_amount": None}],
             "duplicates": [{"concept": "地面找平", "cid": "c2", "amount": 98, "lines": ["57"],
@@ -260,7 +273,7 @@ def self_test():
                              "amount": 100}],
             "cross_unit": [],
         }
-        built = _inq.build({"label": "甲", "total": 1}, fake_res)
+        built = _inquiry_mod.build({"label": "甲", "total": 1}, fake_res)
         kinds = [it.get("kind") for s in built["sections"] for it in s["items"]]
         case("问询单每种条目都带 kind 锚点", all(kinds) and len(kinds) >= 5, str(kinds))
     except Exception as e:  # noqa: BLE001
@@ -281,9 +294,13 @@ def self_test():
     one = _q("新版", 10000.0, [_row(57, "地面找平", "c2")])
     two = _q("新版", 10000.0, [_row(57, "地面找平", "c2"), _row(58, "地面找平", "c2")])
     d1 = check(_inq(dup), one, {"duplicates": [], "risks": [], "recon": {}})
-    d2 = check(_inq(dup), two, {"duplicates": [], "risks": [], "recon": {}})
-    case("合并为 1 行 → 已落实", d1["items"][0]["status"] == "resolved")
-    case("仍是 2 行 → 未落实", d2["items"][0]["status"] == "open")
+    d2 = check(_inq(dup), two,
+               {"duplicates": [{"cid": "c2", "lines": ["57", "58"]}], "risks": [], "recon": {}})
+    case("引擎已不判重复 → 已落实", d1["items"][0]["status"] == "resolved")
+    case("引擎仍判重复 → 未落实", d2["items"][0]["status"] == "open")
+    case("重复项没有 cid → 标 unknown，不猜",
+         check(_inq([{"no": 1, "subject": "x", "kind": "duplicate", "cid": None}]),
+               one, {"duplicates": [], "risks": [], "recon": {}})["items"][0]["status"] == "unknown")
 
     # 4) 口径：统一为一种量纲才算落实
     unit = [{"no": 1, "subject": "踢脚线", "kind": "unit", "cid": "c4"}]
