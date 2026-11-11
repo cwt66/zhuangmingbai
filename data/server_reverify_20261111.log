@@ -1,27 +1,27 @@
 == 1/20 语法编译
 == 2/20 单元测试
-...~/zmb-tasks/repo/eval/ab_tally.py:44: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp72tsugsr.csv' mode='r' encoding='utf-8-sig'>
+...~/zmb-tasks/repo/eval/ab_tally.py:44: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp0hrude85.csv' mode='r' encoding='utf-8-sig'>
   rows = [r for r in csv.DictReader(open(args.csv, encoding="utf-8-sig"))
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-~/zmb-tasks/repo/eval/ab_tally.py:103: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp72tsugsr.csv.md' mode='w' encoding='utf-8'>
+~/zmb-tasks/repo/eval/ab_tally.py:103: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp0hrude85.csv.md' mode='w' encoding='utf-8'>
   open(args.out, "w", encoding="utf-8").write(out + "\n")
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-.~/zmb-tasks/repo/eval/ab_tally.py:44: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmppu6kyo7n.csv' mode='r' encoding='utf-8-sig'>
+.~/zmb-tasks/repo/eval/ab_tally.py:44: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpitaf9gka.csv' mode='r' encoding='utf-8-sig'>
   rows = [r for r in csv.DictReader(open(args.csv, encoding="utf-8-sig"))
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-~/zmb-tasks/repo/eval/ab_tally.py:103: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmppu6kyo7n.csv.md' mode='w' encoding='utf-8'>
+~/zmb-tasks/repo/eval/ab_tally.py:103: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpitaf9gka.csv.md' mode='w' encoding='utf-8'>
   open(args.out, "w", encoding="utf-8").write(out + "\n")
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-.~/zmb-tasks/repo/eval/ab_tally.py:44: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmprbgmf3zp.csv' mode='r' encoding='utf-8-sig'>
+.~/zmb-tasks/repo/eval/ab_tally.py:44: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp4qvssq49.csv' mode='r' encoding='utf-8-sig'>
   rows = [r for r in csv.DictReader(open(args.csv, encoding="utf-8-sig"))
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-~/zmb-tasks/repo/eval/ab_tally.py:103: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmprbgmf3zp.csv.md' mode='w' encoding='utf-8'>
+~/zmb-tasks/repo/eval/ab_tally.py:103: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp4qvssq49.csv.md' mode='w' encoding='utf-8'>
   open(args.out, "w", encoding="utf-8").write(out + "\n")
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-.........................s......................................................................................~/zmb-tasks/repo/tests/test_ledger.py:179: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/zmb_bundle_test_y_ilch7q/zmb_bundle_x__dn7at1q/standards/templates_v0.json' mode='r' encoding='utf-8'>
+.........................s......................................................................................~/zmb-tasks/repo/tests/test_ledger.py:179: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/zmb_bundle_test_g02w0jq3/zmb_bundle_x_0p7rys41/standards/templates_v0.json' mode='r' encoding='utf-8'>
   data = json.load(open(p, encoding="utf-8"))
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-~/zmb-tasks/repo/tests/test_ledger.py:182: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/zmb_bundle_test_y_ilch7q/zmb_bundle_x__dn7at1q/standards/templates_v0.json' mode='w' encoding='utf-8'>
+~/zmb-tasks/repo/tests/test_ledger.py:182: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/zmb_bundle_test_g02w0jq3/zmb_bundle_x_0p7rys41/standards/templates_v0.json' mode='w' encoding='utf-8'>
   json.dump(data, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
 ....................................................s...................................................................................................拒绝采集：当前是 x86_64，存档必须来自 arm64 机器。
@@ -505,7 +505,7 @@ ResourceWarning: Enable tracemalloc to get the object allocation traceback
   ]
 }...........................................................................
 ----------------------------------------------------------------------
-Ran 344 tests in 49.226s
+Ran 344 tests in 48.003s
 
 OK (skipped=2)
 
@@ -680,6 +680,7 @@ wrote out/not_applicable.md (2771 chars)
 == 19/20 评委复验页一致性（11 页 + 台账绑定 + 双向断言）
   展示页 11 页 / 23 项检查 / 违规 0 / 双向断言 PASS
   演示剧本 8 镜 / 双向断言 PASS（8/8）
+  问询单双向断言 PASS（11/11）
 == 20/20 哈希链 + Merkle 包含证明（链 8 招 + 包 4 招 + Merkle 12 招）
   账本 6 条 / 链 OK / 锚点 OK / 链 7/7 / 包 4/4 / Merkle 12/12
 
