@@ -18,6 +18,12 @@
 """
 from datetime import datetime
 
+# 量纲中文名：问询单里不能出现 area/length 这种内部枚举值，对方看不懂。
+DIM_CN = {"area": "面积", "length": "长度", "count": "个数",
+          "volume": "体积", "mass": "重量", "trip": "车次", "item": "包干项"}
+
+CN_NUM = "一二三四五六七八九十"
+
 # 不同问题类型对应的「怎么问」模板。措辞刻意中性——目的是拿到答案，不是赢一场吵架。
 ASK = {
     # 漏项分两种问法：能估价的问「补多少钱」，不能估价的（工艺项）问「做不做、留什么记录」。
@@ -32,6 +38,14 @@ ASK = {
     "recon": "报价单明细合计（{detail}）加取费（{fee}）为 {calc}，与印刷合计 {grand} 相差 {diff} 元，"
              "请说明差额来源。",
     "vague": "该行含「{pattern}」表述，金额未锁定。请写明单价、计量方式与上限。",
+    # 跨单口径：不指控「你多报」，只指出「量纲不同，没法直接比」。
+    "unit_cross": "贵司此项按「{mine}」计价，同批另外 {n} 家按「{others}」计价；"
+                  "两者是{dims}，工程量不能直接相加或相乘。请确认："
+                  "①贵司单位与「{target}」的折算关系（1 单位 = 多少 {target}）；"
+                  "②能否改按「{target}」重报一次，便于与其他家对照。",
+    # 单内混用：同一份单据里自己就有两种口径，先让它自己说清适用范围。
+    "unit_inner": "本单内同一项目同时出现「{mine}」两种计价方式（第 {lines} 行），"
+                  "对应{dims}。请说明各自适用范围与折算关系，并统一为一种口径后重报。",
 }
 
 
@@ -42,8 +56,29 @@ def _fmt(x):
         return "—"
 
 
-def build(quote, res):
-    """返回 {meta, sections:[{title, intro, items:[{no, subject, ask, basis}]}]}"""
+def _units(seq):
+    return "、".join(seq) if seq else "—"
+
+
+def _dim_cn(dim):
+    return DIM_CN.get(dim, dim)
+
+
+def _cn(i):
+    return CN_NUM[i] if 0 <= i < len(CN_NUM) else str(i + 1)
+
+
+def _lines(seq):
+    return "、".join(str(x) for x in seq) if seq else "—"
+
+
+def build(quote, res, cross_unit=None):
+    """返回 {meta, sections:[{title, intro, items:[{no, subject, ask, basis}]}]}
+
+    cross_unit：跨单口径条目（`audit()["_cross_unit"]` 的子集）。不传就读
+    `res["cross_unit"]`——`audit()` 已经把「跟自己有关的那几条」挂到每份单据上了，
+    所以单独调 `inquiry.build(q, res)` 的老写法也能拿到本单相关的口径问题。
+    """
     sections = []
 
     miss = sorted(res.get("missing") or [],
@@ -61,7 +96,7 @@ def build(quote, res):
             items.append({"no": i, "subject": "%s（%s）" % (m["concept"], tier),
                           "ask": ask, "basis": basis})
         sections.append({
-            "title": "一、请补齐或说明的工序（%d 项）" % len(miss),
+            "title": "请补齐或说明的工序（%d 项）" % len(miss),
             "intro": "以下工序是同类报价的常规必做项，本单未见。请逐项答复是否包含。",
             "items": items})
 
@@ -72,7 +107,7 @@ def build(quote, res):
             items.append({"no": i, "subject": "%s（涉及 %s 元）" % (d["concept"], _fmt(d.get("amount"))),
                           "ask": ASK["duplicate"].format(lines="、".join(d.get("lines") or [])),
                           "basis": (d.get("evidence") or {}).get("basis", "")})
-        sections.append({"title": "二、请说明的重复计价（%d 项）" % len(dups),
+        sections.append({"title": "请说明的重复计价（%d 项）" % len(dups),
                          "intro": "同一工序出现多行。可能是分部位计价，也可能是重复收费，请说明。",
                          "items": items})
 
@@ -97,9 +132,44 @@ def build(quote, res):
                     calc=_fmt((rec.get("detail_sum") or 0) + (rec.get("fee_sum") or 0)),
                     grand=_fmt((rec.get("grand") or {}).get("amount")), diff=_fmt(rec["diff"])),
                 "basis": "印刷合计 vs 逐行明细之和 + 派生取费"})
-        sections.append({"title": "三、请核对的算术与合计（%d 项）" % len(items),
+        sections.append({"title": "请核对的算术与合计（%d 项）" % len(items),
                          "intro": "这些是可以用加减法直接验证的差异，请核对后给出更正版。",
                          "items": items})
+
+    cross = cross_unit
+    if cross is None:
+        cross = res.get("cross_unit") or res.get("_cross_unit") or []
+    label = quote.get("label")
+    mine_rows = [x for x in cross if label in (x.get("by_quote") or {})]
+    if mine_rows:
+        items = []
+        for i, x in enumerate(mine_rows, 1):
+            by = x.get("by_quote") or {}
+            mine = by.get(label) or []
+            others = {k: v for k, v in by.items() if k != label}
+            dims = " / ".join(_dim_cn(d) for d in (x.get("dims") or [])) or "不同量纲"
+            lines = _lines((x.get("lines") or {}).get(label) or [])
+            if others:
+                # 同批还有别家：以多数写法作为「建议统一口径」，不硬指定哪家对
+                target = sorted({u for v in others.values() for u in v})[0]
+                ask = ASK["unit_cross"].format(
+                    mine=_units(mine), n=len(others),
+                    others="；".join("%s 按 %s" % (k, _units(v)) for k, v in others.items()),
+                    dims=dims, target=target)
+                basis = ("本体单位定义 + 量纲归一化；贵司第 %s 行；"
+                         "其他家单位取自同批报价原文" % lines)
+            else:
+                ask = ASK["unit_inner"].format(
+                    mine=_units(mine), dims=dims, lines=lines)
+                basis = "本体单位定义 + 量纲归一化；本单第 %s 行，同一工序出现两种量纲" % lines
+            items.append({"no": i, "subject": "%s（计量口径）" % x["concept"],
+                          "ask": ask, "basis": basis})
+        sections.append({
+            "title": "请确认的计量口径（%d 项）" % len(items),
+            "intro": "这些项目的计量单位不是同一量纲（面积 / 长度 / 个数），单看单价会得出"
+                     "相反的结论。不是谁报错了，是比价前必须先换算——请对方给出折算关系，"
+                     "或直接按统一口径重报一次。",
+            "items": items})
 
     obs = res.get("obligations") or []
     if obs:
@@ -109,9 +179,14 @@ def build(quote, res):
                           "ask": o["confirm"] + "（请书面答复并作为合同附件）",
                           "basis": "原文命中：%s；涉及金额 %s 元" % (
                               "、".join(o.get("patterns") or []), _fmt(o.get("amount")))})
-        sections.append({"title": "四、请书面确认的开口条款（%d 类）" % len(obs),
+        sections.append({"title": "请书面确认的开口条款（%d 类）" % len(obs),
                          "intro": "这些条款意味着金额尚未锁定。请把答案写进合同，不要只口头承诺。",
                          "items": items})
+
+    # 编排时的编号：以前每段标题里写死「一、二、三、四」，多一节或某一节为空就出现
+    # 「三、」后面直接跟「五、」。改成按实际出现的顺序重排，编号永远连续。
+    for i, s in enumerate(sections):
+        s["title"] = "%s、%s" % (_cn(i), s["title"].split("、", 1)[-1])
 
     evidence = [o for o in obs if o.get("evidence")]
     meta = {
@@ -150,7 +225,7 @@ def to_markdown(inq):
                 L.append("- 依据：%s" % it["basis"])
             L.append("")
     if m["evidence"]:
-        L.append("## 五、请随合同提供的验收凭证")
+        L.append("## %s、请随合同提供的验收凭证" % _cn(len(inq["sections"])))
         L.append("")
         for e in m["evidence"]:
             L.append("- **%s**：%s" % (e["title"], e["evidence"]))

@@ -860,6 +860,17 @@ def unit_dim(unit):
     return UNIT_DIM.get(s)
 
 
+def _row_no_key(no):
+    """行号排序：纯数字按数值比，`12-1`、`附1` 这类按字符串兜底。
+
+    直接按字符串排会把「第 10 行」排在「第 2 行」前面，问询单里引用的行号顺序就是乱的。
+    """
+    try:
+        return (0, float(no))
+    except (TypeError, ValueError):
+        return (1, str(no))
+
+
 def cross_unit_mix(quotes, onto, rule):
     """R5：同一工序在不同单据里单位不一致。
 
@@ -874,6 +885,7 @@ def cross_unit_mix(quotes, onto, rule):
         return []
     dims = defaultdict(lambda: defaultdict(set))
     raw = defaultdict(lambda: defaultdict(set))
+    hits = defaultdict(lambda: defaultdict(list))
     for q in quotes:
         for r in q["rows"]:
             if not r["cid"]:
@@ -883,6 +895,8 @@ def cross_unit_mix(quotes, onto, rule):
                 continue  # 认不出的单位不判，宁可漏报
             dims[r["cid"]][q["label"]].add(d)
             raw[r["cid"]][q["label"]].add((r["unit"] or "").strip())
+            # 行号要能指回去：问询单里写「第 4 行按根、第 9 行按米」才可核对
+            hits[r["cid"]][q["label"]].append(r["no"])
     out = []
     for cid, per_q in dims.items():
         all_dims = set()
@@ -897,6 +911,7 @@ def cross_unit_mix(quotes, onto, rule):
                     "units": sorted({u for s in raw[cid].values() for u in s}),
                     "dims": sorted(comparable),
                     "by_quote": {k: sorted(v) for k, v in raw[cid].items()},
+                    "lines": {k: sorted(v, key=_row_no_key) for k, v in hits[cid].items()},
                     "rule": rule["id"], "confidence": c, "tier": tier(c),
                     "evidence": {"basis": "本体单位定义 + 量纲归一化",
                                  "formula": "量纲(q1) ≠ 量纲(q2)；m2/㎡、M/m、只/套/樘 视为同量纲"}})
@@ -1048,7 +1063,12 @@ def audit(quotes, onto, templates, rules, coverage=None, template_key="old_house
         row["addon_forecast"] = addon.forecast(
             row, reference_prices_path=os.path.join(DATA, "reference_prices.json"))
         results[q["label"]] = row
-    results["_cross_unit"] = cross_unit_mix(quotes, onto, R["R5_unit_mix"])
+    cross = cross_unit_mix(quotes, onto, R["R5_unit_mix"])
+    # 每份单据只带走「跟自己有关」的那几条：问询单是按单一人生成的，
+    # 让它自己去 res["_cross_unit"] 里翻，等于把跨单结构泄漏进单份结果。
+    for row in results.values():
+        row["cross_unit"] = [x for x in cross if row["quote"]["label"] in x["by_quote"]]
+    results["_cross_unit"] = cross
     return results
 
 
@@ -1226,16 +1246,24 @@ def _report_fingerprint(res):
 
     多单场景（2–4 家对比）按 label 分别取，再组合一次——
     排序固定，所以单序不影响结果。
+
+    下划线键（`_cross_unit`）是**跨单附加信息**，不是某一份单据的结论。
+    它一进 `results`，下面那句 `all(isinstance(v, dict) ...)` 就会因为它是 list 而假，
+    一路掉到 `one(res)`——按单份的字段去读一个「按 label 分组」的字典，
+    读到的全是空值，于是**所有多单报告都盖上同一个常数指纹**。
+    这不是假想：R5 加进 `results` 之后就一直是这个状态，单份用例测不出来。
     """
     def one(r):
         return result_digest(r.get("quote") or {}, r)
 
-    if isinstance(res, dict) and res and all(
-            isinstance(v, dict) and "missing" in v for v in res.values()):
-        if len(res) == 1:
+    rows = {}
+    if isinstance(res, dict):
+        rows = {k: v for k, v in res.items() if not str(k).startswith("_")}
+    if rows and all(isinstance(v, dict) and "missing" in v for v in rows.values()):
+        if len(rows) == 1:
             # 单份：直接用该单的结论指纹，保证与审计包里的数一模一样
-            return one(next(iter(res.values())))
-        parts = {label: one(v) for label, v in res.items()}
+            return one(next(iter(rows.values())))
+        parts = {label: one(v) for label, v in rows.items()}
         body = json.dumps(parts, sort_keys=True, ensure_ascii=False)
         return hashlib.sha256(body.encode()).hexdigest()[:16]
     return one(res)

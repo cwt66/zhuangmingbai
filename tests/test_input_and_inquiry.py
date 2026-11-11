@@ -96,12 +96,48 @@ class TestInquiry(unittest.TestCase):
         res = P.audit([q], onto, tpl, rules, cov, template_key="old_house")[q["label"]]
         return inquiry.build(q, res)
 
+    def _build_multi(self):
+        """三份样例跑一次对照审计，再给 B 公司出问询单。
+
+        跨单口径只有**对照**才存在：单份单据里「按根」是合法写法，
+        要跟另外两家「按米」放在一起才成为「不可直接比」。
+        """
+        onto = P.Ontology(os.path.join(DATA, "ontology_v0.json"))
+        with open(os.path.join(DATA, "templates_v0.json"), encoding="utf-8") as f:
+            tpl = json.load(f)
+        with open(os.path.join(DATA, "rules_v0.json"), encoding="utf-8") as f:
+            rules = json.load(f)
+        with open(os.path.join(DATA, "coverage_v0.json"), encoding="utf-8") as f:
+            cov = json.load(f)
+        files = [("A 公司（规范型）", "company_a.csv"),
+                 ("B 公司（低价引流型）", "company_b.csv"),
+                 ("C 公司（高价项全型）", "company_c.csv")]
+        quotes = [P.build_line_index(
+            P.load_quote(os.path.join(DATA, "samples", fn), lb), onto) for lb, fn in files]
+        full = P.audit(quotes, onto, tpl, rules, cov, template_key="old_house")
+        target = quotes[1]
+        return inquiry.build(target, full[target["label"]],
+                             cross_unit=full.get("_cross_unit")), full
+
     def test_sections_cover_all_finding_types(self):
         inq = self._build()
         titles = " ".join(s["title"] for s in inq["sections"])
         for expect in ("请补齐或说明的工序", "重复计价", "算术与合计", "开口条款"):
             self.assertIn(expect, titles)
         self.assertGreater(inq["meta"]["n_items"], 0)
+
+        # 多单：问询单要能问出「贵司按根、别家按米」——单份问询单里永远没有这一节
+        multi, full = self._build_multi()
+        self.assertTrue(full.get("_cross_unit"), "样例三份应当存在跨单口径差异")
+        sec = [s for s in multi["sections"] if "计量口径" in s["title"]]
+        self.assertTrue(sec, "有跨单口径差异时必须有计量口径一节")
+        asks = " ".join(it["ask"] for it in sec[0]["items"])
+        self.assertIn("折算", asks)
+        self.assertTrue(any("按" in it["basis"] or "行" in it["basis"] for it in sec[0]["items"]))
+
+        # 编号必须连续：多一节、或某一节为空，都不许出现「三、」后面直接跟「五、」
+        heads = [s["title"].split("、", 1)[0] for s in multi["sections"]]
+        self.assertEqual(heads, list("一二三四五")[:len(heads)])
 
     def test_every_item_has_ask_and_basis(self):
         inq = self._build()

@@ -165,6 +165,14 @@ def template_explanation(facts, reason="no_api_key"):
     if tm:
         bullets.append("优先确认：" + "、".join(
             "%s（%s 元）" % (m["工序"], _fmt(m["参照金额"])) for m in tm) + "。")
+    # 跨单口径：事实清单里本来就有，但模板以前完全没用——于是页面上的解读
+    # 永远不提「这家的踢脚线按根、另外两家按米」，而这恰恰是最该问出口的一句。
+    cross = facts.get("跨单口径") or []
+    if cross:
+        x = cross[0]
+        who = "；".join("%s 按 %s" % (k, "、".join(v))
+                        for k, v in (x.get("by_quote") or {}).items())
+        bullets.append("计量口径不一致：%s（%s），单价不可直接比。" % (x.get("concept"), who))
     if (by_dup[0].get("重复剔除") or 0) > 0:
         bullets.append("%s 有可核减的重复计价 %s 元。" % (
             by_dup[0].get("公司"), _fmt(by_dup[0].get("重复剔除"))))
@@ -174,8 +182,11 @@ def template_explanation(facts, reason="no_api_key"):
             d.get("公司") for d in risky[:3]))
     questions = ["「%s」这一项是否包含在报价内？如未包含，请补充单价与做法。" % m["工序"]
                  for m in tm[:3]]
+    for x in cross[:1]:
+        questions.append("「%s」能否统一按一种计量方式报价？如不能，请注明折算关系。"
+                         % x.get("concept"))
     return {"source": "template", "reason": reason, "headline": headline,
-            "bullets": bullets[:3], "questions": questions,
+            "bullets": bullets[:3], "questions": questions[:3],
             "caveat": "以上是规则结论的转写，不构成价格鉴定或法律意见。"}
 
 

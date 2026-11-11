@@ -186,6 +186,23 @@ class TestBundleDigest(unittest.TestCase):
         noisy["generated_at"] = "2026-11-07 12:00"
         self.assertEqual(before, P._report_fingerprint({q["label"]: noisy}))
 
+        # 多单场景：`_cross_unit` 是跨单附加信息，不是某一份单据的结论。
+        # 它一进 results，`all(isinstance(v, dict) ...)` 就为假，指纹掉进单份分支，
+        # 读一个「按 label 分组」的字典读到的全是空值——所有多单报告盖同一个常数指纹。
+        # 单份用例永远测不出来，所以在这里锁住。
+        pair = {q["label"]: r, "B 公司": copy.deepcopy(r)}
+        with_cross = dict(pair, _cross_unit=[{"cid": "x", "concept": "踢脚线"}])
+        self.assertEqual(P._report_fingerprint(with_cross), P._report_fingerprint(pair),
+                         "跨单附加信息不该改变多单指纹")
+        self.assertNotEqual(P._report_fingerprint(pair),
+                            P._report_fingerprint({q["label"]: r}),
+                            "多单指纹不能退化成单份指纹")
+        changed = copy.deepcopy(r)
+        changed["missing"] = changed["missing"][:-1]
+        self.assertNotEqual(P._report_fingerprint(pair),
+                            P._report_fingerprint({q["label"]: r, "B 公司": changed}),
+                            "多单里任一份的结论变了，组合指纹必须变")
+
     def test_report_fingerprint_moves_when_conclusion_changes(self):
         """删掉一条漏项，判定指纹必须变——否则指纹就白盖了。"""
         import copy

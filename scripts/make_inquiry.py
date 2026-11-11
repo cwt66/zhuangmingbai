@@ -25,6 +25,9 @@ def main():
     ap.add_argument("--template", default="old_house", choices=["old_house", "new_house"])
     ap.add_argument("--scope", default="full", choices=["full", "base"])
     ap.add_argument("--out", default=os.path.join(ROOT, "out"))
+    ap.add_argument("--peer", action="append", default=[],
+                    help="同批对照单据（可重复传）。给了它，问询单才会问"
+                         "「贵司按根、别家按米」这类跨单计量口径；只给一份就问不出来。")
     args = ap.parse_args()
 
     onto = P.Ontology(os.path.join(DATA, "ontology_v0.json"))
@@ -37,10 +40,15 @@ def main():
 
     label = args.label or os.path.splitext(os.path.basename(args.csv))[0]
     q = P.build_line_index(P.load_quote(args.csv, label), onto)
-    res = P.audit([q], onto, templates, rules, coverage,
-                  template_key=args.template, scope=args.scope)[q["label"]]
+    peers = []
+    for p in args.peer:
+        pl = os.path.splitext(os.path.basename(p))[0]
+        peers.append(P.build_line_index(P.load_quote(p, pl), onto))
+    full = P.audit([q] + peers, onto, templates, rules, coverage,
+                   template_key=args.template, scope=args.scope)
+    res = full[q["label"]]
 
-    inq = inquiry.build(q, res)
+    inq = inquiry.build(q, res, cross_unit=full.get("_cross_unit"))
     os.makedirs(args.out, exist_ok=True)
     stem = "inquiry_" + os.path.splitext(os.path.basename(args.csv))[0]
     md_path = os.path.join(args.out, stem + ".md")

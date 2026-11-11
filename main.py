@@ -191,7 +191,7 @@ ERR = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 </div></body></html>"""
 
 NAV = """<div class="nav"><b>装明白 · 可计算审计</b>
-<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/perceive">图片识别</a><a href="/review">解析校对</a><a href="/inquiry">问询单</a><a href="/diff">两版对比</a>
+<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/perceive">图片识别</a><a href="/review">解析校对</a><a href="/inquiry">问询单</a><a href="/inquiry/demo">对照问询单</a><a href="/diff">两版对比</a>
 <span class="right">浏览器 Ctrl/⌘+P 可另存为 PDF · <a href="/health">健康检查</a></span></div>"""
 
 
@@ -782,6 +782,29 @@ def inquiry_page():
         html = inquiry_mod.to_html(inquiry_mod.build(q, res))
     except Exception as e:  # noqa: BLE001
         return _err("问询单生成失败", str(e), 500)
+    return HTMLResponse(html)
+
+
+@app.get("/inquiry/demo", response_class=HTMLResponse)
+def inquiry_demo():
+    """三份样例的对照版问询单：把「贵司按根、别家按米」写进问句里。
+
+    单份单据的问询单（/inquiry）只能问事实——「跨单口径」要对照才存在，
+    所以这一屏跑一次三份样例的审计，再给 B 公司出问询单。
+    样例里正好是 B 按「根」、A/C 按「米」，业主拿这句话去问，对方只能给折算关系。
+    """
+    paths = [(lb, os.path.join(pipeline.DATA, "samples", fn)) for lb, fn in SAMPLES]
+    try:
+        onto, templates, rules, coverage = _load_rules()
+        quotes = [pipeline.build_line_index(pipeline.load_quote(p, lb), onto)
+                  for lb, p in paths]
+        full = pipeline.audit(quotes, onto, templates, rules, coverage,
+                              template_key="old_house")
+        target = quotes[1]  # B 公司（低价引流型）
+        html = inquiry_mod.to_html(inquiry_mod.build(
+            target, full[target["label"]], cross_unit=full.get("_cross_unit")))
+    except Exception as e:  # noqa: BLE001
+        return _err("样例问询单生成失败", str(e), 500)
     return HTMLResponse(html)
 
 
