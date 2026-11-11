@@ -91,7 +91,10 @@ def _judge(item, rows, text, after_res):
                 if x.get("rule") == "R8_arithmetic" and str(x.get("line")) == line]
         if not left:
             return "resolved", "新版第 %s 行已无算术差异" % line
-        return "open", "新版第 %s 行仍差 %s 元" % (line, _money(left[0].get("amount")))
+        amt = left[0].get("amount")
+        if amt is None:
+            return "open", "新版第 %s 行合价仍与「数量×单价」不符（差额未量化）" % line
+        return "open", "新版第 %s 行仍差 %s 元" % (line, _money(amt))
 
     if kind == "recon":
         if recon.get("ok") or recon.get("diff") is None:
