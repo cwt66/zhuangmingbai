@@ -94,7 +94,9 @@ def build(quote, res, cross_unit=None):
                     (m.get("ref_source") or [{}])[0].get("quote", "参照"))
             ask = ASK["missing_priced"] if m.get("ref_amount") else ASK["missing_process"]
             items.append({"no": i, "subject": "%s（%s）" % (m["concept"], tier),
-                          "ask": ask, "basis": basis})
+                          "ask": ask, "basis": basis,
+                          # 机器可核对的锚点：新版里这个 cid 出现没出现，就能判「落实没落实」
+                          "kind": "missing", "cid": m.get("cid")})
         sections.append({
             "title": "请补齐或说明的工序（%d 项）" % len(miss),
             "intro": "以下工序是同类报价的常规必做项，本单未见。请逐项答复是否包含。",
@@ -106,7 +108,9 @@ def build(quote, res, cross_unit=None):
         for i, d in enumerate(dups, 1):
             items.append({"no": i, "subject": "%s（涉及 %s 元）" % (d["concept"], _fmt(d.get("amount"))),
                           "ask": ASK["duplicate"].format(lines="、".join(d.get("lines") or [])),
-                          "basis": (d.get("evidence") or {}).get("basis", "")})
+                          "basis": (d.get("evidence") or {}).get("basis", ""),
+                          "kind": "duplicate", "cid": d.get("cid"),
+                          "lines": list(d.get("lines") or [])})
         sections.append({"title": "请说明的重复计价（%d 项）" % len(dups),
                          "intro": "同一工序出现多行。可能是分部位计价，也可能是重复收费，请说明。",
                          "items": items})
@@ -121,7 +125,9 @@ def build(quote, res, cross_unit=None):
             diff = (x.get("amount") or 0)
             items.append({"no": n, "subject": "第 %s 行算术不符" % (x.get("line") or "—"),
                           "ask": ASK["arithmetic"].format(line=x.get("line") or "—", diff=_fmt(diff)),
-                          "basis": (x.get("evidence") or {}).get("basis", "")})
+                          "basis": (x.get("evidence") or {}).get("basis", ""),
+                          "kind": "arithmetic", "cid": x.get("cid"),
+                          "line": x.get("line")})
         rec = (res.get("recon") or {})
         if rec.get("diff") is not None:
             n += 1
@@ -131,7 +137,8 @@ def build(quote, res, cross_unit=None):
                     detail=_fmt(rec.get("detail_sum")), fee=_fmt(rec.get("fee_sum")),
                     calc=_fmt((rec.get("detail_sum") or 0) + (rec.get("fee_sum") or 0)),
                     grand=_fmt((rec.get("grand") or {}).get("amount")), diff=_fmt(rec["diff"])),
-                "basis": "印刷合计 vs 逐行明细之和 + 派生取费"})
+                "basis": "印刷合计 vs 逐行明细之和 + 派生取费",
+                "kind": "recon"})
         sections.append({"title": "请核对的算术与合计（%d 项）" % len(items),
                          "intro": "这些是可以用加减法直接验证的差异，请核对后给出更正版。",
                          "items": items})
@@ -163,7 +170,9 @@ def build(quote, res, cross_unit=None):
                     mine=_units(mine), dims=dims, lines=lines)
                 basis = "本体单位定义 + 量纲归一化；本单第 %s 行，同一工序出现两种量纲" % lines
             items.append({"no": i, "subject": "%s（计量口径）" % x["concept"],
-                          "ask": ask, "basis": basis})
+                          "ask": ask, "basis": basis,
+                          "kind": "unit", "cid": x.get("cid"),
+                          "dims": list(x.get("dims") or [])})
         sections.append({
             "title": "请确认的计量口径（%d 项）" % len(items),
             "intro": "这些项目的计量单位不是同一量纲（面积 / 长度 / 个数），单看单价会得出"
@@ -178,7 +187,8 @@ def build(quote, res, cross_unit=None):
             items.append({"no": i, "subject": o["title"],
                           "ask": o["confirm"] + "（请书面答复并作为合同附件）",
                           "basis": "原文命中：%s；涉及金额 %s 元" % (
-                              "、".join(o.get("patterns") or []), _fmt(o.get("amount")))})
+                              "、".join(o.get("patterns") or []), _fmt(o.get("amount"))),
+                          "kind": "obligation", "patterns": list(o.get("patterns") or [])})
         sections.append({"title": "请书面确认的开口条款（%d 类）" % len(obs),
                          "intro": "这些条款意味着金额尚未锁定。请把答案写进合同，不要只口头承诺。",
                          "items": items})
