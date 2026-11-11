@@ -209,6 +209,8 @@ th{text-align:left;color:var(--grey);font-weight:600;border-bottom:1px solid var
 td{border-bottom:1px solid var(--hair);padding:8px;vertical-align:top}
 td.zero{color:#B33A2B}
 td.ok{color:#0F5132}
+/* 汇总表的钱数右对齐：一眼比大小，左对齐要一位一位数 */
+.sum td:not(:first-child),.sum th:not(:first-child){text-align:right}
 .sum td:first-child{font-weight:600}
 footer{margin-top:34px;border-top:1px solid var(--hair);padding-top:12px;color:var(--faint);font-size:12px}
 @media print{body{background:#fff}.wrap{padding:0}.masthead{background:#fff;color:var(--ink);
