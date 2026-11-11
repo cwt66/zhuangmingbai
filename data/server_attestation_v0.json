@@ -4,7 +4,7 @@
     {
       "name": "check_all.sh 运行日志",
       "digest": {
-        "sha256": "8c833d3b6eab4fa1bf5f55a228206d26c2db74f094deaba503a5bf58c444a654"
+        "sha256": "4ef54b04bded2285ae6f711fcf88f9ea6c2fd6c62a117aa10e05b1afb7010cb8"
       }
     }
   ],
@@ -14,7 +14,7 @@
       "buildType": "https://zhuangmingbai.local/attestation/server-reverify/v1",
       "externalParameters": {
         "command": "bash scripts/check_all.sh",
-        "repo_commit": "0ac94629323d067c6d04173d97dfd24ed5a94bbe",
+        "repo_commit": "9875d9e67602551750132a4d27b43e766bd66442",
         "python": "3.12.3",
         "platform": "Linux x86_64"
       },
@@ -138,9 +138,9 @@
         "id": "self-hosted:linux:x86_64"
       },
       "metadata": {
-        "generatedOn": "2026-11-11T13:54:21+00:00",
+        "generatedOn": "2026-11-11T14:18:50+00:00",
         "executionTime": "not_recorded",
-        "invocationId": "6662cf0b088681a2"
+        "invocationId": "7ce3ed906b203361"
       }
     },
     "claims": [
@@ -284,7 +284,7 @@
             ]
           },
           {
-            "line": 686,
+            "line": 687,
             "text": "== 20/20 哈希链 + Merkle 包含证明（链 8 招 + 包 4 招 + Merkle 12 招）",
             "groups": [
               "20"
@@ -300,7 +300,7 @@
         "reproduce": "bash scripts/check_all.sh",
         "hits": [
           {
-            "line": 689,
+            "line": 690,
             "text": "[ALL GREEN] 全部检查通过。",
             "groups": []
           }
@@ -315,7 +315,7 @@
         "hits": [
           {
             "line": 508,
-            "text": "Ran 344 tests in 48.235s",
+            "text": "Ran 344 tests in 48.128s",
             "groups": [
               "344"
             ]
@@ -346,7 +346,7 @@
         "reproduce": "python3 eval/ledger_chain.py --json",
         "hits": [
           {
-            "line": 687,
+            "line": 688,
             "text": "  账本 6 条 / 链 OK / 锚点 OK / 链 7/7 / 包 4/4 / Merkle 12/12",
             "groups": [
               "12",
