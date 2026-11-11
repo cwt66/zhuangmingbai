@@ -110,6 +110,9 @@ echo "== 18/20 跨环境判定确定性（12 变体 + arm64 存档 + 双向断�
 echo "== 19/20 评委复验页一致性（11 页 + 台账绑定 + 双向断言）"
 "$PY" scripts/verify_showcase.py --self-test --json | "$PY" -c \
   "import sys,json;d=json.load(sys.stdin);print('  展示页 %d 页 / %d 项检查 / 违规 %d / 双向断言 %s' % (d['pages'],d['checks'],len(d['violations']),d['self_test']))"
+# 演示即代码：8 镜剧本的结构自测（不开浏览器；真实录屏走 scripts/auto_demo.py --run）
+"$PY" scripts/auto_demo.py --self-test --json | "$PY" -c \
+  "import sys,json;d=json.load(sys.stdin);print('  演示剧本 %d 镜 / 双向断言 %s（%d/%d）' % (8,d['self_test'],d['passed'],d['checks']));sys.exit(0 if d['self_test']=='PASS' else 1)"
 
 # 哈希链账本：把「每一次判定」串成一条改不动的链。
 # 这一步管的是前面 19 步都管不到的一件事——**结论被事后改写**。

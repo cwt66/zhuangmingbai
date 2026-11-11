@@ -1,0 +1,161 @@
+{
+  "schema": "zmb.demo-timeline/v1",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "steps": [
+    {
+      "id": "s01",
+      "name": "封面 / 上传入口",
+      "path": "/",
+      "status": "ok",
+      "must": [
+        "装明白 · 可计算审计",
+        "上传报价单"
+      ],
+      "hits": [
+        "装明白 · 可计算审计",
+        "上传报价单"
+      ],
+      "missing": [],
+      "screenshot": "out/demo/s01.png",
+      "screenshot_sha256": "8c2738bbc743647f2050cf4b4f95a958d9c2044afdd1c9e8161c08edbee8eb5c",
+      "screenshot_bytes": 183928,
+      "elapsed_ms": 340
+    },
+    {
+      "id": "s02",
+      "name": "样例结构与字段",
+      "path": "/",
+      "status": "ok",
+      "must": [
+        "样例 A",
+        "样例 B",
+        "漏 17 项"
+      ],
+      "hits": [
+        "样例 A",
+        "样例 B",
+        "漏 17 项"
+      ],
+      "missing": [],
+      "screenshot": "out/demo/s02.png",
+      "screenshot_sha256": "014ea0fc81b4f7f7fee2346d104520d1342ba5c72a8cc5decd667be2d043cb08",
+      "screenshot_bytes": 184037,
+      "elapsed_ms": 805
+    },
+    {
+      "id": "s03",
+      "name": "三家表面报价",
+      "path": "/demo",
+      "status": "ok",
+      "must": [
+        "3 家报价",
+        "86,498",
+        "59,902"
+      ],
+      "hits": [
+        "3 家报价",
+        "86,498",
+        "59,902"
+      ],
+      "missing": [],
+      "screenshot": "out/demo/s03.png",
+      "screenshot_sha256": "2cf23e7f3b43dc711bd8f877d46c87f8270e614b3fa40c86b7f02a42dd15977f",
+      "screenshot_bytes": 181125,
+      "elapsed_ms": 397
+    },
+    {
+      "id": "s04",
+      "name": "B 的 17 项漏项",
+      "path": "/demo",
+      "status": "ok",
+      "must": [
+        "漏项",
+        "基准"
+      ],
+      "hits": [
+        "漏项",
+        "基准"
+      ],
+      "missing": [],
+      "screenshot": "out/demo/s04.png",
+      "screenshot_sha256": "68759cbaf6f0f2dd9588ddb7765d4f8d597d9d65044765c0cb7901ae92f741b9",
+      "screenshot_bytes": 213592,
+      "elapsed_ms": 741
+    },
+    {
+      "id": "s05",
+      "name": "真实成本反转",
+      "path": "/demo",
+      "status": "ok",
+      "must": [
+        "真实成本"
+      ],
+      "hits": [
+        "真实成本"
+      ],
+      "missing": [],
+      "screenshot": "out/demo/s05.png",
+      "screenshot_sha256": "a7d346dbd224bea1fc6926f868123588302739b863fc9b3e2f7d7627401cfb18",
+      "screenshot_bytes": 235704,
+      "elapsed_ms": 780
+    },
+    {
+      "id": "s06",
+      "name": "证据三档与审计编号",
+      "path": "/demo",
+      "status": "ok",
+      "must": [
+        "证据"
+      ],
+      "hits": [
+        "证据"
+      ],
+      "missing": [],
+      "screenshot": "out/demo/s06.png",
+      "screenshot_sha256": "8d1646bbc47acccbd9cff8f36189b08a5313971c9847278bd7276be40cd23b55",
+      "screenshot_bytes": 189251,
+      "elapsed_ms": 775
+    },
+    {
+      "id": "s07",
+      "name": "照片识别与校对",
+      "path": "/perceive",
+      "status": "ok",
+      "must": [
+        "识别",
+        "校对"
+      ],
+      "hits": [
+        "识别",
+        "校对"
+      ],
+      "missing": [],
+      "screenshot": "out/demo/s07.png",
+      "screenshot_sha256": "e032d5056686c4c9256ad6780785a50cefbabf91250880a1757570494ca5e724",
+      "screenshot_bytes": 204621,
+      "elapsed_ms": 316
+    },
+    {
+      "id": "s08",
+      "name": "架构与云底座",
+      "path": "docs/assets/deck-architecture.png",
+      "status": "ok",
+      "must": [],
+      "hits": [],
+      "missing": [],
+      "screenshot": "out/demo/s08.png",
+      "screenshot_sha256": "178df372363503e0b88b8d122133c4e370177a03c1954f356ecaa122aa0a3316",
+      "screenshot_bytes": 295818,
+      "elapsed_ms": 339
+    }
+  ],
+  "summary": {
+    "steps": 8,
+    "ok": 8,
+    "fail": 0,
+    "total_ms": 4493
+  }
+}
