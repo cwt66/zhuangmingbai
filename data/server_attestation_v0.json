@@ -4,7 +4,7 @@
     {
       "name": "check_all.sh 运行日志",
       "digest": {
-        "sha256": "d1b29d355ca0fdd23c8878629f0cdcd03d263fedd099bdb675db645fbb4e2816"
+        "sha256": "df89f9a82da03fa5341476a355a4626e219bb1dd30cd7204647240492600ac28"
       }
     }
   ],
@@ -14,7 +14,7 @@
       "buildType": "https://zhuangmingbai.local/attestation/server-reverify/v1",
       "externalParameters": {
         "command": "bash scripts/check_all.sh",
-        "repo_commit": "8c6a8e11ce1d65a8dc9c028a9e314dcccb86bcf7",
+        "repo_commit": "021547dd6811de5ae490e2258a58e0b24f98d23b",
         "python": "3.12.3",
         "platform": "Linux x86_64"
       },
@@ -138,9 +138,9 @@
         "id": "self-hosted:linux:x86_64"
       },
       "metadata": {
-        "generatedOn": "2026-11-11T12:10:00+00:00",
+        "generatedOn": "2026-11-11T13:39:05+00:00",
         "executionTime": "not_recorded",
-        "invocationId": "6ec3e21797ba7993"
+        "invocationId": "021e4fe6d02b4a70"
       }
     },
     "claims": [
@@ -315,7 +315,7 @@
         "hits": [
           {
             "line": 508,
-            "text": "Ran 344 tests in 48.168s",
+            "text": "Ran 344 tests in 48.388s",
             "groups": [
               "344"
             ]
