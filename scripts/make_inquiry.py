@@ -26,7 +26,8 @@ def main():
     ap.add_argument("--scope", default="full", choices=["full", "base"])
     ap.add_argument("--out", default=os.path.join(ROOT, "out"))
     ap.add_argument("--peer", action="append", default=[],
-                    help="同批对照单据（可重复传）。给了它，问询单才会问"
+                    help="同批对照单据（可重复传），写成「标签=路径」时问询单里用该标签："
+                         "--peer \"A 公司=a.csv\"。给了它，问询单才会问"
                          "「贵司按根、别家按米」这类跨单计量口径；只给一份就问不出来。")
     args = ap.parse_args()
 
@@ -41,9 +42,14 @@ def main():
     label = args.label or os.path.splitext(os.path.basename(args.csv))[0]
     q = P.build_line_index(P.load_quote(args.csv, label), onto)
     peers = []
-    for p in args.peer:
-        pl = os.path.splitext(os.path.basename(p))[0]
-        peers.append(P.build_line_index(P.load_quote(p, pl), onto))
+    for spec in args.peer:
+        # 「标签=路径」优先；否则退回文件名。问询单里写的是标签，写公司名比写 company_a.csv 可读
+        if "=" in spec:
+            peer_label, peer_path = spec.split("=", 1)
+        else:
+            peer_path = spec
+            peer_label = os.path.splitext(os.path.basename(spec))[0]
+        peers.append(P.build_line_index(P.load_quote(peer_path, peer_label), onto))
     full = P.audit([q] + peers, onto, templates, rules, coverage,
                    template_key=args.template, scope=args.scope)
     res = full[q["label"]]

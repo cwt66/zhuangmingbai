@@ -39,8 +39,8 @@ ASK = {
              "请说明差额来源。",
     "vague": "该行含「{pattern}」表述，金额未锁定。请写明单价、计量方式与上限。",
     # 跨单口径：不指控「你多报」，只指出「量纲不同，没法直接比」。
-    "unit_cross": "贵司此项按「{mine}」计价，同批另外 {n} 家按「{others}」计价；"
-                  "两者是{dims}，工程量不能直接相加或相乘。请确认："
+    "unit_cross": "贵司此项按「{mine}」计价；同批另外 {n} 家为：{others}。"
+                  "两者不是同一量纲（{dims}），工程量不能直接相加或相乘。请确认："
                   "①贵司单位与「{target}」的折算关系（1 单位 = 多少 {target}）；"
                   "②能否改按「{target}」重报一次，便于与其他家对照。",
     # 单内混用：同一份单据里自己就有两种口径，先让它自己说清适用范围。
@@ -154,7 +154,7 @@ def build(quote, res, cross_unit=None):
                 target = sorted({u for v in others.values() for u in v})[0]
                 ask = ASK["unit_cross"].format(
                     mine=_units(mine), n=len(others),
-                    others="；".join("%s 按 %s" % (k, _units(v)) for k, v in others.items()),
+                    others="、".join("%s 按「%s」" % (k, _units(v)) for k, v in others.items()),
                     dims=dims, target=target)
                 basis = ("本体单位定义 + 量纲归一化；贵司第 %s 行；"
                          "其他家单位取自同批报价原文" % lines)
