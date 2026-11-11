@@ -238,13 +238,26 @@ def _esc(s):
     return (str(s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
 
 
+def _delta_phrase(delta):
+    """总价怎么变的——必须和数据同向。
+
+    页面原来写死「总价降了不等于问题解决了」，而演示数据其实是 **+664**。
+    一句和数字反向的话，比不说更糟：评委一眼就能看出我们没核对过自己的输出。
+    """
+    if not isinstance(delta, (int, float)):
+        return "总价无法比较"
+    if delta > 0:
+        return '总价还涨了 <b class="up">%s 元</b>' % _money(abs(delta))
+    if delta < 0:
+        return '总价降了 <b class="down">%s 元</b>' % _money(abs(delta))
+    return "总价没变"
+
+
 def to_html(r):
     """网页版：和问询单同一套视觉（IKB × 纸白 × 墨黑），可直接 Ctrl/⌘+P 存 PDF。"""
     m, s = r["meta"], r["summary"]
     rate = "—" if s["rate"] is None else "%d%%" % round(s["rate"] * 100)
     delta = m["delta"]
-    delta_s = ("%+d" % delta) if isinstance(delta, (int, float)) else "—"
-    tone = "" if not isinstance(delta, (int, float)) else (" up" if delta > 0 else " down")
     css = """
 :root{--ink:#0A0A0A;--paper:#FAFAF8;--ikb:#002FA7;--grey:#6B7280;--hair:#E4E2DC;--faint:#8A877F;
 --ok:#0F5132;--okbg:#E7F3EC;--open:#8A4B0F;--openbg:#FBEFE2;--unk:#4B5563;--unkbg:#EEF0F3}
@@ -303,8 +316,8 @@ footer{margin-top:34px;border-top:1px solid var(--hair);padding-top:12px;color:v
         '<div class="chip"><div class="n">%d</div><div class="t">无法自动核对</div></div>' % s["unknown"],
         '<div class="chip rate"><div class="n">%s</div><div class="t">落实率</div></div>' % rate,
         "</div>",
-        '<p class="lead">总价变化 <b class="%s">%s 元</b>——'
-        '总价降了不等于问的问题解决了，要看下面这一列。</p>' % (tone.strip(), delta_s),
+        '<p class="lead">%s——但总价变化不等于问的问题解决了，要看下面这一列。</p>'
+        % _delta_phrase(delta),
         "<table><thead><tr><th>#</th><th>问询条目</th><th>状态</th><th>依据</th></tr></thead><tbody>",
     ]
     for it in r["items"]:
@@ -462,6 +475,17 @@ def self_test():
     xss = check(_inq([{"no": 1, "subject": "<script>alert(1)</script>",
                        "kind": "missing", "cid": "c1"}]), q_done, {"risks": [], "recon": {}})
     case("HTML 转义用户文本", "<script>" not in to_html(xss))
+
+    # 13) 总价方向必须和数据一致：涨了不能说「降了」
+    up_html = to_html(r1)  # before 10000 → after 10100（+100）
+    down_html = to_html(check(_inq(it), _q("新版", 9900.0, [_row(1, "闭水试验", "c1")]),
+                              {"risks": [], "recon": {}}))
+    case("总价上涨 → 文案说涨，不许说降",
+         "涨了" in up_html and "降了" not in up_html)
+    case("总价下降 → 文案说降", "降了" in down_html and "涨了" not in down_html)
+    case("总价持平 → 说没变", "总价没变" in to_html(
+        check(_inq(it), _q("新版", 10000.0, [_row(1, "闭水试验", "c1")]),
+              {"risks": [], "recon": {}})))
 
     failed = [r for r in results if r["status"] != "pass"]
     return {"self_test": "PASS" if not failed else "FAIL",
