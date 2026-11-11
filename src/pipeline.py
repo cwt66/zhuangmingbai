@@ -1107,10 +1107,19 @@ def build_markdown(quotes, res):
             L.append(f"\n### 风险敞口（不计入核减）\n\n- {e['concept']}：现报 {fmt_money(e['current'])}，{e['basis']}，预计上浮 **{fmt_money(e['low'])}–{fmt_money(e['high'])}**。\n")
     L.append(f"\n## {cn[len(quotes)]}、跨单口径对比\n")
     if res.get("_cross_unit"):
-        L.append("| 工序 | 各单位口径 | 依据 |")
-        L.append("|---|---|---|")
+        L.append("| 工序 | 各单口径 | 量纲 | 为什么不能直接比 |")
+        L.append("|---|---|---|---|")
         for x in res["_cross_unit"]:
-            L.append(f"| {x['concept']} | {' / '.join(x['units'])} | {x['evidence']['basis']} |")
+            by = x.get("by_quote") or {}
+            cell = ("；".join("%s：%s" % (k, "/".join(v)) for k, v in by.items())
+                    if by else " / ".join(x["units"]))
+            dims = " vs ".join(x.get("dims") or []) or "—"
+            L.append(f"| {x['concept']} | {cell} | {dims} | 量纲不同，工程量不可直接相加/相乘 |")
+        L.append("")
+        L.append("> 同量纲不同写法（m2 / ㎡ / 平方米、M / m、只 / 套 / 樘）已归一，不列入此表。")
+        L.append("> 上面这些不是「谁错了」，是**比价前必须先换算**："
+                 "例如拆墙按米是墙长、按㎡是墙面积，差一个墙高；垃圾清运按㎡是面积、按车是趟数。")
+        L.append("")
     else:
         L.append("无跨单单位差异。\n")
     L.append(f"\n## {cn[len(quotes)+1]}、结论口径（对外话术）\n")
@@ -1185,6 +1194,7 @@ footer code{font-family:ui-monospace,Menlo,monospace}
 <h2><span class="idx">01</span>总览</h2>
 {{SUMMARY}}
 {{RECON}}
+{{CROSS}}
 <div class="note">{{NOTE}}</div>
 {{SECTIONS}}
 <div class="concl">
@@ -1417,10 +1427,32 @@ def build_html(quotes, res):
                               '②照片遮挡/转录缺行 ③取费未单列。签约前逐项核对，别默认是自己看错。</span>'))
     recon_html = "".join(rec_lines)
 
+    # 跨单口径：以前只有 markdown 报告有这张表，网页里看不到。
+    # 评委点开的是网页，所以这里补上；按单列出口径，并说明为什么不能直接比。
+    if res.get("_cross_unit"):
+        crows = []
+        for x in res["_cross_unit"]:
+            by = x.get("by_quote") or {}
+            cell = ("；".join("%s：%s" % (_esc(k), "/".join(_esc(u) for u in v))
+                              for k, v in by.items())
+                    if by else " / ".join(_esc(u) for u in x["units"]))
+            dims = " vs ".join(x.get("dims") or []) or "—"
+            crows.append("<tr><td>%s</td><td>%s</td><td>%s</td>"
+                         "<td class='hint'>量纲不同，工程量不可直接相加/相乘</td></tr>"
+                         % (_esc(x["concept"]), cell, _esc(dims)))
+        cross_html = ("<h2>跨单口径对比</h2>"
+                      "<p class='hint'>同量纲不同写法（m2 / ㎡ / 平方米、M / m、只 / 套 / 樘）"
+                      "已归一，不列此表。下面这些是<b>比价前必须先换算</b>的：</p>"
+                      "<table><tr><th>工序</th><th>各单口径</th><th>量纲</th>"
+                      "<th>为什么不能直接比</th></tr>%s</table>" % "".join(crows))
+    else:
+        cross_html = ""
+
     return (HTML_TPL.replace("{{DOC_NO}}", doc_no).replace("{{TITLE}}", title)
             .replace("{{META}}", meta)
             .replace("{{KPIS}}", "".join(kpis))
             .replace("{{SUMMARY}}", summary).replace("{{RECON}}", recon_html)
+            .replace("{{CROSS}}", cross_html)
             .replace("{{NOTE}}", note)
             .replace("{{SECTIONS}}", "".join(secs))
             .replace("{{CONCL_IDX}}", "%02d" % (idx + 1))
