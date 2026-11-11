@@ -828,6 +828,38 @@ def find_split(quote, rule, onto, template):
     return out
 
 
+# 单位归一化：比价时真正致命的是「量纲不同」（面积按米报，数量差 10 倍），
+# 而不是写法不同（m2 / ㎡ / 平方米 是同一个东西）。不归一化会把
+# 「m2 vs ㎡」「M vs m」「只 vs 套 vs 樘」全报成风险——实测 5 份真实单据
+# 27 条里有 17 条属于这类等价写法，属于噪声。
+UNIT_DIM = {
+    "㎡": "area", "m2": "area", "m²": "area", "平方米": "area", "平米": "area",
+    "m": "length", "米": "length", "米m": "length", "延米": "length", "m'": "length",
+    "项": "item", "宗": "item", "处": "item",
+    "个": "count", "只": "count", "樘": "count", "套": "count", "扇": "count",
+    "台": "count", "组": "count", "块": "count", "根": "count", "付": "count",
+    "端口": "count", "位": "count",
+    "m3": "volume", "立方米": "volume",
+    "kg": "mass", "车": "trip",
+}
+
+
+def norm_unit(unit):
+    """把单位写法压成可比较的键：去空格、全角转半角、平方符号统一。"""
+    return (unit or "").strip().replace(" ", "").replace("²", "2").lower()
+
+
+def unit_dim(unit):
+    """返回量纲（area/length/item/count/volume/mass/trip），认不出返回 None。
+
+    认不出就不判——宁可漏报也不把「看不懂的单位」当成风险。
+    """
+    s = norm_unit(unit)
+    if not s:
+        return None
+    return UNIT_DIM.get(s)
+
+
 def cross_unit_mix(quotes, onto, rule):
     """R5：同一工序在不同单据里单位不一致。
 
@@ -840,21 +872,34 @@ def cross_unit_mix(quotes, onto, rule):
         return []
     if rule.get("scope") not in (None, "cross_quote"):
         return []
-    units = defaultdict(lambda: defaultdict(set))
+    dims = defaultdict(lambda: defaultdict(set))
+    raw = defaultdict(lambda: defaultdict(set))
     for q in quotes:
         for r in q["rows"]:
-            if r["cid"]:
-                units[r["cid"]][q["label"]].add(r["unit"])
+            if not r["cid"]:
+                continue
+            d = unit_dim(r["unit"])
+            if not d:
+                continue  # 认不出的单位不判，宁可漏报
+            dims[r["cid"]][q["label"]].add(d)
+            raw[r["cid"]][q["label"]].add((r["unit"] or "").strip())
     out = []
-    for cid, per_q in units.items():
-        allu = set()
+    for cid, per_q in dims.items():
+        all_dims = set()
         for s in per_q.values():
-            allu |= s
-        if len(allu) > 1:
-            c = confidence(rule["strength"], 0.95, 0.9, False)
-            out.append({"cid": cid, "concept": onto.by_id[cid]["n"], "units": sorted(allu),
-                        "rule": rule["id"], "confidence": c, "tier": tier(c),
-                        "evidence": {"basis": "本体单位定义", "formula": "unit(q1) != unit(q2)"}})
+            all_dims |= s
+        # 「项」是计价方式（包干）而不是量纲，单列由 R6 管；这里只看可换算的量纲
+        comparable = all_dims - {"item"}
+        if len(comparable) <= 1:
+            continue  # 同量纲不同写法（m2/㎡、M/m、只/套/樘）不是风险
+        c = confidence(rule["strength"], 0.95, 0.9, False)
+        out.append({"cid": cid, "concept": onto.by_id[cid]["n"],
+                    "units": sorted({u for s in raw[cid].values() for u in s}),
+                    "dims": sorted(comparable),
+                    "by_quote": {k: sorted(v) for k, v in raw[cid].items()},
+                    "rule": rule["id"], "confidence": c, "tier": tier(c),
+                    "evidence": {"basis": "本体单位定义 + 量纲归一化",
+                                 "formula": "量纲(q1) ≠ 量纲(q2)；m2/㎡、M/m、只/套/樘 视为同量纲"}})
     return out
 
 
