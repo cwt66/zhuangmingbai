@@ -29,6 +29,7 @@ if BASE not in sys.path:
 from src import pipeline  # noqa: E402
 from src import perception  # noqa: E402
 from src import inquiry as inquiry_mod  # noqa: E402
+from src import batch_inquiry as batch_mod  # noqa: E402
 from src import followup as followup_mod  # noqa: E402
 from src import cache as cache_mod  # noqa: E402
 from src import llm as llm_mod  # noqa: E402
@@ -192,7 +193,7 @@ ERR = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 </div></body></html>"""
 
 NAV = """<div class="nav"><b>装明白 · 可计算审计</b>
-<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/perceive">图片识别</a><a href="/review">解析校对</a><a href="/inquiry">问询单</a><a href="/inquiry/demo">对照问询单</a><a href="/followup">落实情况</a><a href="/diff">两版对比</a>
+<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/perceive">图片识别</a><a href="/review">解析校对</a><a href="/inquiry">问询单</a><a href="/inquiry/demo">对照问询单</a><a href="/inquiry/batch">三家对照</a><a href="/followup">落实情况</a><a href="/diff">两版对比</a>
 <span class="right">浏览器 Ctrl/⌘+P 可另存为 PDF · <a href="/health">健康检查</a></span></div>"""
 
 
@@ -825,6 +826,26 @@ FOLLOWUP_FORM = """<form method="post" action="/followup" enctype="multipart/for
 <button type="submit" style="margin-left:10px;padding:6px 16px;background:#002FA7;color:#fff;
  border:0;border-radius:2px;font-size:13px;cursor:pointer">核对</button>
 </form>"""
+
+
+@app.get("/inquiry/batch", response_class=HTMLResponse)
+def inquiry_batch():
+    """三家对照：同一批报价里，谁缺了什么、谁重复、谁口径不同。
+
+    单看三份问询单会得出一个假象——每家都「有问题」，看不出问题是不是同一处。
+    并成一张表才看得见：三家都缺的，多半是行业常规；只有一家写的，才是差异。
+    """
+    paths = [(lb, os.path.join(pipeline.DATA, "samples", fn)) for lb, fn in SAMPLES]
+    try:
+        onto, templates, rules, coverage = _load_rules()
+        quotes = [pipeline.build_line_index(pipeline.load_quote(p, lb), onto)
+                  for lb, p in paths]
+        res = pipeline.audit(quotes, onto, templates, rules, coverage,
+                             template_key="old_house")
+        data = batch_mod.compare(quotes, res)
+    except Exception as e:  # noqa: BLE001
+        return _err("三家对照生成失败", str(e), 500)
+    return HTMLResponse(batch_mod.to_html(data))
 
 
 @app.get("/followup", response_class=HTMLResponse)

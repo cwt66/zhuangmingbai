@@ -129,6 +129,11 @@ echo "== 19/20 评委复验页一致性（11 页 + 台账绑定 + 双向断言�
 "$PY" scripts/verify_followup_upload.py --self-test --json | "$PY" -c \
   "import sys,json;d=json.load(sys.stdin);print('  落实核对上传链路 %s（%d/%d）' % (d['self_test'],d['passed'],d['checks']));sys.exit(0 if d['self_test']=='PASS' else 1)"
 
+# 三家对照：最容易出的错是张冠李戴（把 A 的漏项算到 B 头上）。
+# 所以断言都带方向：谁是缺、谁是有、谁重复。
+"$PY" src/batch_inquiry.py --self-test --json | "$PY" -c \
+  "import sys,json;d=json.load(sys.stdin);print('  三家对照双向断言 %s（%d/%d）' % (d['self_test'],d['passed'],d['checks']));sys.exit(0 if d['self_test']=='PASS' else 1)"
+
 # 哈希链账本：把「每一次判定」串成一条改不动的链。
 # 这一步管的是前面 19 步都管不到的一件事——**结论被事后改写**。
 # 链级 8 招 + 包级 3 招，其中 1 招离线拦不住、必须靠外部锚点，
