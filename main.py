@@ -29,6 +29,7 @@ if BASE not in sys.path:
 from src import pipeline  # noqa: E402
 from src import perception  # noqa: E402
 from src import inquiry as inquiry_mod  # noqa: E402
+from src import followup as followup_mod  # noqa: E402
 from src import cache as cache_mod  # noqa: E402
 from src import llm as llm_mod  # noqa: E402
 from src import privacy  # noqa: E402
@@ -191,7 +192,7 @@ ERR = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 </div></body></html>"""
 
 NAV = """<div class="nav"><b>装明白 · 可计算审计</b>
-<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/perceive">图片识别</a><a href="/review">解析校对</a><a href="/inquiry">问询单</a><a href="/inquiry/demo">对照问询单</a><a href="/diff">两版对比</a>
+<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/perceive">图片识别</a><a href="/review">解析校对</a><a href="/inquiry">问询单</a><a href="/inquiry/demo">对照问询单</a><a href="/followup">落实情况</a><a href="/diff">两版对比</a>
 <span class="right">浏览器 Ctrl/⌘+P 可另存为 PDF · <a href="/health">健康检查</a></span></div>"""
 
 
@@ -806,6 +807,36 @@ def inquiry_demo():
     except Exception as e:  # noqa: BLE001
         return _err("样例问询单生成失败", str(e), 500)
     return HTMLResponse(html)
+
+
+@app.get("/followup", response_class=HTMLResponse)
+def followup_page():
+    """对方回了新版：逐条核对问询单里的问题到底改了没有。
+
+    为什么单独一屏：新版报价回过来，人第一眼看的是总价。总价降了 6 百，
+    可能是因为补了问的漏项、同时把别的单价调高了——不逐条对，看不出来。
+    这一屏把「问的 19 条里改了几条」和「新版新加了什么」摆在同一张表上。
+    """
+    before = os.path.join(pipeline.DATA, "real", "feitai_budget.csv")
+    after = os.path.join(pipeline.DATA, "samples", "feitai_change_demo.csv")
+    for p in (before, after):
+        if not os.path.isfile(p):
+            return _err("演示数据缺失", "仓库内未找到 %s。" % os.path.basename(p), 404)
+    try:
+        onto, templates, rules, coverage = _load_rules()
+
+        def one(path, label):
+            q = pipeline.build_line_index(pipeline.load_quote(path, label), onto)
+            r = pipeline.audit([q], onto, templates, rules, coverage,
+                               template_key="old_house")[q["label"]]
+            return q, r
+
+        q1, r1 = one(before, "翡翠台 · 原版")
+        q2, r2 = one(after, "翡翠台 · 变更版")
+        result = followup_mod.check(inquiry_mod.build(q1, r1), q2, r2, before_res=r1)
+    except Exception as e:  # noqa: BLE001
+        return _err("问询落实核对失败", str(e), 500)
+    return HTMLResponse(followup_mod.to_html(result))
 
 
 DIFF_FORM = """<form method="post" action="/diff" enctype="multipart/form-data"

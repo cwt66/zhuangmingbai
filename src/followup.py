@@ -234,6 +234,101 @@ def to_markdown(r):
     return "\n".join(L) + "\n"
 
 
+def _esc(s):
+    return (str(s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+
+
+def to_html(r):
+    """网页版：和问询单同一套视觉（IKB × 纸白 × 墨黑），可直接 Ctrl/⌘+P 存 PDF。"""
+    m, s = r["meta"], r["summary"]
+    rate = "—" if s["rate"] is None else "%d%%" % round(s["rate"] * 100)
+    delta = m["delta"]
+    delta_s = ("%+d" % delta) if isinstance(delta, (int, float)) else "—"
+    tone = "" if not isinstance(delta, (int, float)) else (" up" if delta > 0 else " down")
+    css = """
+:root{--ink:#0A0A0A;--paper:#FAFAF8;--ikb:#002FA7;--grey:#6B7280;--hair:#E4E2DC;--faint:#8A877F;
+--ok:#0F5132;--okbg:#E7F3EC;--open:#8A4B0F;--openbg:#FBEFE2;--unk:#4B5563;--unkbg:#EEF0F3}
+*{box-sizing:border-box}
+body{font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;background:var(--paper);
+ color:var(--ink);margin:0;line-height:1.75;font-size:14px}
+.masthead{background:var(--ikb);color:#fff;padding:10px 48px;display:flex;justify-content:space-between}
+.masthead .brand{font-weight:700;letter-spacing:.12em;font-size:13px}
+.wrap{max-width:1000px;margin:0 auto;padding:0 48px 56px}
+h1{font-size:30px;margin:34px 0 6px;letter-spacing:-.01em}
+.sub{color:var(--faint);font-size:13px}
+.chips{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 6px}
+.chip{background:#fff;border:1px solid var(--hair);border-radius:2px;padding:12px 16px;min-width:118px}
+.chip .n{font-size:24px;font-weight:700;line-height:1.2}
+.chip .t{font-size:12px;color:var(--grey)}
+.chip.rate .n{color:var(--ikb)}
+.lead{margin:14px 0 4px;font-size:15px}
+.lead b{font-size:17px}
+/* 涨红跌绿：这是中国用户看报价的习惯 */
+.lead b.up{color:#B33A2B}
+.lead b.down{color:#0F5132}
+table{width:100%;border-collapse:collapse;margin:18px 0 8px;font-size:13px}
+th{text-align:left;color:var(--grey);font-weight:600;border-bottom:1px solid var(--ink);
+ padding:8px 6px;font-size:12px;letter-spacing:.03em}
+td{border-bottom:1px solid var(--hair);padding:9px 6px;vertical-align:top}
+td.no{width:36px;color:var(--faint)}
+td.st{width:96px}
+.badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:2px;white-space:nowrap}
+.badge.resolved{background:var(--okbg);color:var(--ok)}
+.badge.open{background:var(--openbg);color:var(--open)}
+.badge.unknown{background:var(--unkbg);color:var(--unk)}
+.ev{color:var(--grey)}
+h2{font-size:15px;margin:30px 0 8px;letter-spacing:.04em}
+ul.new{margin:6px 0 0;padding-left:20px;color:var(--grey)}
+.note{background:#fff;border-left:4px solid var(--ikb);padding:12px 16px;color:var(--grey);
+ font-size:12.5px;margin:22px 0}
+footer{margin-top:34px;border-top:1px solid var(--hair);padding-top:12px;color:var(--faint);font-size:12px}
+@media print{body{background:#fff}.wrap{padding:0}.masthead{background:#fff;color:var(--ink);
+ border-bottom:2px solid var(--ikb)}}
+"""
+    parts = [
+        '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">',
+        "<title>问询落实情况核对 · %s → %s</title><style>%s</style></head><body>" % (
+            _esc(m["before_label"]), _esc(m["after_label"]), css),
+        '<div class="masthead"><div class="brand">装明白 · 问询落实核对</div>'
+        '<div style="font-size:12px">只核对事实，不评价答复</div></div>',
+        '<div class="wrap">',
+        "<h1>问询落实情况核对</h1>",
+        '<div class="sub">旧版 %s（%s 元）→ 新版 %s（%s 元）</div>' % (
+            _esc(m["before_label"]), _money(m["before_total"]),
+            _esc(m["after_label"]), _money(m["after_total"])),
+        '<div class="chips">',
+        '<div class="chip"><div class="n">%d</div><div class="t">问询条目</div></div>' % s["total"],
+        '<div class="chip"><div class="n">%d</div><div class="t">已落实</div></div>' % s["resolved"],
+        '<div class="chip"><div class="n">%d</div><div class="t">未落实</div></div>' % s["open"],
+        '<div class="chip"><div class="n">%d</div><div class="t">无法自动核对</div></div>' % s["unknown"],
+        '<div class="chip rate"><div class="n">%s</div><div class="t">落实率</div></div>' % rate,
+        "</div>",
+        '<p class="lead">总价变化 <b class="%s">%s 元</b>——'
+        '总价降了不等于问的问题解决了，要看下面这一列。</p>' % (tone.strip(), delta_s),
+        "<table><thead><tr><th>#</th><th>问询条目</th><th>状态</th><th>依据</th></tr></thead><tbody>",
+    ]
+    for it in r["items"]:
+        parts.append(
+            '<tr><td class="no">%d</td><td>%s</td><td class="st">'
+            '<span class="badge %s">%s</span></td><td class="ev">%s</td></tr>' % (
+                it["no"], _esc(it["subject"]), _esc(it["status"]),
+                _esc(STATUS_CN.get(it["status"], it["status"])), _esc(it["evidence"])))
+    parts.append("</tbody></table>")
+    if r["new_findings"]:
+        parts.append("<h2>新版新增的问题（%d 项）</h2><ul class=\"new\">" % len(r["new_findings"]))
+        for x in r["new_findings"]:
+            parts.append("<li><b>%s</b>：%s</li>" % (_esc(x["subject"]), _esc(x["detail"])))
+        parts.append("</ul>")
+    else:
+        parts.append("<h2>新版新增的问题</h2>"
+                     '<p class="ev">无。新版没有引入新的漏项 / 重复 / 口径问题。</p>')
+    parts.append('<div class="note">%s</div>' % _esc(r["limits"]))
+    parts.append("<footer>本页由装明白按两版报价原文生成；每条状态都可回到新版的对应行号核对。"
+                 "落实不等于质量合格——它只说明「问到的那件事，原文变了没有」。</footer>")
+    parts.append("</div></body></html>")
+    return "".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # 自测：双向断言。重点不是「能判出已落实」，而是
 # **没改的绝不能被判成已落实**——那等于替对方背书。
@@ -356,6 +451,17 @@ def self_test():
     # 10) 空问询单不许冒出「100%」
     empty = check(_inq([]), q_done, {"risks": [], "recon": {}})
     case("没有问询时不报落实率", empty["summary"]["rate"] is None, str(empty["summary"]))
+
+    # 11) 网页版与 markdown 同源：同一份结果，两边都要有这条状态
+    html = to_html(r1)
+    case("HTML 含落实率与状态徽标",
+         "落实率" in html and "已落实" in html and "badge resolved" in html)
+    case("HTML 行数 = 条目数 + 表头",
+         html.count("<tr>") == r1["summary"]["total"] + 1, str(html.count("<tr>")))
+    # 12) 报价单里的项目名会原样进 HTML——必须转义，否则一张单据就能注入脚本
+    xss = check(_inq([{"no": 1, "subject": "<script>alert(1)</script>",
+                       "kind": "missing", "cid": "c1"}]), q_done, {"risks": [], "recon": {}})
+    case("HTML 转义用户文本", "<script>" not in to_html(xss))
 
     failed = [r for r in results if r["status"] != "pass"]
     return {"self_test": "PASS" if not failed else "FAIL",
