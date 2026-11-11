@@ -124,6 +124,11 @@ echo "== 19/20 评委复验页一致性（11 页 + 台账绑定 + 双向断言�
 "$PY" src/followup.py --self-test --json | "$PY" -c \
   "import sys,json;d=json.load(sys.stdin);print('  问询闭环双向断言 %s（%d/%d）' % (d['self_test'],d['passed'],d['checks']));sys.exit(0 if d['self_test']=='PASS' else 1)"
 
+# 上传链路：返回 400 不等于「正确拒绝」。逐个分支核对状态码**和理由**，
+# 不用 TestClient（会往证据的依赖清单里加包），直接构造 UploadFile 调异步处理函数。
+"$PY" scripts/verify_followup_upload.py --self-test --json | "$PY" -c \
+  "import sys,json;d=json.load(sys.stdin);print('  落实核对上传链路 %s（%d/%d）' % (d['self_test'],d['passed'],d['checks']));sys.exit(0 if d['self_test']=='PASS' else 1)"
+
 # 哈希链账本：把「每一次判定」串成一条改不动的链。
 # 这一步管的是前面 19 步都管不到的一件事——**结论被事后改写**。
 # 链级 8 招 + 包级 3 招，其中 1 招离线拦不住、必须靠外部锚点，
