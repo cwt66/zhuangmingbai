@@ -273,7 +273,10 @@ def self_test():
     ]
     res = {
         "A 公司": {"missing": [{"cid": "waterproof", "concept": "防水", "ref_amount": 1200}],
-                   "duplicates": [], "obligations": [], "effective": 31200.0},
+                   "duplicates": [],
+                   "obligations": [{"title": "按实结算 → 结算口径未定",
+                                    "patterns": ["按实结算"], "amount": 9000}],
+                   "effective": 31200.0},
         "B 公司": {"missing": [{"cid": "waterproof", "concept": "防水", "ref_amount": 1200},
                                {"cid": "tile", "concept": "贴地砖", "ref_amount": 800}],
                    "duplicates": [{"cid": "demolish", "concept": "打拆墙体", "amount": 400,
@@ -335,9 +338,10 @@ def self_test():
     case("没有发现时不出任何对照节", empty["sections"] == [], str(len(empty["sections"])))
 
     md = to_markdown(c)
+    heads = md.count("| 工序 / 条款 | A 公司 | B 公司 | C 公司 |")
     case("markdown 表头列数 = 公司数 + 1",
-         md.count("| 公司 | 报价总价") == 1 and md.count("| 工序 / 条款 | A 公司 | B 公司 | C 公司 |") == 4,
-         str(md.count("| 工序 / 条款 |")))
+         md.count("| 公司 | 报价总价") == 1 and heads == len(c["sections"]),
+         "表头 %d 个 / 对照节 %d 个" % (heads, len(c["sections"])))
 
     xss = compare([_q("<script>x</script>", 1.0, [])],
                   {"<script>x</script>": {"missing": [], "duplicates": [], "obligations": []}})
