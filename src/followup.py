@@ -253,8 +253,12 @@ def _delta_phrase(delta):
     return "总价没变"
 
 
-def to_html(r):
-    """网页版：和问询单同一套视觉（IKB × 纸白 × 墨黑），可直接 Ctrl/⌘+P 存 PDF。"""
+def to_html(r, top_html=""):
+    """网页版：和问询单同一套视觉（IKB × 纸白 × 墨黑），可直接 Ctrl/⌘+P 存 PDF。
+
+    top_html：可选的一段说明 / 上传入口（放在摘要之后、明细表之前）。
+    结果页与上传入口放一起——否则用户看完演示，还要自己找去哪传自己的两版。
+    """
     m, s = r["meta"], r["summary"]
     rate = "—" if s["rate"] is None else "%d%%" % round(s["rate"] * 100)
     delta = m["delta"]
@@ -318,6 +322,7 @@ footer{margin-top:34px;border-top:1px solid var(--hair);padding-top:12px;color:v
         "</div>",
         '<p class="lead">%s——但总价变化不等于问的问题解决了，要看下面这一列。</p>'
         % _delta_phrase(delta),
+        top_html,
         "<table><thead><tr><th>#</th><th>问询条目</th><th>状态</th><th>依据</th></tr></thead><tbody>",
     ]
     for it in r["items"]:
@@ -486,6 +491,13 @@ def self_test():
     case("总价持平 → 说没变", "总价没变" in to_html(
         check(_inq(it), _q("新版", 10000.0, [_row(1, "闭水试验", "c1")]),
               {"risks": [], "recon": {}})))
+
+    # 14) 上传入口与结果同页：表单只能出现一次，且必须在明细表之前
+    with_form = to_html(r1, top_html='<form action="/followup"></form>')
+    case("上传表单在结果页且只出现一次",
+         with_form.count("<form") == 1
+         and with_form.find("<form") < with_form.find("<table"))
+    case("不传表单时页面干净", "<form" not in html)
 
     failed = [r for r in results if r["status"] != "pass"]
     return {"self_test": "PASS" if not failed else "FAIL",

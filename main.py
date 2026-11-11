@@ -809,6 +809,24 @@ def inquiry_demo():
     return HTMLResponse(html)
 
 
+FOLLOWUP_FORM = """<form method="post" action="/followup" enctype="multipart/form-data"
+ style="margin:16px 0 18px;padding:16px 18px;border:1px solid #E4E2DC;background:#fff">
+<div style="font-size:13px;font-weight:600;margin-bottom:4px">核对你自己手上的两版</div>
+<div style="font-size:12px;color:#8A877F;margin-bottom:10px">
+第 1 份是原版、第 2 份是对方回的新版（CSV / XLSX）。只核同一项目、同一计价口径的两版，
+不做跨公司比价。下方默认是仓库内的演示结果，上传后会替换成你的两版。</div>
+<input type="file" name="files" accept=".csv,.xlsx" required style="font-size:12px">
+<input type="file" name="files" accept=".csv,.xlsx" required style="font-size:12px;margin-left:8px">
+<label style="font-size:12px;margin-left:10px">模板
+<select name="template_key" style="font-size:12px">
+<option value="old_house">老房翻新（39 项）</option>
+<option value="new_house">新房毛坯（28 项）</option>
+</select></label>
+<button type="submit" style="margin-left:10px;padding:6px 16px;background:#002FA7;color:#fff;
+ border:0;border-radius:2px;font-size:13px;cursor:pointer">核对</button>
+</form>"""
+
+
 @app.get("/followup", response_class=HTMLResponse)
 def followup_page():
     """对方回了新版：逐条核对问询单里的问题到底改了没有。
@@ -836,7 +854,67 @@ def followup_page():
         result = followup_mod.check(inquiry_mod.build(q1, r1), q2, r2, before_res=r1)
     except Exception as e:  # noqa: BLE001
         return _err("问询落实核对失败", str(e), 500)
-    return HTMLResponse(followup_mod.to_html(result))
+    return HTMLResponse(followup_mod.to_html(result, top_html=FOLLOWUP_FORM))
+
+
+@app.post("/followup", response_class=HTMLResponse)
+async def followup_upload(files: List[UploadFile] = File(default=None),
+                          template_key: str = Form("old_house")):
+    """用户自己的两版：原版 → 对方回的新版，逐条核对问询落实。
+
+    校验链路与 /diff 一致（大小 / 空文件 / 文档守门 / 表头），不另造一套。
+    模板由用户选：选错模板，漏项结论全错，所以做成显式参数而不是猜。
+    """
+    if not files or len(files) != 2:
+        return _err("需要两份报价", "请选择 2 份：第 1 份原版、第 2 份对方回的新版。", 400)
+    if template_key not in ("old_house", "new_house"):
+        return _err("模板不合法", "template_key 只能是 old_house 或 new_house。", 400)
+    tmp = tempfile.mkdtemp(prefix="zmb_followup_")
+    paths = []
+    try:
+        for i, f in enumerate(files, start=1):
+            raw = await f.read()
+            if not raw.strip():
+                return _err("空文件", "《%s》是空文件。" % (f.filename or i), 400)
+            if len(raw) > MAX_BYTES:
+                return _err("文件过大", "《%s》超过 4MB。" % (f.filename or i), 400)
+            dst = os.path.join(tmp, "v%d%s" % (
+                i, os.path.splitext(f.filename or "")[1] or ".csv"))
+            with open(dst, "wb") as w:
+                w.write(raw)
+            paths.append((_label_from_name(f.filename or "第%d份" % i), dst))
+        onto, templates, rules, coverage = _load_rules()
+        for lb, p in paths:
+            ok_f, info_f = doc_gate.gate_file(p, lb)
+            if not ok_f:
+                raise WrongDocTypeError(info_f["message"])
+
+        def one(lb, p):
+            q = pipeline.build_line_index(pipeline.load_quote(p, lb), onto)
+            r = pipeline.audit([q], onto, templates, rules, coverage,
+                               template_key=template_key)[q["label"]]
+            return q, r
+
+        q1, r1 = one(*paths[0])
+        q2, r2 = one(*paths[1])
+        result = followup_mod.check(inquiry_mod.build(q1, r1), q2, r2, before_res=r1)
+        return HTMLResponse(followup_mod.to_html(result, top_html=FOLLOWUP_FORM))
+    except WrongDocTypeError as e:
+        return _err("文档类型不符", str(e), 400)
+    except pipeline.HeaderMismatchError as e:
+        return _err("表头不符", "%s 请确认为带「项目名称/数量/单价/合价」列的报价表。" % e, 400)
+    except Exception as e:  # noqa: BLE001
+        return _err("落实核对失败", str(e), 500)
+    finally:
+        for _, p in paths:
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+        try:
+            os.rmdir(tmp)
+        except OSError:
+            pass
 
 
 DIFF_FORM = """<form method="post" action="/diff" enctype="multipart/form-data"
