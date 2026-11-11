@@ -170,9 +170,9 @@ def template_explanation(facts, reason="no_api_key"):
     cross = facts.get("跨单口径") or []
     if cross:
         x = cross[0]
-        who = "；".join("%s 按 %s" % (k, "、".join(v))
+        who = "、".join("%s：%s" % (k, "、".join(v))
                         for k, v in (x.get("by_quote") or {}).items())
-        bullets.append("计量口径不一致：%s（%s），单价不可直接比。" % (x.get("concept"), who))
+        bullets.append("计量口径不一致：%s —— %s，单价不可直接比。" % (x.get("concept"), who))
     if (by_dup[0].get("重复剔除") or 0) > 0:
         bullets.append("%s 有可核减的重复计价 %s 元。" % (
             by_dup[0].get("公司"), _fmt(by_dup[0].get("重复剔除"))))
@@ -182,9 +182,11 @@ def template_explanation(facts, reason="no_api_key"):
             d.get("公司") for d in risky[:3]))
     questions = ["「%s」这一项是否包含在报价内？如未包含，请补充单价与做法。" % m["工序"]
                  for m in tm[:3]]
-    for x in cross[:1]:
-        questions.append("「%s」能否统一按一种计量方式报价？如不能，请注明折算关系。"
-                         % x.get("concept"))
+    if cross:
+        # 跨单那句更稀缺（漏项那句按模板批量生成，谁都会问），排不进前三条就等于没有。
+        # 单份场景 cross 为空，仍是原来那三条，行为不变。
+        q = "「%s」能否统一按一种计量方式报价？如不能，请注明折算关系。" % cross[0].get("concept")
+        questions = (questions[:2] + [q]) if len(questions) >= 3 else (questions + [q])
     return {"source": "template", "reason": reason, "headline": headline,
             "bullets": bullets[:3], "questions": questions[:3],
             "caveat": "以上是规则结论的转写，不构成价格鉴定或法律意见。"}
