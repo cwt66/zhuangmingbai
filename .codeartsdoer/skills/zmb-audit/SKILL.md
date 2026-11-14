@@ -5,7 +5,7 @@ tags: [huawei-cloud, codearts, audit, quotation, deterministic]
 license: MIT
 compatibility: "零第三方依赖（纯标准库 + 同仓模块）；macOS arm64、Linux x86_64、Linux aarch64 均可运行；判定链路不需要网络与云凭据；可选依赖缺失时降级并在 /health 如实显示。"
 metadata:
-  repository: "https://github.com/cwt66/zhuangmingbai"
+  repository: "https://gitee.com/Cwt66/zhuangmingbai"
   evidence: "20 步自检 / 主张台账 / 跨环境确定性 / Linux aarch64 原生 CI"
 ---
 
