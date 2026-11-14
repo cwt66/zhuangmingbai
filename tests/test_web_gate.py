@@ -18,12 +18,19 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
+try:  # Web 层是可选依赖：离线包/裸 Python 环境没装 fastapi 时跳过，不判失败
+    import fastapi  # noqa: F401
+    HAS_FASTAPI = True
+except ImportError:
+    HAS_FASTAPI = False
+
 
 def self_main():
     import main
     return main
 
 
+@unittest.skipUnless(HAS_FASTAPI, "未安装 fastapi（Web 层可选依赖）")
 class TestWebGateWiring(unittest.TestCase):
 
     @classmethod

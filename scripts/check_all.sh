@@ -127,7 +127,7 @@ echo "== 19/20 评委复验页一致性（11 页 + 台账绑定 + 双向断言�
 # 上传链路：返回 400 不等于「正确拒绝」。逐个分支核对状态码**和理由**，
 # 不用 TestClient（会往证据的依赖清单里加包），直接构造 UploadFile 调异步处理函数。
 "$PY" scripts/verify_followup_upload.py --self-test --json | "$PY" -c \
-  "import sys,json;d=json.load(sys.stdin);print('  落实核对上传链路 %s（%d/%d）' % (d['self_test'],d['passed'],d['checks']));sys.exit(0 if d['self_test']=='PASS' else 1)"
+  "import sys,json;d=json.load(sys.stdin);print('  落实核对上传链路 %s（%d/%d）%s' % (d['self_test'],d['passed'],d['checks'],('  ← '+d.get('reason','')) if d['self_test']=='SKIP' else ''));sys.exit(0 if d['self_test'] in ('PASS','SKIP') else 1)"
 
 # 三家对照：最容易出的错是张冠李戴（把 A 的漏项算到 B 头上）。
 # 所以断言都带方向：谁是缺、谁是有、谁重复。

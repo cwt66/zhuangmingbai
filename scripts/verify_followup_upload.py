@@ -37,7 +37,15 @@ def _body(resp):
 
 
 def self_test():
-    import main
+    try:
+        import main
+    except ModuleNotFoundError as e:
+        # 离线包/裸 Python 环境没装 fastapi：上传链路无从构造，明确 SKIP 而不是报错。
+        if e.name == "fastapi":
+            return {"self_test": "SKIP", "checks": 0, "passed": 0,
+                    "results": [], "violations": [],
+                    "reason": "fastapi 未安装（Web 层可选依赖）"}
+        raise
 
     before = open(os.path.join(main.pipeline.DATA, "real", "feitai_budget.csv"), "rb").read()
     after = open(os.path.join(main.pipeline.DATA, "samples", "feitai_change_demo.csv"), "rb").read()
@@ -104,7 +112,7 @@ def main(argv=None):
             print("  %s %s%s" % ("✓" if r["status"] == "pass" else "✗", r["name"],
                                  ("  ← " + r["detail"]) if r["status"] != "pass" else ""))
         print("%s 上传链路断言 %d/%d" % (out["self_test"], out["passed"], out["checks"]))
-    return 0 if out["self_test"] == "PASS" else 1
+    return 0 if out["self_test"] in ("PASS", "SKIP") else 1
 
 
 if __name__ == "__main__":

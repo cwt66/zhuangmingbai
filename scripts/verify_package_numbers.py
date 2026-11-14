@@ -184,14 +184,22 @@ def scan(package):
     # 无关 hash（tamper_head）仍必须 FAIL，见 --self-test。
     heads = release_heads()
     head = heads[0] if heads else ""
-    picked = select_release_head(heads, texts)
-    stats["head"] = picked[0] if picked else head
-    stats["head_files"] = len(picked[1]) if picked else 0
-    if not picked:
-        violations.append("发布快照 commit 不在最近 3 个祖先里（当前 HEAD `%s`），提交包可能已过期" % head)
+    if not heads:
+        # 离线演示包不带 .git：没有历史可比，明确降级为「跳过」而不是判过期。
+        # 仓库内/CI 仍然走下面这条严格路径。
+        stats["head"] = ""
+        stats["head_files"] = 0
+        notes.append("无 git 历史（离线包），跳过发布快照 commit 校验")
+        picked = None
     else:
+        picked = select_release_head(heads, texts)
+    if heads and not picked:
+        violations.append("发布快照 commit 不在最近 3 个祖先里（当前 HEAD `%s`），提交包可能已过期" % head)
+    elif picked:
         # 报告是「生成时点的快照」，内容不能随之后的同步提交变化；
         # 所以只写快照 hash 与覆盖份数，不写当前 HEAD / 相差几个提交。
+        stats["head"] = picked[0]
+        stats["head_files"] = len(picked[1])
         notes.append("发布快照 commit `%s` 出现在 %d 份文件（认可 HEAD 最近 3 个祖先；无关 hash 仍 FAIL）" %
                      (picked[0], len(picked[1])))
     other_hashes = {}
