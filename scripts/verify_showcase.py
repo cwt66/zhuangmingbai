@@ -14,7 +14,7 @@
 而当时的真实状态是 `298 测试 / 18 步 / 2aa018f`。
 README、台账、提交包、CI 全都绿，只有评委手里那一份悄悄过期了 4 天。
 
-所以这里做的事很朴素：让**当前版展示页**住进仓库 `deliverables/`，
+所以这里做的事很朴素：让**当前版展示页**住进仓库 `tests/fixtures/`（判据 fixture，不对外发布），
 把它的每句可量化数字与 `data/claims_v0.json` 绑定，
 改了台账没改这一页（或反之），自检第 19 步就红。
 
@@ -42,7 +42,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SHOWCASE = ROOT / "deliverables" / "装明白_评委复验页.html"
+SHOWCASE = ROOT / "tests" / "fixtures" / "装明白_评委复验页.html"
 CLAIMS = ROOT / "data" / "claims_v0.json"
 OUT = ROOT / "out" / "showcase_consistency.md"
 # 仓库外的提交包副本：本机存在才逐字节比对，CI 上没有就如实跳过
@@ -220,7 +220,7 @@ def self_test(claims=None):
 
 def render(rep, selftest=None):
     lines = ["# 评委复验页一致性 · 可执行版", "",
-             "> `deliverables/装明白_评委复验页.html` 的每句可量化数字，",
+             "> `tests/fixtures/装明白_评委复验页.html` 的每句可量化数字，",
              "> 都与 `data/claims_v0.json` 绑定；改了台账没改这一页，自检第 19 步就红。", "",
              "**%s** ｜ %d 页 ｜ %d 项检查 ｜ 双向断言 %s" %
              (rep["status"], rep["pages"], rep["checks"],

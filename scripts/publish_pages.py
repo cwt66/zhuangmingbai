@@ -48,8 +48,8 @@ FETCH_REF = "refs/remotes/gh/gh-pages"
 
 # (仓库内当前版, gh-pages 上的路径)
 TARGETS = (
-    ("deliverables/装明白_评委复验页.html", "verify/index.html"),
-    ("deliverables/装明白_评委复验页_11页.pdf", "verify/装明白_评委复验页_11页.pdf"),
+    ("deliverables/装明白_评委复验页_对外版.html", "index.html"),
+    ("deliverables/装明白_评委复验页_对外版.html", "verify/index.html"),
 )
 
 sys.path.insert(0, str(ROOT / "src"))

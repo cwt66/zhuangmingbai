@@ -279,7 +279,7 @@ arm64 开发机采集的判定指纹存档；GitHub Actions 第三个 job `deter
 而当时的真实状态是 `298 测试 / 18 步 / 2aa018f`。
 README、台账、提交包、CI 全绿，**只有评委手里那一份悄悄过期**。
 
-`scripts/verify_showcase.py` 把当前版展示页（`deliverables/装明白_评委复验页.html`）
+`scripts/verify_showcase.py` 把当前版展示页（`tests/fixtures/装明白_评委复验页.html`）
 与 `data/claims_v0.json` 绑定，接进自检第 19 步、台账 **C22**：
 
 | 设计 | 为什么 |

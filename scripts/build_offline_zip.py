@@ -26,9 +26,8 @@ DEFAULT_OUT = os.path.join(os.path.dirname(ROOT), "装明白_校赛材料", "装
 # 预测快照要进包：评委可以拿它比对指纹，验证结论没被事后改过
 # deliverables/ 是发布产物（含 20MB+ 提交包 zip）。打进来会递归包含：
 # 离线包 1.1MB → 25MB → 74MB，提交包再跟着涨到 92MB。2026-11-09 真踩过。
-# 但评委复验页（32 KB）是 test_showcase 的判据输入，必须进包，否则离线自检红。
+# 但评委复验页（32 KB）是 test_showcase 的判据输入，已移到 tests/fixtures/ 随源码进包。
 EXCLUDE_PREFIX = (".git/", ".auto-deploy/", "__pycache__/", "deliverables/")
-INCLUDE_EXACT = ("deliverables/装明白_评委复验页.html",)
 
 
 def tracked_files():
@@ -49,7 +48,7 @@ def main():
 
     with zipfile.ZipFile(args.out, "w", zipfile.ZIP_DEFLATED) as z:
         for f in files:
-            if f.startswith(EXCLUDE_PREFIX) and f not in INCLUDE_EXACT:
+            if f.startswith(EXCLUDE_PREFIX):
                 skipped.append(f)
                 continue
             full = os.path.join(ROOT, f)
@@ -88,7 +87,7 @@ def main():
             "src/vision_ocr.py", "scripts/ocr_vision.py", "scripts/vision_ocr.m",
             "scripts/build_vision_ocr.sh", "tests/test_vision.py", "eval/gate.py",
             # 离线自检需要：评委复验页是 test_showcase 的判据输入
-            "deliverables/装明白_评委复验页.html"]
+            "tests/fixtures/装明白_评委复验页.html"]
     miss = [k for k in must if not any(n.endswith(k) for n in names)]
     print("关键文件：", "全在" if not miss else "缺 " + str(miss))
     return 1 if (miss or bad) else 0
