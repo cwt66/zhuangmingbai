@@ -127,7 +127,7 @@ bash scripts/check_all.sh             # 20 步全量自检
 |---|---|---|
 | `hcloud <Service> <Operation> --help` 前置、CLI 安装指南 | 不调用任何云 API，无 CLI 命令 | `references/cli-installation-guide.md` 写明「无 CLI，只需 Python 3.10+」 |
 | `references/iam-policies.md` 最小权限策略 | 无云账号、不读云资源 | 文档写明最小权限 = 本地只读 + 单文件输出，而非编造一条 IAM policy |
-| `skill-quality-cli` 统一质量上报 | 未接入遥测（离线可运行、无外发请求） | 明确写为偏离；不为了过检查而发一个假上报 |
+| `skill-quality-cli` 统一质量上报 | 离线优先：不引入遥测外发，所有校验在本地完成 | 偏离声明：质量结果以本地报告呈现，不伪造上报 |
 
 其余验收项（frontmatter 字段、name 与目录名一致、章节齐全、
 无硬编码凭据、无跨 Skill 调用、≤500 行 / ≤30 文件 / 扩展名白名单）
