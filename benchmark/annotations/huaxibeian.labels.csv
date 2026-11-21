@@ -1,0 +1,33 @@
+﻿"# golden_state ∈ {present, missing, not_applicable}；present=单据中有该工序（含别名/证据词）"
+# missing=模板要求但单据中确实没有；not_applicable=该口径下不适用（不计 FP）
+# 双人盲标：两人独立填写，互不看对方结果；分歧交第三人仲裁并写入 arbitrated
+# 每条结论必须能落到单据行号 + 工序概念 ID；不确定的写「待定」，不要猜
+cid,quote_doc,golden_state,first_annotator,second_annotator,arbitrated,note
+mep,huaxibeian,,,,,
+waterproof,huaxibeian,,,,,
+water_test,huaxibeian,,,,,
+pressure_test,huaxibeian,,,,,
+tile_wall,huaxibeian,,,,,
+tile_floor,huaxibeian,,,,,
+level_floor,huaxibeian,,,,,
+grout,huaxibeian,,,,,
+threshold,huaxibeian,,,,,
+sill,huaxibeian,,,,,
+skirting,huaxibeian,,,,,
+pipe_wrap,huaxibeian,,,,,
+ceiling,huaxibeian,,,,,
+door_install,huaxibeian,,,,,
+door_frame,huaxibeian,,,,,
+wall_base,huaxibeian,,,,,
+putty,huaxibeian,,,,,
+primer,huaxibeian,,,,,
+topcoat,huaxibeian,,,,,
+interface_agent,huaxibeian,,,,,
+sanitary,huaxibeian,,,,,
+switch_install,huaxibeian,,,,,
+light_install,huaxibeian,,,,,
+clean,huaxibeian,,,,,
+mgmt_fee,huaxibeian,,,,,
+water_pipe,huaxibeian,,,,,
+wire,huaxibeian,,,,,
+floor_drain,huaxibeian,,,,,
