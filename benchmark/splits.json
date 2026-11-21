@@ -1,0 +1,43 @@
+{
+  "version": "v0",
+  "updated": "2026-11-21",
+  "note": "v0 不是完整基准：只有 2 份完整标注（单一标注者）。split 仅用于固定跑批口径，不得对外宣称 train/dev/test 覆盖率。",
+  "annotated": [
+    {
+      "id": "feitai",
+      "csv": "data/real/feitai_budget.csv",
+      "template": "old_house",
+      "labels": "eval/golden_labels_feitai.csv",
+      "annotators": 1,
+      "status": "complete_single_annotator"
+    },
+    {
+      "id": "guijiao124",
+      "csv": "data/real/guijiao_124_basic.csv",
+      "template": "new_house",
+      "labels": "eval/golden_labels_guijiao124.csv",
+      "annotators": 1,
+      "status": "complete_single_annotator"
+    }
+  ],
+  "pending_blind_annotation": [
+    {"id": "huaxibeian", "csv": "data/real/huaxibeian_newhouse.csv", "template": "new_house", "sheet": "benchmark/annotations/huaxibeian.labels.csv"},
+    {"id": "sh_zhuoguan", "csv": "data/real/sh_zhuoguan_halfpack.csv", "template": "old_house", "sheet": "benchmark/annotations/sh_zhuoguan.labels.csv"},
+    {"id": "company_a", "csv": "data/samples/company_a.csv", "template": "old_house", "sheet": "benchmark/annotations/company_a.labels.csv"},
+    {"id": "company_b", "csv": "data/samples/company_b.csv", "template": "old_house", "sheet": "benchmark/annotations/company_b.labels.csv"},
+    {"id": "company_c", "csv": "data/samples/company_c.csv", "template": "old_house", "sheet": "benchmark/annotations/company_c.labels.csv"}
+  ],
+  "cross_domain_holdout": [
+    {"id": "szxinxin_clinic_pdf", "csv": "data/real/szxinxin_clinic_pdf.csv", "note": "诊所维保单，用于验证跨领域迁移，不进入家装基准统计"}
+  ],
+  "excluded": [
+    {"csv": "data/real/feitai_budget_ocr.csv", "reason": "feitai 的 OCR 转录变体，与原件同源，不能当独立样本"},
+    {"csv": "data/samples/feitai_change_demo.csv", "reason": "feitai 的模拟变更版，用于 /diff 演示，不是独立报价单"}
+  ],
+  "gates": {
+    "min_annotators": 2,
+    "min_agreement": 0.8,
+    "min_kappa": 0.6,
+    "min_docs_for_v1": 12
+  }
+}

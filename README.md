@@ -9,6 +9,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](./requirements.txt)
 [![Tests](https://img.shields.io/badge/tests-344-brightgreen.svg)](./tests)
 [![Rules](https://img.shields.io/badge/rules-13-002FA7.svg)](./data/rules_v0.json)
+[![RQAB](https://img.shields.io/badge/RQAB-v0--protocol-orange.svg)](./benchmark/)
 
 签合同之前，上传 2–4 家装修公司的报价单（照片 / PDF / Excel / CSV），输出一份**可核对、可溯源、可复现**的审计报告：
 谁漏了项、谁重复收了钱、谁口径混乱、补漏后真实成本是多少。

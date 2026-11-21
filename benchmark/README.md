@@ -17,6 +17,7 @@
 ## 2. 数据与标注协议
 
 - 单据：`data/real/`（公开装修日记脱敏转录）与 `data/samples/`（结构取自真实晒单、金额重制）。
+- 固定 split 与排除规则见 [splits.json](./splits.json)：同源 OCR 变体与模拟变更版不得当独立样本。
 - 模板：`data/templates_v0.json`（老房 39 项 / 新房 28 项）。
 - 标注字段：`cid, quote_doc, golden_state, first_annotator, second_annotator, arbitrated, note`。
 - 枚举：`present`（含别名/备注证据词）、`missing`（真漏项候选）、`not_applicable`（口径不适用，不计 FP）。
@@ -43,6 +44,13 @@
 | 规则 + 坐标系（本作品） | `python3 benchmark/run_baselines.py` | 确定性，离线可跑 |
 | LLM 直读 | `MAAS_API_KEY=… python3 eval/ab_llm_vs_rules.py --provider maas` | 报跨次一致性 Jaccard、幻觉候选、与规则差集 |
 | LLM 直读（mock） | `python3 eval/ab_llm_vs_rules.py` | **仅验证统计逻辑，不产生实验结论** |
+
+真实模型跑批建议先做前置检查，脚本会明确拒绝在缺 Key 时运行，也不会拿 mock 冒充实验：
+
+```bash
+python3 benchmark/run_llm_ab.py --check
+MAAS_API_KEY=... python3 benchmark/run_llm_ab.py
+```
 
 真实模型 A/B 需要 MaaS Key；没有 Key 时脚本明确拒绝，不用 mock 数字冒充实验结果。
 
