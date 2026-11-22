@@ -51,19 +51,27 @@ def main():
             print(" -", m)
         print("\nmock 模式只能验证统计逻辑，不产生实验结论；不会用它替代真实 A/B。")
         return 2
+    # 11-13 已实测：这把 Key 可用范围是 openpangu-2.0-flash（deepseek-v4-flash 403）。
+    # 脚本默认 qwen-vl-plus 是视觉模型，文本 A/B 用它会 404；这里显式纠正。
+    chosen = os.environ.get("MAAS_MODEL") or "openpangu-2.0-flash"
+    os.environ["MAAS_MODEL"] = chosen
     if args.check:
-        print("[OK] 前置条件齐备，可跑真实 LLM A/B")
+        print("[OK] 前置条件齐备，可跑真实 LLM A/B｜model=" + chosen)
         return 0
 
     stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    record = {"run_id": stamp, "provider": "maas", "runs_per_doc": args.runs, "docs": []}
+    record = {"run_id": stamp, "provider": "maas", "model": chosen, "runs_per_doc": args.runs, "docs": []}
     for csv, template in DOCS:
         cmd = [sys.executable, "eval/ab_llm_vs_rules.py", "--provider", "maas",
                "--csv", csv, "--template", template, "--runs", str(args.runs)]
-        p = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=1800)
+        try:
+            p = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=900)
+            rc, out, err = p.returncode, p.stdout, p.stderr
+        except subprocess.TimeoutExpired:
+            rc, out, err = 124, "", "timeout after 900s (MaaS 网络/排队)"
         record["docs"].append({
-            "csv": csv, "template": template, "returncode": p.returncode,
-            "stdout_tail": p.stdout[-1200:], "stderr_tail": p.stderr[-600:],
+            "csv": csv, "template": template, "returncode": rc,
+            "stdout_tail": out[-1200:], "stderr_tail": err[-600:],
             "runner_sha256": hashlib.sha256(RUNNER.read_bytes()).hexdigest(),
         })
         print(f"[{csv}] rc={p.returncode}")

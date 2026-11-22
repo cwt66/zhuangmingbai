@@ -68,6 +68,7 @@ OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失�
 **给智能体调用**：`python3 mcp_server.py --self-test` 可自测一个零依赖 MCP server
 （3 个工具 / 3 个资源 / 1 个审查 prompt），CodeArts 或任意 MCP host 可直接调用审计能力；
 可靠性另见 `benchmark/reliability.py`（弃答 3/3、误拒 0/3、pass^3 2/2，服务器实测）。
+真实 LLM A/B 也已跑通（MaaS `openpangu-2.0-flash`，3 单据×3 次）：LLM 直读漏项集合两两 Jaccard 多为 0，规则侧指纹恒同；口径与限制见 `benchmark/leaderboard.md`。
 
 ---
 

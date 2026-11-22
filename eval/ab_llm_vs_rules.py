@@ -160,7 +160,7 @@ def compare(rules_res, llm_runs, q):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv", default="data/real/sh_zhuoguan_halfpack.csv")
-    ap.add_argument("--doc", default="上海卓观")
+    ap.add_argument("--doc", default="", help="单据显示名；留空则从 csv 文件名推导")
     ap.add_argument("--template", default="old_house", choices=["old_house", "new_house"])
     ap.add_argument("--runs", type=int, default=3)
     ap.add_argument("--provider", default="mock", choices=["mock", "maas"])
@@ -179,7 +179,8 @@ def main():
     cov = json.load(open(os.path.join(ROOT, "data", "coverage_v0.json"), encoding="utf-8"))
 
     # 规则侧
-    q = P.build_line_index(P.load_quote(os.path.join(ROOT, args.csv), args.doc), onto)
+    doc_label = args.doc or os.path.splitext(os.path.basename(args.csv))[0]
+    q = P.build_line_index(P.load_quote(os.path.join(ROOT, args.csv), doc_label), onto)
     rules_res = P.audit([q], onto, tpl, rules, cov, template_key=args.template)[q["label"]]
 
     text = quote_text(q)
@@ -204,7 +205,7 @@ def main():
         "# 幻觉 A/B：LLM 直接审 vs 规则裁决",
         "",
         "> 单据：%s（%d 行）｜ 模板：%s ｜ provider：%s ｜ runs：%d ｜ %s" %
-        (args.doc, len(q["rows"]), args.template, args.provider,
+        (doc_label, len(q["rows"]), args.template, args.provider,
          args.runs, datetime.now().strftime("%Y-%m-%d %H:%M")),
         "",
         "| 指标 | LLM 直接审 | 规则裁决 |",
@@ -226,7 +227,10 @@ def main():
         "**统计口径（预注册）**：漏项本就定义为「单据里没有的工序」，回原文零命中是预期行为，不构成幻觉判据；"
         "漏项真伪只能对照黄金标注（eval/golden_labels_TEMPLATE.csv）。重复/口径声称了行号，行号不存在即可自动判幻觉。",
         "",
-        "**mock 模式说明**：以上 LLM 输出为人工构造演示，只验证统计口径；真实验需 --provider maas。",
+        ("**mock 模式说明**：以上 LLM 输出为人工构造演示，只验证统计口径；不能作为实验结论。"
+         if args.provider == "mock" else
+         "**实验口径**：以上 LLM 输出来自 ModelArts Studio MaaS 真实调用（temperature 0.7，不压温度），"
+         "留痕 JSON 保留每次完整 raw；跨次差异是实测结果，不是构造数据。"),
     ]
     report = "\n".join(lines)
     rp = os.path.join(OUT_DIR, "ab_report_%s.md" % slug)
