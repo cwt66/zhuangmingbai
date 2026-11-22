@@ -20,6 +20,8 @@
 
 **评委 5 分钟复验页**（单文件 HTML，双击即用、可离线）：
 <https://cwt66.github.io/zhuangmingbai/verify/>（**当前入口**，随代码更新）。
+**可交互审计回放**：<https://cwt66.github.io/zhuangmingbai/replay/> ——点结论高亮原表行；
+口径为**预计算回放，不是实时引擎**，实时交互请本地 `uvicorn main:app`。
 OBS 上另有一份 2026-10-29 的**历史快照**——AK 于 11-07 被判失效，不能覆盖更新，
 所以不再把它当主入口：[HTML](https://zmb-quotes-20261029.obs.cn-north-4.myhuaweicloud.com/verify/index.html) ·
 [PDF](https://zmb-quotes-20261029.obs.cn-north-4.myhuaweicloud.com/verify/%E8%A3%85%E6%98%8E%E7%99%BD_%E8%AF%84%E5%A7%94%E5%A4%8D%E9%AA%8C%E9%A1%B5_10%E9%A1%B5.pdf)。
