@@ -71,12 +71,40 @@ python3 eval/cohen_kappa.py \
 
 生成好的空白表在 `benchmark/annotations/`，已是 `cid` 逐项齐全、枚举值固定的可填写模板。
 
-## 6. 提交与复现
+## 6. 可靠性指标：弃答与 pass^k
+
+借鉴 FinTrace（不可能任务的正确答案是「不知道」）与 Tessera / Claw-Eval（严格 pass^k）：
+
+```bash
+python3 benchmark/reliability.py
+```
+
+- **弃答**：3 个不可能任务（合同文本、购物清单、只有表头的 CSV）必须被拒绝；
+  3 个正常单据不得误拒。服务器实测 **正确弃答 3/3、误拒 0/3**。
+- **pass^k**：同一单据跑 3 次，判定指纹逐字节一致才算过。服务器实测 **2/2 文档 pass^3**。
+
+> 这两项都不调用模型：拒绝是守门的结构行为，一致性来自确定性引擎。
+> 不把它们写成「模型很稳」，而是写成「架构不允许它乱说」。
+
+## 7. MCP 接口：让智能体直接调用审计
+
+`mcp_server.py` 是零第三方依赖的 MCP server（stdio / JSON-RPC 2.0），
+对标 `modelcontextprotocol/python-sdk`（24.9k★，MIT），协议帧与其 stdio transport 兼容：
+
+```bash
+python3 mcp_server.py --self-test     # 自握手 + 列工具 + 跑一次审计 + 读资源
+python3 mcp_server.py                 # 作为 MCP server 启动
+```
+
+暴露 3 个工具（`classify_quote` / `audit_quote` / `list_samples`）、3 个资源与 1 个标准审查 prompt。
+路径限制在项目目录内，所有日志只写 stderr——stdout 专供协议帧。
+
+## 8. 提交与复现
 
 - 提交格式：`benchmark/results/<run_id>.json`，含命令、退出码、时长、脚本 sha256 与原始输出路径。
 - 所有结果由 `run_baselines.py` 自动生成，不允许手写数字进 leaderboard。
 - 隐私：只发布脱敏转录与重制金额；不发布业主姓名、电话、地址或原始照片。
 
-## 7. 当前结果
+## 9. 当前结果
 
 见 [leaderboard.md](./leaderboard.md)。n=2 的区间很宽，这是事实，扩容后按同一口径重跑即可。
