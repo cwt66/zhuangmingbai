@@ -108,3 +108,12 @@ python3 mcp_server.py                 # 作为 MCP server 启动
 ## 9. 当前结果
 
 见 [leaderboard.md](./leaderboard.md)。n=2 的区间很宽，这是事实，扩容后按同一口径重跑即可。
+
+## 10. 方法参考（2026）
+
+| 项目 | 借鉴点 |
+|---|---|
+| [FinTrace](https://github.com/FredXing1/FinTrace)（Apache-2.0, v1.0） | auditpack：claims + evidence chains + execution log + sign-off；不可能任务正确答案是「unknown」；结构门禁比提示词有效 |
+| [Tessera](https://github.com/rinaldofesta/tessera) | 严格 pass^k 作 headline；按 agent 真实 MCP 流量评 provenance；「拒绝」作为可评分行为 |
+| [Claw-Eval](https://github.com/claw-eval/claw-eval) | 三次试验全过才算过；轨迹级审计（Completion / Safety / Robustness） |
+| [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)（MIT, 24.9k★） | stdio / JSON-RPC 帧格式、tools/resources/prompts 三原语；本项目用标准库实现最小兼容子集 |
