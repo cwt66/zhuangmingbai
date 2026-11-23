@@ -1,3 +1,7 @@
+# Zhuang Mingbai — Live Demo
+
+**http://113.47.4.91:8000** (available during review; `/health` green: PostgreSQL + Redis + MaaS)
+
 # Zhuang Mingbai — Computable Audit for Renovation Quotes
 
 > 11th Huawei ICT Competition · China Innovation Contest · Track 1: AI Applications on Huawei Cloud

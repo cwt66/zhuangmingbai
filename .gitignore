@@ -28,3 +28,5 @@ eval/predictions/*
 
 # 本地 OCR 二进制（按平台编译，不提交）
 scripts/bin/
+.auto-deploy-live2/
+.auto-deploy-live/
