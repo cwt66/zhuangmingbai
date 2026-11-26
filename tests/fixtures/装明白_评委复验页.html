@@ -5,15 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>装明白 · 评委复验页（第十一届华为 ICT 大赛创新赛 赛题一）</title>
 <!--
-  设计来源：本地 skills/frontend-slides（zarazhangrui/frontend-slides，MIT）的
-  「固定 16:9 舞台 / 零依赖单文件 / visible 切页 / 渐进显现 / Swiss 网格」规范，
-  viewport-base.css 全文内联如下。用了 MIT 的设计思想，没有复制 AGPL 项目的代码。
-
-  两处刻意的偏离，理由写在明处：
-  1) 不用外部 Web Font：提交包会被评委离线双击打开，任何 CDN 请求都是失败点。
-     改用系统中文衬线（宋体）做大标题、黑体做正文，仍是明确的字体搭配，不是默认 system-ui。
-  2) 不做花哨动效，只保留一次性错峰显现：这是「复验文档」，可读性 > 表演性。
-
+  自研单页版式：固定 16:9 舞台 / 零依赖单文件 / visible 切页 / 渐进显现 / Swiss 网格。
+  刻意不用外部 Web Font：提交包会被评委离线双击打开，任何 CDN 请求都是失败点，
+  故改用系统中文衬线（宋体）做大标题、黑体做正文。
+  不做花哨动效，只保留一次性错峰显现：这是「复验文档」，可读性 > 表演性。
   所有数字由 scripts/verify_showcase.py 与 data/claims_v0.json 逐条校验；不写死 commit hash，以仓库 git log -1 为准。
 -->
 <style>
@@ -26,7 +21,7 @@
   --font-mono:"SF Mono",Menlo,Consolas,monospace;
   --slide-padding:110px; --ease:cubic-bezier(.16,1,.3,1);
 }
-/* ============ viewport-base.css（frontend-slides skill 要求全文内联） ============ */
+/* ============ viewport 基础样式（全文内联，便于离线打开） ============ */
 html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--stage-bg,#000)}
 .deck-viewport{position:fixed;inset:0;overflow:hidden;background:var(--stage-bg,#000)}
 .deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;

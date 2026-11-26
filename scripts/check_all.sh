@@ -52,7 +52,11 @@ echo "== 10/20 报告交付门（7 检查 + 5 故障注入）"
 # 检测下限回答「最小能抓多少钱」。它不改任何东西，只把能力边界写成数字，
 # 顺便盯住那个已知盲区（单行<1 元、累计<对账容差）还在不在。
 echo "== 11/20 检测下限（单行/累计两维）"
-"$PY" eval/detection_floor.py | grep -E "^\*\*|盲区确认|最严重" || true
+# 先取脚本真实退出码，再单独 grep 展示；不能用 `| grep ... || true`，
+# 那会在 pipefail 下把脚本崩溃也一起吞掉，让这一步永远"通过"。
+"$PY" eval/detection_floor.py > /tmp/zmb_detection_floor.out 2>&1 || {
+  cat /tmp/zmb_detection_floor.out; echo "✗ 检测下限脚本失败"; exit 1; }
+grep -E "^\*\*|盲区确认|最严重" /tmp/zmb_detection_floor.out || true
 
 # 负向知识库：不判什么、为什么。每次重建，防止它和代码漂开。
 echo "== 12/20 负向知识库（13 条不判 + 10 条测试锁 + 1 条已知拦不住）"
@@ -67,7 +71,11 @@ echo "== 13/20 红队自测（8 招攻击，7 招拦住）"
 # 证据在提交包（不随仓库发布），干净 clone 里没有 → 默认只报「待采集」。
 # 一旦文件存在，这一步就是**硬**的：数字对不上直接非 0。
 echo "== 14/20 码道 Skill 运行证据（有则逐字段复算）"
-"$PY" scripts/verify_skill_evidence.py | grep -E "状态|待采集|结论|不一致|纪律" || true
+# 同上：显式判脚本退出码，证据存在时这是硬门禁（数字对不上直接非 0）；
+# 只有 grep 展示部分容忍无匹配，绝不吞掉脚本自身的失败。
+"$PY" scripts/verify_skill_evidence.py > /tmp/zmb_skill_evidence.out 2>&1 || {
+  cat /tmp/zmb_skill_evidence.out; echo "✗ Skill 证据复算失败（数字不一致或脚本崩溃）"; exit 1; }
+grep -E "状态|待采集|结论|不一致|纪律" /tmp/zmb_skill_evidence.out || true
 
 # 规则活性：把变异打在 rules_v0.json 上，测「13 条可审阅的规则」是否真的在起作用。
 # --strict 会让存活的判定字段直接失败 —— 修过的字段不许退化。

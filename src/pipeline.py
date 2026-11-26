@@ -1316,12 +1316,14 @@ def build_html(quotes, res):
                     (_esc(q["label"]), fmt_money(r["effective"]), fmt_money(q["total"]),
                      len(r["missing"]), len(r["duplicates"])))
     rows = []
-    maxv = max(res[q["label"]]["effective"] for q in quotes)
+    maxv = max((res[q["label"]]["effective"] for q in quotes), default=0)
     for q in quotes:
         r = res[q["label"]]
         exp = r["exposure"]
         exp_s = f"{fmt_money(exp[0]['low'])}–{fmt_money(exp[0]['high'])}" if exp else "—"
-        pct = int(r["effective"] / maxv * 100)
+        # 全零金额单据（合法 CSV：工序列全但金额均为 0）不得除零崩溃；
+        # 无有效金额时占比按 0 显示，条形图宽度为 0%。
+        pct = int(r["effective"] / maxv * 100) if maxv else 0
         rows.append("<tr><td>%s</td><td class='num'>%s</td><td class='num'>%s</td><td class='num'>%s</td>"
                     "<td class='num barcell'>%s<div class='bar'><i style='width:%d%%'></i></div></td>"
                     "<td class='num'>%s</td><td class='num'>%d</td><td class='num'>%d</td><td class='num'>%d</td></tr>" %

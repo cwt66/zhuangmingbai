@@ -46,10 +46,10 @@
 - 「LLM 独有 / 规则独有」都没有人工真值裁定，**不等于谁对谁错**；要判对错得靠 n≥12 的双人盲标集。
 - 这不证明我们比模型准，只证明我们**可复现**；准确率仍看 n=2 的 auto P/R 0.833（95%CI 0.552–0.953）。
 
-原始输出与报告：`eval/ab_runs/ab_result_*.json`、`ab_report_*.md`（服务器）。
-mock 模式只验证统计逻辑，不产生结论。
+原始留痕：`benchmark/results/llm_ab_20261122_163735.json`（已入库，脱敏，含每条 runner_sha256 与 returncode）；
+`eval/ab_runs/ab_result_*.json` / `ab_report_*.md` 为服务器侧逐次明细。mock 模式只验证统计逻辑，不产生结论。
 
-## 3. 可靠性（服务器实测 `reliability_20261122_161113.json`）
+## 3. 可靠性（2026-11-22 实测 `benchmark/results/reliability_20261122_161113.json`，已入库）
 
 | 指标 | 值 | 含义 |
 |---|---:|---|

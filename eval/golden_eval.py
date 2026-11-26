@@ -28,8 +28,9 @@ sys.path.insert(0, os.path.join(BASE, "src"))
 from pipeline import Ontology, audit, build_line_index, load_quote, DATA  # noqa: E402
 
 DOCS = {
+    # 行数由 load_quote 从 CSV 实际读取，不在展示标签里硬编码（曾误写 131，实际 123）。
     "feitai": {"csv": "feitai_budget.csv", "template": "old_house", "scope": "full",
-               "label": "上海翡翠台 · 老房全案（131 行）"},
+               "label": "上海翡翠台 · 老房全案"},
     "guijiao124": {"csv": "guijiao_124_basic.csv", "template": "new_house", "scope": "base",
                    "label": "124㎡ · 基础报价单（65 行）"},
 }

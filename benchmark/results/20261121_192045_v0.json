@@ -1,0 +1,43 @@
+{
+  "run_id": "20261121_192045_v0",
+  "python": "3.12.3",
+  "cwd": "repo",
+  "runs": [
+    {
+      "name": "golden_eval",
+      "command": "python3 eval/golden_eval.py --json benchmark/results/golden_eval.json",
+      "returncode": 0,
+      "seconds": 0.627,
+      "script_sha256": "86a0091c87c98f2e544c2b1372c9bcef040fc8c865e9aabcd18a8d32bac3156e",
+      "stdout": "benchmark/results/golden_eval.stdout.txt",
+      "stderr": "benchmark/results/golden_eval.stderr.txt"
+    },
+    {
+      "name": "ablation",
+      "command": "python3 eval/ablation.py",
+      "returncode": 0,
+      "seconds": 1.736,
+      "script_sha256": "f93ae54895ecc339a1dea63ab41944456d3b70cf68835e5dfd99bb9ac5c5b07d",
+      "stdout": "benchmark/results/ablation.stdout.txt",
+      "stderr": "benchmark/results/ablation.stderr.txt"
+    },
+    {
+      "name": "detection_floor",
+      "command": "python3 eval/detection_floor.py --json",
+      "returncode": 0,
+      "seconds": 2.921,
+      "script_sha256": "266d9f6ef6fcb5e5c71ae75cb5baec4f0f6ab4f9441efdedf48e0b5b2bb57f5c",
+      "stdout": "benchmark/results/detection_floor.stdout.txt",
+      "stderr": "benchmark/results/detection_floor.stderr.txt"
+    },
+    {
+      "name": "injection_test",
+      "command": "python3 eval/injection_test.py --quiet",
+      "returncode": 0,
+      "seconds": 2.659,
+      "script_sha256": "f6247b245dff40e4002196efe24afdc7173c9f970814e0e9e679e41f81e26ba3",
+      "stdout": "benchmark/results/injection_test.stdout.txt",
+      "stderr": "benchmark/results/injection_test.stderr.txt"
+    }
+  ]
+}

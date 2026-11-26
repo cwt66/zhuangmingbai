@@ -12,9 +12,11 @@ ENV PYTHONUNBUFFERED=1
 # 步骤 1：先复制 requirements.txt（利用 Docker 层缓存，依赖不变时无需重装）
 COPY requirements.txt .
 
-# 使用清华 PyPI 镜像源加速安装，no-cache-dir 减小镜像体积
+# 默认走官方 PyPI（评委机器境外/网络策略也能构建）；如需镜像源，
+# 构建时显式传入：docker build --build-arg PIP_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple
+ARG PIP_INDEX=""
 RUN pip install --no-cache-dir \
-    -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    ${PIP_INDEX:+--index-url "$PIP_INDEX"} \
     -r requirements.txt
 
 # 步骤 2：再复制源码（源码变更时此层才会重建）

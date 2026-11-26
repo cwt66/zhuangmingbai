@@ -74,7 +74,9 @@ def main():
             "stdout_tail": out[-1200:], "stderr_tail": err[-600:],
             "runner_sha256": hashlib.sha256(RUNNER.read_bytes()).hexdigest(),
         })
-        print(f"[{csv}] rc={p.returncode}")
+        # 超时分支下 p 未绑定，必须用上面已赋值的 rc（124）记录，否则真实 MaaS
+        # 网络/排队超时时这里抛 UnboundLocalError，整批判跑丢失。
+        print(f"[{csv}] rc={rc}")
     out = ROOT / "benchmark" / "results" / f"llm_ab_{stamp}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

@@ -1,0 +1,82 @@
+{
+  "run_at": "2026-11-22T16:11:12",
+  "python": "3.12.3",
+  "abstention": [
+    {
+      "id": "contract_not_quote",
+      "path": "benchmark/fixtures/contract_like.txt",
+      "expect": "refuse",
+      "reason": "《contract_like.txt》看起来是装修合同，不是报价单。本系统只做报价单的计费核对，不审合同条款；请上传带「项目/数量/单价/合价」的报价表。",
+      "refused": true,
+      "correct": true
+    },
+    {
+      "id": "irrelevant_text",
+      "path": "benchmark/fixtures/irrelevant.txt",
+      "expect": "refuse",
+      "reason": "解析失败: 没找到「项目名称」列。识别到的表头：周末购物清单｜支持的别名：项目/名称/施工项目/工序…",
+      "refused": true,
+      "correct": true
+    },
+    {
+      "id": "header_only",
+      "path": "benchmark/fixtures/header_only.csv",
+      "expect": "refuse",
+      "reason": "文件里没有可解析的行项。",
+      "refused": true,
+      "correct": true
+    },
+    {
+      "id": "valid_company_a",
+      "path": "data/samples/company_a.csv",
+      "expect": "accept",
+      "refused": false,
+      "reason": "可接受",
+      "correct": true
+    },
+    {
+      "id": "valid_company_b",
+      "path": "data/samples/company_b.csv",
+      "expect": "accept",
+      "refused": false,
+      "reason": "可接受",
+      "correct": true
+    },
+    {
+      "id": "valid_feitai",
+      "path": "data/real/feitai_budget.csv",
+      "expect": "accept",
+      "refused": false,
+      "reason": "可接受",
+      "correct": true
+    }
+  ],
+  "pass_k": [
+    {
+      "path": "data/samples/company_a.csv",
+      "k": 3,
+      "fingerprints": [
+        "a6b43d9df7f4758d",
+        "a6b43d9df7f4758d",
+        "a6b43d9df7f4758d"
+      ],
+      "passed": true
+    },
+    {
+      "path": "data/real/feitai_budget.csv",
+      "k": 3,
+      "fingerprints": [
+        "52bf7b635204fd96",
+        "52bf7b635204fd96",
+        "52bf7b635204fd96"
+      ],
+      "passed": true
+    }
+  ],
+  "summary": {
+    "correct_abstention": "3/3",
+    "false_refusal": "0/3",
+    "abstention_pass": true,
+    "pass_k": "2/2"
+  }
+}

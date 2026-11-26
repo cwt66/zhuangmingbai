@@ -1,0 +1,34 @@
+"# golden_state ∈ {present, missing, not_applicable}；present=单据中有该工序（含别名/证据词）"
+# missing=模板要求但单据中确实没有；not_applicable=该口径下不适用（不计 FP）
+# 双人盲标：两人独立填写，互不看对方结果；分歧交第三人仲裁并写入 arbitrated
+# 每条结论必须能落到单据行号 + 工序概念 ID；不确定的写「待定」，不要猜
+# 本表为标注人 B 的盲标表：只填 golden_state 与 note，不要打开 eval/golden_labels_guijiao124.csv
+cid,quote_doc,golden_state,first_annotator,second_annotator,arbitrated,note
+mep,guijiao124,,,,,
+waterproof,guijiao124,,,,,
+water_test,guijiao124,,,,,
+pressure_test,guijiao124,,,,,
+tile_wall,guijiao124,,,,,
+tile_floor,guijiao124,,,,,
+level_floor,guijiao124,,,,,
+grout,guijiao124,,,,,
+threshold,guijiao124,,,,,
+sill,guijiao124,,,,,
+skirting,guijiao124,,,,,
+pipe_wrap,guijiao124,,,,,
+ceiling,guijiao124,,,,,
+door_install,guijiao124,,,,,
+door_frame,guijiao124,,,,,
+wall_base,guijiao124,,,,,
+putty,guijiao124,,,,,
+primer,guijiao124,,,,,
+topcoat,guijiao124,,,,,
+interface_agent,guijiao124,,,,,
+sanitary,guijiao124,,,,,
+switch_install,guijiao124,,,,,
+light_install,guijiao124,,,,,
+clean,guijiao124,,,,,
+mgmt_fee,guijiao124,,,,,
+water_pipe,guijiao124,,,,,
+wire,guijiao124,,,,,
+floor_drain,guijiao124,,,,,

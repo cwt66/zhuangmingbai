@@ -1,0 +1,3 @@
+# 分歧仲裁记录：doc=单据，cid=工序，A1/A2=两人判定，arbitrated=仲裁后定稿，reason=裁决依据（行号/规则/原文）
+# 只有两人判定不一致的行才进本表；一致的行不记。仲裁人填写 arbitrated 与 reason。
+doc,cid,A1,A2,arbitrated,reason
