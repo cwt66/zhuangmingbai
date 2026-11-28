@@ -176,10 +176,12 @@ class TestBundlePipeline(unittest.TestCase):
         """上一版失守的那一招：删必做项 + 重算 digest + 写回。"""
         d = self._extract()
         p = os.path.join(d, "standards", "templates_v0.json")
-        data = json.load(open(p, encoding="utf-8"))
+        with open(p, encoding="utf-8") as f:
+            data = json.load(f)
         data["old_house"] = [x for x in data["old_house"]
                              if x not in ("protect_door", "water_test", "material_lift")]
-        json.dump(data, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
         r = self._verify(d)
         self.assertNotEqual(r.returncode, 0, "改标准必须被拦住")
         self.assertIn("templates_v0.json", r.stdout)

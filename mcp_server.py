@@ -55,7 +55,10 @@ def load_rules():
     with open(os.path.join(pipeline.DATA, "rules_v0.json"), encoding="utf-8") as f:
         rules = json.load(f)
     cover = os.path.join(pipeline.DATA, "coverage_v0.json")
-    coverage = json.load(open(cover, encoding="utf-8")) if os.path.exists(cover) else None
+    coverage = None
+    if os.path.exists(cover):
+        with open(cover, encoding="utf-8") as f:
+            coverage = json.load(f)
     return onto, templates, rules, coverage
 
 

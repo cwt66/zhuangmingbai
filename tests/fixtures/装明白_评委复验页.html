@@ -173,17 +173,17 @@ body.on-dark .deck-controls span:last-child{color:#888}
 <section class="slide">
   <div class="kicker reveal"><span class="no">04</span> 云上部署 · 关联服务</div>
   <h2 class="reveal">每个服务都在链路里有位置，状态如实写</h2>
-  <div class="lead reveal">官方要求「云上部署 + 可视化 Demo 页面」；15 条路由本地与沙箱均全 200。</div>
+  <div class="lead reveal">官方要求「云上部署 + 可视化 Demo 页面」；云上实跑 8 个路由 200（另 /audit GET 405），本地 29 路由全绿。</div>
   <div class="hair reveal"></div>
   <table class="reveal">
     <tr><th style="width:250px">服务</th><th style="width:270px">代码位置</th><th>实例 / 额度状态</th><th style="width:230px">材料怎么写</th></tr>
-    <tr><td><b>RDS PostgreSQL</b></td><td><code>src/store.py</code></td><td>已开通；连不上自动降级 SQLite</td><td>已接入并落库，/history 可查</td></tr>
-    <tr><td><b>DCS Redis</b></td><td><code>src/cache.py</code></td><td><span class="tag red">需控制台创建</span>无 CLI 接口</td><td>代码已接入，实例待开通</td></tr>
-    <tr><td><b>MaaS 文本 / 视觉</b></td><td><code>src/llm.py</code></td><td>无 API Key；输出接地校验，失败退模板</td><td>当前解读标注「规则模板」</td></tr>
+    <tr><td><b>RDS PostgreSQL</b></td><td><code>src/store.py</code></td><td>托管实例未开通；11-23 云上用 postgres 容器实跑，连不上自动降级 SQLite</td><td>代码接入就绪，/history 可查</td></tr>
+    <tr><td><b>DCS Redis</b></td><td><code>src/cache.py</code></td><td>11-23 实测接管缓存，已随演示按需释放</td><td>已实测（cache.kind=redis）</td></tr>
+    <tr><td><b>MaaS 文本 / 视觉</b></td><td><code>src/llm.py</code></td><td>openPangu 文本已开通并跑通 3×3 真 A/B；视觉模型未开通</td><td>文本「MaaS 生成」并做接地校验</td></tr>
     <tr><td><b>OCR 表格识别</b></td><td><code>src/perception.py</code></td><td>额度受限（11/04 复测 4106）</td><td>用历史产物 / 本地 Vision</td></tr>
-    <tr><td><b>OBS / ECS</b></td><td>部署手册</td><td>OBS 的 AK 11-07 失效；ECS 停在 <code>Ecs.7000</code> 余额不足</td><td>静态展示走 GitHub Pages；判定链路不依赖 ECS</td></tr>
+    <tr><td><b>OBS / ECS</b></td><td>部署手册</td><td>OBS AK 11-07 失效；11-07 历史 IaC 停在 <code>Ecs.7000</code>；11-23 北京一 ECS 已实跑并按需释放</td><td>静态展示走 GitHub Pages；快照随包</td></tr>
   </table>
-  <div class="note reveal"><b>红线</b>：不写「Redis 已开通」「MaaS 已跑通真实照片」「公网永久可用」；DevBridge 隧道 72h 失效，可 5 分钟重建。<br><b>硬件四层</b>：arm64 开发机 ✅ 实测 / 跨环境确定性 ✅ 可复算 / 华为云 x86 ECS 🟡 IaC 跑到 apply / 鲲鹏 ❌ 未实测、昇腾 ❌ 未涉及（详见第 10 页）。</div>
+  <div class="note reveal"><b>红线</b>：不写「RDS 托管实例已开通」「MaaS 已跑通真实照片」「公网永久可用」；按需实例已释放，按 SOP 40 分钟重建。<br><b>硬件四层</b>：arm64 开发机 ✅ 实测 / 跨环境确定性 ✅ 可复算 / 华为云 x86 ECS 🟡 已实跑并按需释放（历史 IaC 曾遇 <code>Ecs.7000</code>） / 鲲鹏 ❌ 未实测、昇腾 ❌ 未涉及（详见第 10 页）。</div>
   <div class="foot"><span>证据：09_证据附录/演示环境验证记录.md</span><span>04 / 11</span></div>
 </section>
 
@@ -321,13 +321,13 @@ body.on-dark .deck-controls span:last-child{color:#888}
   <h2 class="reveal">能跑的系统、能查的数字、能承认的边界</h2>
   <div class="cols c2 reveal" style="margin-top:20px">
     <div class="card"><div class="t" style="color:#F0A9A0">还不能说「已完成」</div>
-      <div class="d">· 0 个真实家庭试点（应用价值唯一硬证据）<br>· MaaS 无 Key，云端 OCR 额度受限<br>
-      · Redis 实例需控制台创建<br>· <b>红队 8 招有 1 招得手</b>（㎡ 写成 m，见负向库 NA13）<br>
-      · macOS arm64 / Linux aarch64 / x86_64 判定确定性已复算，但<b>鲲鹏物理机 / openEuler 发行版仍未实测</b>，不写「已适配」<br>· ③ 档 3 条声明写不出复算命令，不计已验证<br>· 3 分钟演示视频未录<br>· 报名与队伍信息未填（11/30 截止）</div></div>
+      <div class="d">· 0 个真实家庭试点（应用价值唯一硬证据）<br>· MaaS 视觉模型未开通，云端 OCR 额度受限<br>
+      · RDS 托管实例未开通（11-23 用容器实跑、按需释放）<br>· <b>红队 8 招有 1 招得手</b>（㎡ 写成 m，见负向库 NA13）<br>
+      · macOS arm64 / Linux aarch64 / x86_64 判定确定性已复算，但<b>鲲鹏物理机 / openEuler 发行版仍未实测</b>，不写「已适配」<br>· ③ 档 3 条声明写不出复算命令，不计已验证<br>· Round 1 双人盲标（n=2→7）执行中，待仲裁入库</div></div>
     <div class="card"><div class="t" style="color:#A9C0F5">按性价比排的下一步</div>
-      <div class="d"><b>P0</b> 报名 + 队伍信息（逾期 = 弃赛）<br><b>P0</b> 2–3 个真实家庭试点（签合同前介入）<br>
-      <b>P1</b> 收 1–2 对「报价 + 结算」，验证漏项是否真变成加钱<br><b>P1</b> 视频 + Redis 控制台 + 云上固定地址<br>
-      <b>P2</b> 第二标注者跑盲标，算 Cohen's κ</div></div>
+      <div class="d"><b>P0</b> Round 1 双人盲标 + Cohen's κ（12-05 前收口）<br><b>P0</b> 1–3 个真实家庭试点（签合同前介入）<br>
+      <b>P1</b> 3 分钟真人配音演示视频 + 视觉拍照闭环<br><b>P1</b> 评审窗口按需拉起 ECS 固定地址<br>
+      <b>P2</b> 收 1–2 对「报价 + 结算」，验证漏项是否真变成加钱</div></div>
   </div>
   <div class="rule reveal" style="background:#FAFAF8"></div>
   <div class="cols c3 reveal">

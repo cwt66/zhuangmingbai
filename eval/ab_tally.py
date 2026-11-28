@@ -41,9 +41,10 @@ def main():
     if not os.path.exists(args.csv):
         raise SystemExit("找不到评分表：%s（先按模板填，模板见 eval/对照实验_评分表.csv）" % args.csv)
 
-    rows = [r for r in csv.DictReader(open(args.csv, encoding="utf-8-sig"))
-            if norm(r.get("system")) in ("renopit", "zhuangmingbai")
-            and norm(r.get("conclusion"))]
+    with open(args.csv, encoding="utf-8-sig") as f:
+        rows = [r for r in csv.DictReader(f)
+                if norm(r.get("system")) in ("renopit", "zhuangmingbai")
+                and norm(r.get("conclusion"))]
 
     agg = defaultdict(lambda: {"n": 0, "trace": 0, "halluc": 0,
                                "by_doc": defaultdict(lambda: {"n": 0, "trace": 0, "halluc": 0})})
@@ -100,7 +101,8 @@ def main():
     out = "\n".join(lines)
     print(out)
     if args.out:
-        open(args.out, "w", encoding="utf-8").write(out + "\n")
+        with open(args.out, "w", encoding="utf-8") as f:
+            f.write(out + "\n")
         print("\n已写入:", args.out)
 
 

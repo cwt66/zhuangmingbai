@@ -42,6 +42,9 @@ from src import doc_gate  # noqa: E402
 from src import report_pdf  # noqa: E402
 from src import report_gate  # noqa: E402
 from src import version_diff as diff_mod  # noqa: E402
+from src import audit_record as AR  # noqa: E402
+from src import ledger as ledger_mod  # noqa: E402
+from src import merkle as merkle_mod  # noqa: E402
 fmt_money = pipeline.fmt_money
 
 app = FastAPI(title="装明白 · 可计算审计", version="0.5.0")
@@ -136,8 +139,8 @@ PAGE = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
   <div class="grid">
     <div class="card">
       <h2>上传报价单</h2>
-      <p>当前支持 CSV 行项（项目名称 / 规格工艺 / 单位 / 数量 / 单价 / 合价）。
-      照片与 PDF 由 MaaS Qwen-VL 解析为同一结构后进入本引擎。</p>
+      <p>当前支持 CSV / Excel（多 sheet 自动选主表）行项（项目名称 / 规格工艺 / 单位 / 数量 / 单价 / 合价）。
+      照片与 PDF 由感知层解析并过 critic 校对后进入本引擎。</p>
       <form action="/audit" method="post" enctype="multipart/form-data">
         <div class="drop">
           <input type="file" name="files" accept=".csv" multiple required>
@@ -162,7 +165,7 @@ PAGE = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
         <button class="btn ghost" type="submit" formaction="/audit.xlsx">下载 Excel（可审计工作簿）</button>
         <div class="meta">2–4 份，单份 ≤ 4MB，UTF-8 编码（可带 BOM）</div>
       </form>
-      <p style="margin-top:26px">没有单据？<a href="/demo">用三家样例跑一次</a>　·　<a href="/review">看解析校对台</a></p>
+      <p style="margin-top:26px">没有单据？<a href="/demo">用三家样例跑一次</a>　·　<a href="/real">真实单据实测</a>　·　<a href="/review">解析校对台</a>　·　<a href="/ledger">可信账本</a></p>
     </div>
 
     <div class="card">
@@ -193,7 +196,7 @@ ERR = """<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 </div></body></html>"""
 
 NAV = """<div class="nav"><b>装明白 · 可计算审计</b>
-<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/perceive">图片识别</a><a href="/review">解析校对</a><a href="/inquiry">问询单</a><a href="/inquiry/demo">对照问询单</a><a href="/inquiry/batch">三家对照</a><a href="/followup">落实情况</a><a href="/diff">两版对比</a>
+<a href="/" style="margin-left:18px">重新上传</a><a href="/demo">样例演示</a><a href="/real">真实单据</a><a href="/perceive">图片识别</a><a href="/review">解析校对</a><a href="/inquiry">问询单</a><a href="/inquiry/demo">对照问询单</a><a href="/inquiry/batch">三家对照</a><a href="/followup">落实情况</a><a href="/diff">两版对比</a><a href="/history">审计历史</a><a href="/ledger">可信账本</a>
 <span class="right">浏览器 Ctrl/⌘+P 可另存为 PDF · <a href="/health">健康检查</a></span></div>"""
 
 
@@ -346,6 +349,57 @@ def _pdf_response(paths, template_key, scope, source, name="zhuangmingbai_report
                     headers={"Content-Disposition": 'attachment; filename="%s"' % name})
 
 
+def _bundle_response(csv_path, label, name, template_key="old_house", scope="full"):
+    """生成离线可复算审计包（只读附带已有账本快照与 Merkle 证明，不写仓库文件）。"""
+    fd, tmp = tempfile.mkstemp(suffix=".zmb.zip")
+    os.close(fd)
+    try:
+        AR.package_bundle(
+            csv_path, label, tmp,
+            template=template_key, scope=scope,
+            write_ledger=False, attach_readonly_ledger=True,
+        )
+        with open(tmp, "rb") as f:
+            data = f.read()
+    finally:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+    return Response(content=data, media_type="application/zip",
+                    headers={"Content-Disposition": 'attachment; filename="%s"' % name})
+
+
+def _ledger_status(include_entries=False):
+    lp = os.path.join(pipeline.DATA, "ledger.jsonl")
+    ap = os.path.join(pipeline.DATA, "ledger_anchor.json")
+    if not os.path.isfile(lp):
+        return {"entries": 0, "chain_ok": False, "anchor_ok": False, "merkle_root": None}
+    entries = ledger_mod.load(lp)
+    chain_ok, chain_errs = ledger_mod.verify(entries)
+    anchor = None
+    if os.path.isfile(ap):
+        with open(ap, encoding="utf-8") as f:
+            anchor = json.load(f)
+    anchor_ok, anchor_errs = ledger_mod.check_anchor(entries, anchor)
+    root = merkle_mod.root_hex([e["hash"] for e in entries]) if entries else None
+    merkle_ok = bool(anchor and root and anchor.get("merkle_root") == root)
+    out = {
+        "entries": len(entries),
+        "chain_ok": chain_ok,
+        "anchor_ok": anchor_ok,
+        "merkle_ok": merkle_ok,
+        "merkle_root": root,
+        "head": entries[-1]["hash"] if entries else None,
+        "git_commit": (anchor or {}).get("git_commit"),
+        "errors": (chain_errs + anchor_errs)[:5],
+    }
+    if include_entries:
+        out["items"] = entries
+        out["anchor"] = anchor
+    return out
+
+
 def _label_from_name(name: str) -> str:
     stem = os.path.splitext(os.path.basename(name or ""))[0].strip()
     return stem[:24] or "未命名报价"
@@ -478,7 +532,7 @@ def _persist(quotes, res, source="upload", docs=None):
 
 
 def _decorate(html, quotes, res, audit_id=None, source="upload",
-              xlsx_url=None, pdf_url=None):
+              xlsx_url=None, pdf_url=None, bundle_url=None):
     """在报告尾部加「解读」（MaaS 或模板）与审计编号。"""
     qgate = _quality_html(_quality(quotes, res))
     try:
@@ -511,8 +565,11 @@ def _decorate(html, quotes, res, audit_id=None, source="upload",
           '<a class="btn ghost no-print" href="%s" style="margin-top:10px">下载 Excel</a> '
           % html_mod.escape(xlsx_url))
     xl += ('' if not pdf_url else
-           '<a class="btn ghost no-print" href="%s" style="margin-top:10px">下载 PDF</a>'
+           '<a class="btn ghost no-print" href="%s" style="margin-top:10px">下载 PDF</a> '
            % html_mod.escape(pdf_url))
+    xl += ('' if not bundle_url else
+           '<a class="btn ghost no-print" href="%s" style="margin-top:10px">下载离线审计包 (.zmb.zip)</a> '
+           % html_mod.escape(bundle_url))
     footer = ('<div class="wrap" style="padding-top:0"><p class="note">审计编号 %s ｜ 来源 %s ｜ '
               '<a href="/history">历史记录</a> ｜ 数据仅用于本次核对，不用于训练</p>'
               '%s<button class="btn no-print" onclick="window.print()" style="margin-top:10px">'
@@ -642,6 +699,7 @@ def health():
         "llm": {"enabled": llm_mod.get_client().available(),
                 "model": llm_mod.get_client().model if llm_mod.get_client().available() else None},
         "vision": (lambda a: {"available": a[0], "detail": a[1]})(vision_ocr.available()),
+        "ledger": _ledger_status(include_entries=False),
         "time": __import__("datetime").datetime.now().astimezone().isoformat(timespec="seconds"),
     })
 
@@ -662,7 +720,8 @@ def demo():
     try:
         html, res, quotes = _audit(paths)
         aid = _persist(quotes, res, source="demo")
-        html = _decorate(html, quotes, res, aid, "合成样例", xlsx_url="/demo.xlsx", pdf_url="/demo.pdf")
+        html = _decorate(html, quotes, res, aid, "合成样例", xlsx_url="/demo.xlsx",
+                         pdf_url="/demo.pdf", bundle_url="/demo.bundle.zip")
     except WrongDocTypeError as e:
         return _err("文档类型不符", str(e), 400)
     except pipeline.HeaderMismatchError as e:
@@ -683,7 +742,8 @@ def real():
     try:
         html, res, quotes = _audit([("上海卓观 · 两房半包（真实单据）", path)])
         aid = _persist(quotes, res, source="real")
-        html = _decorate(html, quotes, res, aid, "真实单据", xlsx_url="/real.xlsx", pdf_url="/real.pdf")
+        html = _decorate(html, quotes, res, aid, "真实单据", xlsx_url="/real.xlsx",
+                         pdf_url="/real.pdf", bundle_url="/real.bundle.zip")
     except Exception as e:  # noqa: BLE001
         return _err("真实单据跑失败", str(e), 500)
     return HTMLResponse(html)
@@ -719,6 +779,75 @@ def real_pdf():
         return _err("真实单据缺失", "仓库内未找到真实单据。", 404)
     return _pdf_response([("上海卓观 · 两房半包（真实单据）", path)],
                          "old_house", "full", "真实单据", "zhuangmingbai_real.pdf")
+
+
+@app.get("/demo.bundle.zip")
+def demo_bundle():
+    """导出 B 公司样例的可离线复算审计包（含 input / standards / src / verify.py）。"""
+    path = os.path.join(pipeline.DATA, "samples", "company_b.csv")
+    if not os.path.isfile(path):
+        return _err("样例缺失", "未找到 company_b.csv。", 404)
+    return _bundle_response(path, "B 公司（低价引流型）", "zhuangmingbai_demo_b.zmb.zip")
+
+
+@app.get("/real.bundle.zip")
+def real_bundle():
+    """导出真实单据的可离线复算审计包（附哈希链账本快照与 RFC 6962 Merkle 包含证明）。"""
+    path = os.path.join(pipeline.DATA, "real", "sh_zhuoguan_halfpack.csv")
+    if not os.path.isfile(path):
+        return _err("真实单据缺失", "仓库内未找到真实单据。", 404)
+    return _bundle_response(path, "sh_zhuoguan_halfpack", "sh_zhuoguan_audit.zmb.zip")
+
+
+@app.get("/api/ledger")
+def api_ledger():
+    return JSONResponse(_ledger_status(include_entries=True))
+
+
+@app.get("/ledger", response_class=HTMLResponse)
+def ledger_page():
+    """可信账本与 Merkle 包含证明：把不可篡改证据直接展示给评委。"""
+    st = _ledger_status(include_entries=True)
+    ok_all = bool(st.get("chain_ok") and st.get("anchor_ok") and st.get("merkle_ok"))
+    badge_color = "#0A7C42" if ok_all else "#B33A2B"
+    badge_text = "链内自洽 · 锚点一致 · Merkle 根一致" if ok_all else "账本校验异常"
+    rows = []
+    for e in st.get("items") or []:
+        pl = e.get("payload") or {}
+        rows.append(
+            "<tr><td>#%d</td><td>%s</td><td><code>%s</code></td>"
+            "<td><code>%s…</code></td><td><code>%s…</code></td></tr>" % (
+                int(e.get("seq") or 0),
+                html_mod.escape(str(pl.get("label") or "")),
+                html_mod.escape(str(pl.get("result_digest") or "")),
+                html_mod.escape(str(e.get("prev") or "")[:12]),
+                html_mod.escape(str(e.get("hash") or "")[:16]),
+            )
+        )
+    body = """
+<h1>可信审计账本（哈希链 + Merkle 包含证明）</h1>
+<p class="lead">每份真实单据审计记录串成不可改的哈希链（<code>prev</code> 指向前一条），并用 RFC 6962 Merkle 树生成 32 字节公开根锚点；
+下载审计包后本地运行 <code>python3 verify.py</code> 即可完成三层离线复算。</p>
+<div class="qgate" style="border:1px solid #E4E2DC;border-left:4px solid %s;padding:12px 16px;margin:14px 0;font-size:13px;color:#56606C">
+  <b style="color:%s">%s</b> ｜ 记录 <b>%d</b> 条 ｜ 锚点链头 <code>%s</code> ｜ Merkle Root <code>%s</code>
+</div>
+<table class="s">
+  <tr><th>序号</th><th>单据</th><th>判定指纹</th><th>前驱 prev</th><th>条目哈希</th></tr>
+  %s
+</table>
+<p style="margin-top:20px">
+  <a class="btn" href="/real.bundle.zip">下载真实单据审计包（含 Merkle 证明）</a>
+  <a class="btn ghost" href="/demo.bundle.zip">下载样例审计包</a>
+</p>
+<p class="note">离线复算：解压审计包后执行 <code>python3 verify.py</code>；链级与包级 12 招防篡改攻击自测命令：<code>python3 eval/ledger_chain.py --json</code>。</p>
+""" % (
+        badge_color, badge_color, badge_text,
+        int(st.get("entries") or 0),
+        html_mod.escape(str(st.get("head") or "")[:16] + "…"),
+        html_mod.escape(str(st.get("merkle_root") or "")[:24] + "…"),
+        "".join(rows) or "<tr><td colspan=5>暂无账本记录</td></tr>",
+    )
+    return _sub_page(body)
 
 
 @app.post("/audit.xlsx")
