@@ -68,7 +68,7 @@
   <table>
     <tr><th style="width:22%">服务</th><th style="width:38%">承担什么</th><th>实测证据</th></tr>
     <tr><td>CodeArts 码道</td><td>需求 / 生成 / 构建 / 修复 / 部署五环节 + 项目级 Skill</td><td>原始会话逐字保留；Skill 采集结果可复算</td></tr>
-    <tr><td>ECS + Nginx</td><td>公网入口与 HTTPS</td><td>7 个路由 200；服务器侧 344 测试全绿</td></tr>
+    <tr><td>ECS + Nginx</td><td>公网入口与 HTTPS</td><td>8 个路由 200（另 /audit GET 405）；按需实例已释放，快照随包</td></tr>
     <tr><td>DCS for Redis</td><td>缓存 / 限流 / 任务状态</td><td><code>/health</code> 显示 <code>cache.kind=redis</code></td></tr>
     <tr><td>MaaS openPangu</td><td>报告解读与话术生成</td><td>输出接地校验；标签注明「MaaS 生成」</td></tr>
     <tr><td>RDS / OBS</td><td>审计摘要、归档与锚点</td><td>云原生接口接入，本地可无缝回退</td></tr>
